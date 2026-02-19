@@ -57,6 +57,8 @@ class _MainControllerState extends State<MainController> {
   bool _isEventMode = false;
   int _currentEventIndex = 0;
 
+  bool _isTestMode = false;
+
   // Sound Beep Player
   final AudioPlayer _audioPlayer = AudioPlayer();
   
@@ -117,7 +119,7 @@ class _MainControllerState extends State<MainController> {
             _currentPrayerName = name;
             _adzanCounter = DURASI_ADZAN;
 
-            _playSound('sounds/beep_adzan.wav');
+            _playSound('beep_adzan.wav');
           }
         });
       }
@@ -136,7 +138,7 @@ class _MainControllerState extends State<MainController> {
         _iqomahCounter--;
 
         if (_iqomahCounter <= 10 && _iqomahCounter > 0) {
-          _playSound('sounds/beep_iqomah.wav');
+          _playSound('beep_iqomah.wav');
         }
 
         if (_iqomahCounter <= 0) _appStatus = "HOME";
@@ -150,6 +152,13 @@ class _MainControllerState extends State<MainController> {
     if (_appStatus == "ADZAN") {
       screen = AdzanScreen(namaSholat: _currentPrayerName);
     } else if (_appStatus == "IQOMAH") {
+      /*
+      if (_isTestMode) {
+        _iqomahCounter = 15;
+
+        _isTestMode = false;
+      }
+      */
       screen = IqomahScreen(namaSholat: _currentPrayerName, countdown: _iqomahCounter);
     } else if (_isEventMode) {
       screen = EventScreen(key: const ValueKey("event_screen_fixed"), images: _eventImages, currentIndex: _currentEventIndex, currentTime: _timeString);
@@ -163,6 +172,24 @@ class _MainControllerState extends State<MainController> {
 
     return Scaffold(
       body: AnimatedSwitcher(duration: const Duration(milliseconds: 800), child: screen),
+
+      /*
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.red.withOpacity(0.5), // Biar gak terlalu mencolok
+        onPressed: () {
+          setState(() {
+            // Paksa pindah ke mode Adzan
+            _appStatus = "ADZAN";
+            _currentPrayerName = "Tes Adzan";
+            _adzanCounter = 5;
+            _isTestMode = true;
+            
+            _playSound('beep_adzan.wav');
+          });
+        },
+        child: const Icon(Icons.bug_report), // Ikon serangga (simbol debugging)
+      ),
+      */
     );
   }
 

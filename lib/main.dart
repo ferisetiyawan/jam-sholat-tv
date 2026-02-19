@@ -10,6 +10,7 @@ import 'services/prayer_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/adzan_screen.dart';
 import 'screens/iqomah_screen.dart';
+import 'screens/event_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -134,7 +135,7 @@ class _MainControllerState extends State<MainController> {
     } else if (_appStatus == "IQOMAH") {
       screen = IqomahScreen(namaSholat: _currentPrayerName, countdown: _iqomahCounter);
     } else if (_isEventMode) {
-      screen = _buildEventScreen();
+      screen = EventScreen(imageUrl: _eventImages[_currentEventIndex], currentTime: _timeString);
     } else {
       screen = _buildHomeWrapper();
     }
@@ -151,26 +152,6 @@ class _MainControllerState extends State<MainController> {
         Container(color: Colors.black.withOpacity(0.5)),
         HomeScreen(time: _timeString, jadwal: _jadwal, prayerItemBuilder: _buildPrayerItem),
       ],
-    );
-  }
-
-  Widget _buildEventScreen() {
-    return SizedBox.expand( // Memaksa konten mengisi seluruh layar
-      child: Container(
-        color: Colors.black,
-        child: Image.network(
-          _eventImages[_currentEventIndex],
-          // BoxFit.cover akan membuat gambar memenuhi layar tanpa gepeng.
-          // Bagian pinggir gambar akan sedikit terpotong jika rasio tidak pas 16:9
-          fit: BoxFit.cover, 
-          width: double.infinity,
-          height: double.infinity,
-          alignment: Alignment.center, // Memastikan pusat gambar tetap di tengah
-          errorBuilder: (context, error, stackTrace) => const Center(
-            child: Text("Gagal Memuat Poster Event", style: TextStyle(color: Colors.white)),
-          ),
-        ),
-      ),
     );
   }
 

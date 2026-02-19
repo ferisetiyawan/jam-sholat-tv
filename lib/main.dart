@@ -148,9 +148,30 @@ class _MainControllerState extends State<MainController> {
   Widget _buildHomeWrapper() {
     return Stack(
       children: [
-        Positioned.fill(child: Image.network('https://i.ibb.co.com/mPvfRZ7/Whats-App-Image-2026-02-19-at-4-29-11-PM.jpg', fit: BoxFit.cover)),
+        // BACKGROUND IMAGE DENGAN FALLBACK
+        Positioned.fill(
+          child: Image.network(
+            'https://i.ibb.co.com/mPvfRZ7/Whats-App-Image-2026-02-19-at-4-29-11-PM.jpg',
+            fit: BoxFit.cover,
+            // LOGIKA JIKA INTERNET MATI:
+            errorBuilder: (context, error, stackTrace) {
+              return Image.asset(
+                'assets/background_masjid.jpg', // Pastikan nama file di assets benar
+                fit: BoxFit.cover,
+              );
+            },
+          ),
+        ),
+
+        // OVERLAY GELAP
         Container(color: Colors.black.withOpacity(0.5)),
-        HomeScreen(time: _timeString, jadwal: _jadwal, prayerItemBuilder: _buildPrayerItem),
+
+        // KONTEN UTAMA (HOME SCREEN)
+        HomeScreen(
+          time: _timeString, 
+          jadwal: _jadwal, 
+          prayerItemBuilder: _buildPrayerItem,
+        ),
       ],
     );
   }

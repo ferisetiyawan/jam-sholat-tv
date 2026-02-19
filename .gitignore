@@ -120,4 +120,7 @@ app.*.symbols
 
 .DS_Store
 
-.fvm/
+.fvm/flutter_sdk
+.fvm/versions/
+.fvm/release
+.fvm/version

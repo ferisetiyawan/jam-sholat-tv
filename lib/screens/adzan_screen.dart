@@ -16,7 +16,7 @@ class AdzanScreen extends StatelessWidget {
           const Icon(Icons.mosque, size: 100, color: Colors.greenAccent),
           const SizedBox(height: 30),
           const Text(
-            "ADZAN BERKUMANDANG",
+            "WAKTU ADZAN BERKUMANDANG",
             style: TextStyle(fontSize: 40, fontWeight: FontWeight.w300, letterSpacing: 10),
           ),
           const SizedBox(height: 10),

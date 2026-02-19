@@ -4,13 +4,16 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:audioplayers/audioplayers.dart';
 
-// Import buatan sendiri
+// screens
 import 'services/prayer_service.dart';
-import 'screens/home_screen.dart';
 import 'screens/adzan_screen.dart';
 import 'screens/iqomah_screen.dart';
 import 'screens/event_screen.dart';
+
+// wrappers
+import 'wrappers/home_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,8 +44,8 @@ class MainController extends StatefulWidget {
 
 class _MainControllerState extends State<MainController> {
   // KONFIGURASI SIKLUS (Detik)
-  static const int DURASI_HOME = 60;
-  static const int DURASI_EVENT = 15;
+  static const int DURASI_HOME = 10;
+  static const int DURASI_EVENT = 3;
   static const int DURASI_ADZAN = 180; // 3 Menit
 
   // STATE
@@ -53,6 +56,9 @@ class _MainControllerState extends State<MainController> {
   int _adzanCounter = 0;
   bool _isEventMode = false;
   int _currentEventIndex = 0;
+
+  // Sound Beep Player
+  final AudioPlayer _audioPlayer = AudioPlayer();
   
   Map<String, String> _jadwal = {"Subuh": "--:--", "Syuruq": "--:--", "Dzuhur": "--:--", "Ashar": "--:--", "Maghrib": "--:--", "Isya": "--:--"};
   final List<String> _eventImages = [
@@ -84,6 +90,10 @@ class _MainControllerState extends State<MainController> {
     if (fresh != null) setState(() => _jadwal = fresh);
   }
 
+  void _playSound(String fileName) async {
+    await _audioPlayer.play(AssetSource('sounds/$fileName'));
+  }
+
   void _onTick() {
     final now = DateTime.now();
     setState(() {
@@ -106,6 +116,8 @@ class _MainControllerState extends State<MainController> {
             _appStatus = "ADZAN";
             _currentPrayerName = name;
             _adzanCounter = DURASI_ADZAN;
+
+            _playSound('sounds/beep_adzan.wav');
           }
         });
       }
@@ -122,6 +134,11 @@ class _MainControllerState extends State<MainController> {
       // KONTROL IQOMAH -> HOME
       if (_appStatus == "IQOMAH") {
         _iqomahCounter--;
+
+        if (_iqomahCounter <= 10 && _iqomahCounter > 0) {
+          _playSound('sounds/beep_iqomah.wav');
+        }
+
         if (_iqomahCounter <= 0) _appStatus = "HOME";
       }
     });
@@ -135,44 +152,17 @@ class _MainControllerState extends State<MainController> {
     } else if (_appStatus == "IQOMAH") {
       screen = IqomahScreen(namaSholat: _currentPrayerName, countdown: _iqomahCounter);
     } else if (_isEventMode) {
-      screen = EventScreen(imageUrl: _eventImages[_currentEventIndex], currentTime: _timeString);
+      screen = EventScreen(key: const ValueKey("event_screen_fixed"), images: _eventImages, currentIndex: _currentEventIndex, currentTime: _timeString);
     } else {
-      screen = _buildHomeWrapper();
+      screen = HomeWrapper(
+        time: _timeString,
+        jadwal: _jadwal,
+        prayerItemBuilder: _buildPrayerItem,
+      );
     }
 
     return Scaffold(
       body: AnimatedSwitcher(duration: const Duration(milliseconds: 800), child: screen),
-    );
-  }
-
-  Widget _buildHomeWrapper() {
-    return Stack(
-      children: [
-        // BACKGROUND IMAGE DENGAN FALLBACK
-        Positioned.fill(
-          child: Image.network(
-            'https://i.ibb.co.com/mPvfRZ7/Whats-App-Image-2026-02-19-at-4-29-11-PM.jpg',
-            fit: BoxFit.cover,
-            // LOGIKA JIKA INTERNET MATI:
-            errorBuilder: (context, error, stackTrace) {
-              return Image.asset(
-                'assets/background_masjid.jpg', // Pastikan nama file di assets benar
-                fit: BoxFit.cover,
-              );
-            },
-          ),
-        ),
-
-        // OVERLAY GELAP
-        Container(color: Colors.black.withOpacity(0.5)),
-
-        // KONTEN UTAMA (HOME SCREEN)
-        HomeScreen(
-          time: _timeString, 
-          jadwal: _jadwal, 
-          prayerItemBuilder: _buildPrayerItem,
-        ),
-      ],
     );
   }
 

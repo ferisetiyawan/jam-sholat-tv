@@ -1,63 +1,73 @@
 import 'package:flutter/material.dart';
 
-class EventScreen extends StatelessWidget {
-  final String imageUrl;
+class EventScreen extends StatefulWidget {
+  final List<String> images;
+  final int currentIndex;
   final String currentTime;
 
   const EventScreen({
     super.key,
-    required this.imageUrl,
+    required this.images,
+    required this.currentIndex,
     required this.currentTime,
   });
+
+  @override
+  State<EventScreen> createState() => _EventScreenState();
+}
+
+class _EventScreenState extends State<EventScreen> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.currentIndex);
+  }
+
+  @override
+  void didUpdateWidget(EventScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      _pageController.animateToPage(
+        widget.currentIndex,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOutCubic,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Gambar Event Fullscreen
-        Positioned.fill(
-          child: Container(
-            color: Colors.black,
-            child: Image.network(
-              imageUrl,
-              fit: BoxFit.cover, // Fullscreen tanpa gepeng
-              errorBuilder: (context, error, stackTrace) => const Center(
-                child: Text("Info Kegiatan Masjid", style: TextStyle(color: Colors.white)),
-              ),
-            ),
-          ),
+        PageView.builder(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: widget.images.length,
+          itemBuilder: (context, index) {
+            return Image.network(
+              widget.images[index],
+              fit: BoxFit.cover,
+            );
+          },
         ),
-        
-        // Overlay Gradasi (Opsional: Agar jam lebih terbaca jika gambar terang)
-        Positioned.fill(
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.5),
-                ],
-                stops: const [0.8, 1.0],
-              ),
-            ),
-          ),
-        ),
-
-        // Jam Kecil di Pojok Kanan Bawah
         Positioned(
-          bottom: 30,
-          right: 40,
+          bottom: 30, right: 40,
           child: Text(
-            currentTime,
+            widget.currentTime,
             style: const TextStyle(
-              fontSize: 45,
+              fontSize: 45, 
+              color: Colors.white, 
               fontWeight: FontWeight.bold,
-              color: Colors.white,
-              shadows: [
-                Shadow(blurRadius: 10, color: Colors.black, offset: Offset(2, 2))
-              ],
+              shadows: [Shadow(blurRadius: 10, color: Colors.black)],
             ),
           ),
         ),

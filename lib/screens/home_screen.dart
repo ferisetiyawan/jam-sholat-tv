@@ -5,7 +5,7 @@ import 'package:marquee/marquee.dart';
 class HomeScreen extends StatelessWidget {
   final String time;
   final Map<String, String> jadwal;
-  final Widget Function(String, String) prayerItemBuilder; // Fungsi untuk gambar kotak jadwal
+  final Widget Function(String, String) prayerItemBuilder;
 
   const HomeScreen({
     super.key, 
@@ -28,8 +28,8 @@ class HomeScreen extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: const [
-                  Text("MASJID AL HIJRAH", style: TextStyle(fontSize: 38, fontWeight: FontWeight.bold)),
-                  Text("Cimanggis Golf Estate", style: TextStyle(fontSize: 18, color: Colors.white70)),
+                  Text("MASJID AL HIJRAH CGE", style: TextStyle(fontSize: 38, fontWeight: FontWeight.bold)),
+                  Text("Cimanggis Golf Estate", style: TextStyle(fontSize: 24, color: Colors.white70)),
                 ],
               ),
             ],

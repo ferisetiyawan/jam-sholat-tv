@@ -13,39 +13,53 @@ class IqomahScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Format detik ke MM:SS
     String minutes = (countdown ~/ 60).toString().padLeft(2, '0');
     String seconds = (countdown % 60).toString().padLeft(2, '0');
 
-    return Center(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          padding: const EdgeInsets.all(40),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("MENUJU IQOMAH", style: TextStyle(fontSize: 40, fontWeight: FontWeight.w300, letterSpacing: 8)),
-              Text(namaSholat.toUpperCase(), style: const TextStyle(fontSize: 30, color: Colors.white70)),
-              const SizedBox(height: 20),
-              Text(
-                "$minutes:$seconds",
-                style: const TextStyle(
-                  fontSize: 200, 
-                  fontWeight: FontWeight.w900, 
-                  color: Colors.greenAccent, 
-                  fontFeatures: [FontFeature.tabularFigures()]
+    return Scaffold(
+      backgroundColor: Colors.transparent, // Agar background wrapper kelihatan
+      body: Center(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.85,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Sesuai isi konten
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("MENUJU IQOMAH", style: TextStyle(fontSize: 35, fontWeight: FontWeight.w300, letterSpacing: 8)),
+                Text(namaSholat.toUpperCase(), style: const TextStyle(fontSize: 25, color: Colors.white70)),
+                
+                // Menggunakan FittedBox agar teks jam tidak overflow
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      "$minutes:$seconds",
+                      style: const TextStyle(
+                        fontSize: 250, // Ukuran target
+                        fontWeight: FontWeight.w900, 
+                        color: Colors.greenAccent, 
+                        fontFeatures: [FontFeature.tabularFigures()],
+                        height: 1.1, // Mengurangi spasi vertikal teks
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Text("LURUSKAN DAN RAPATKAN SHAF", style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, letterSpacing: 2)),
-            ],
+                
+                const Text(
+                  "LURUSKAN DAN RAPATKAN SHAF", 
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 2)
+                ),
+              ],
+            ),
           ),
         ),
       ),

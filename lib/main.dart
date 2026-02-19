@@ -40,8 +40,8 @@ class MainController extends StatefulWidget {
 
 class _MainControllerState extends State<MainController> {
   // KONFIGURASI SIKLUS (Detik)
-  static const int DURASI_HOME = 10;
-  static const int DURASI_EVENT = 3;
+  static const int DURASI_HOME = 60;
+  static const int DURASI_EVENT = 15;
   static const int DURASI_ADZAN = 180; // 3 Menit
 
   // STATE

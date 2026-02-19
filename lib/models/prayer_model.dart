@@ -19,13 +19,13 @@ class PrayerSchedule {
 
   factory PrayerSchedule.fromJson(Map<String, dynamic> json) {
     return PrayerSchedule(
-      tanggal: json['tanggal'],
-      subuh: json['subuh'],
-      syuruq: json['terbit'], // Di API MyQuran, syuruq disebut 'terbit'
-      dzuhur: json['dzuhur'],
-      ashar: json['ashar'],
-      maghrib: json['maghrib'],
-      isya: json['isya'],
+      tanggal: json['tanggal'] ?? "",
+      subuh: json['subuh'] ?? "--:--",
+      syuruq: json['terbit'] ?? "--:--", // MyQuran pakai 'terbit' untuk syuruq
+      dzuhur: json['dzuhur'] ?? "--:--",
+      ashar: json['ashar'] ?? "--:--",
+      maghrib: json['maghrib'] ?? "--:--",
+      isya: json['isya'] ?? "--:--",
     );
   }
 }

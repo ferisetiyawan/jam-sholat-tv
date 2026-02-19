@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 class EventScreen extends StatefulWidget {
   final List<String> images;
   final int currentIndex;
@@ -53,9 +55,11 @@ class _EventScreenState extends State<EventScreen> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: widget.images.length,
           itemBuilder: (context, index) {
-            return Image.network(
-              widget.images[index],
+            return CachedNetworkImage(
+              imageUrl: widget.images[index],
               fit: BoxFit.cover,
+              placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
             );
           },
         ),

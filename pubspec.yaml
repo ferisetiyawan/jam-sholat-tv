@@ -19,6 +19,7 @@ dependencies:
   marquee: ^2.2.3
   audioplayers: ^6.5.1
   cached_network_image: ^3.4.1
+  flutter_launcher_icons: ^0.14.4
 
 dev_dependencies:
   flutter_test:
@@ -31,3 +32,10 @@ flutter:
     - assets/images/background_masjid.jpeg
     - assets/sounds/beep_adzan.wav
     - assets/sounds/beep_iqomah.wav
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/icon.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/icon.png"

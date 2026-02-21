@@ -4,6 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import '../models/prayer_model.dart';
 
+import 'package:hijriyah_indonesia/hijriyah_indonesia.dart';
+
 class PrayerService {
   final Dio _dio = Dio();
   final String cityId = "1225"; 
@@ -115,5 +117,22 @@ class PrayerService {
       }
     }
     return null;
+  }
+
+  static Map<String, String> getFullDate() {
+    final now = DateTime.now();
+    
+    // 1. Format Masehi (Contoh: Sabtu, 21 Februari 2026)
+    String masehi = DateFormat('d MMMM yyyy', 'id_ID').format(now);
+    
+    // 2. Format Hijriah (Contoh: 3 Ramadhan 1447 H)
+    // Anda bisa menambah/mengurangi H+1 jika tanggal Hijriah kurang pas
+    var hijri = Hijriyah.now(); 
+    String hijriah = "${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} H";
+
+    return {
+      "masehi": masehi,
+      "hijriah": hijriah,
+    };
   }
 }

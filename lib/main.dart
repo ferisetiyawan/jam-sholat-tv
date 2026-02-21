@@ -66,6 +66,9 @@ class _MainControllerState extends State<MainController> {
   String _nextPrayerName = "";
   String _countdownString = "";
 
+  String _dateMasehi = "";
+  String _dateHijriah = "";
+
   // Sound Beep Player
   final AudioPlayer _audioPlayer = AudioPlayer();
   
@@ -107,6 +110,10 @@ class _MainControllerState extends State<MainController> {
     final now = DateTime.now();
     setState(() {
       _timeString = DateFormat('HH:mm').format(now);
+
+      final dates = PrayerService.getFullDate();
+      _dateMasehi = dates['masehi']!;
+      _dateHijriah = dates['hijriah']!;
 
       final result = PrayerService.calculateCountdown(_jadwal);
       _nextPrayerName = result["nextName"]!;
@@ -187,6 +194,8 @@ class _MainControllerState extends State<MainController> {
     } else {
       screen = HomeWrapper(
         time: _timeString,
+        dateMasehi: _dateMasehi, // Ambil dari variabel state di main.dart
+        dateHijriah: _dateHijriah,
         jadwal: _jadwal,
         prayerItemBuilder: _buildPrayerItem,
       );
@@ -200,7 +209,7 @@ class _MainControllerState extends State<MainController> {
         onPressed: () {
           setState(() {
             _appStatus = "ADZAN";
-            _currentPrayerName = "Tes Adzan";
+            _currentPrayerName = "Jumat";
             _adzanCounter = 5;
             
             _playSound('beep_adzan.wav');

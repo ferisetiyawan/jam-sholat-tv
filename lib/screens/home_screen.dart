@@ -5,11 +5,15 @@ import 'package:marquee/marquee.dart';
 class HomeScreen extends StatelessWidget {
   final String time;
   final Map<String, String> jadwal;
+  final String dateMasehi;
+  final String dateHijriah;
   final Widget Function(String, String) prayerItemBuilder;
 
   const HomeScreen({
     super.key, 
     required this.time, 
+    required this.dateMasehi,
+    required this.dateHijriah,
     required this.jadwal,
     required this.prayerItemBuilder,
   });
@@ -28,8 +32,42 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 25),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start, // Agar rata atas
                 children: [
-                  Text(time, style: const TextStyle(fontSize: 110, fontWeight: FontWeight.w900, letterSpacing: -5)),
+                  // --- BAGIAN KIRI: JAM & TANGGAL ---
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        time, 
+                        style: const TextStyle(
+                          fontSize: 110, 
+                          fontWeight: FontWeight.w900, 
+                          letterSpacing: -5,
+                          height: 1.0, // Mengurangi spasi bawah bawaan font
+                        )
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        dateHijriah,
+                        style: const TextStyle(
+                          fontSize: 26, 
+                          color: Colors.amber, 
+                          fontWeight: FontWeight.bold
+                        ),
+                      ),
+                      Text(
+                        dateMasehi,
+                        style: const TextStyle(
+                          fontSize: 22, 
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w500
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  // --- BAGIAN KANAN: NAMA MASJID ---
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: const [

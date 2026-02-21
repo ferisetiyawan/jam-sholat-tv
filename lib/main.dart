@@ -219,7 +219,7 @@ class _MainControllerState extends State<MainController> {
         duration: const Duration(milliseconds: 500),
         decoration: BoxDecoration(
           color: isNext ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

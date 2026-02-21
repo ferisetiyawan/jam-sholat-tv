@@ -25,9 +25,9 @@ class IqomahScreen extends StatelessWidget {
             width: MediaQuery.of(context).size.width * 0.85,
             padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min, // Sesuai isi konten

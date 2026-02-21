@@ -172,7 +172,7 @@ class _MainControllerState extends State<MainController> {
       body: AnimatedSwitcher(duration: const Duration(milliseconds: 800), child: screen),
       
       floatingActionButton: kDebugMode ? FloatingActionButton(
-        backgroundColor: Colors.red.withOpacity(0.5),
+        backgroundColor: Colors.red.withValues(alpha: 0.5),
         onPressed: () {
           setState(() {
             _appStatus = "ADZAN";
@@ -189,9 +189,10 @@ class _MainControllerState extends State<MainController> {
 
   Widget _buildPrayerItem(String label, String time) {
     bool isActive = (_timeString == time.replaceAll(':', '.'));
+    
     return Expanded(
       child: Container(
-        decoration: BoxDecoration(color: isActive ? Colors.white.withOpacity(0.2) : Colors.transparent),
+        decoration: BoxDecoration(color: isActive ? Colors.white.withValues(alpha: 0.2) : Colors.transparent),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

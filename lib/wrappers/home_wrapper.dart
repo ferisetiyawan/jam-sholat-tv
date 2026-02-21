@@ -33,7 +33,7 @@ class HomeWrapper extends StatelessWidget {
         ),
 
         // OVERLAY GELAP
-        Container(color: Colors.black.withOpacity(0.5)),
+        Container(color: Colors.black.withValues(alpha: 0.5)),
 
         // KONTEN UTAMA
         HomeScreen(

@@ -51,8 +51,8 @@ class HomeScreen extends StatelessWidget {
                   child: Container(
                     height: 100, 
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
-                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                      color: Colors.white.withValues(alpha: 0.12),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                     ),
                     child: Row(
                       children: jadwal.entries.map((e) => prayerItemBuilder(e.key, e.value)).toList(),
@@ -63,7 +63,7 @@ class HomeScreen extends StatelessWidget {
             ),
             // Running Text
             Container(
-              height: 35, width: double.infinity, color: Colors.black.withOpacity(0.8),
+              height: 35, width: double.infinity, color: Colors.black.withValues(alpha: 0.8),
               child: Marquee(
                 text: 'Selamat Datang di Masjid Al Hijrah CGE - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ',
                 style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
@@ -78,14 +78,14 @@ class HomeScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             height: double.infinity,
-            color: Colors.black.withOpacity(0.85),
+            color: Colors.black.withValues(alpha: 0.85),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.all(40),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.8),
+                    color: Colors.red.withValues(alpha: 0.8),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.white, width: 2),
                   ),

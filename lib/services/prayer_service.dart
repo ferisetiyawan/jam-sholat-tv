@@ -8,7 +8,56 @@ class PrayerService {
   final Dio _dio = Dio();
   final String cityId = "1225"; 
 
+  static Map<String, String> calculateCountdown(Map<String, String> jadwal) {
+    final now = DateTime.now();
+    DateTime? nextTime;
+    String nextName = "";
+
+    // Urutan sholat yang akan di-highlight (Syuruq dilewati karena bukan waktu sholat utama)
+    List<String> order = ["Subuh", "Dzuhur", "Ashar", "Maghrib", "Isya"];
+
+    for (String name in order) {
+      String? t = jadwal[name];
+      if (t == null || t == "--:--" || t.isEmpty) continue;
+
+      final parts = t.split(':');
+      var pTime = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+
+      if (pTime.isAfter(now)) {
+        nextTime = pTime;
+        nextName = name;
+        break; 
+      }
+    }
+
+    // Jika sudah lewat Isya, targetnya adalah Subuh besok
+    if (nextTime == null) {
+      nextName = "Subuh";
+      String? t = jadwal["Subuh"];
+      if (t != null && t != "--:--") {
+        final parts = t.split(':');
+        nextTime = DateTime(now.year, now.month, now.day + 1, int.parse(parts[0]), int.parse(parts[1]));
+      }
+    }
+
+    String countdown = "00:00:00";
+    if (nextTime != null) {
+      final diff = nextTime.difference(now);
+      String h = diff.inHours.toString().padLeft(2, '0');
+      String m = (diff.inMinutes % 60).toString().padLeft(2, '0');
+      String s = (diff.inSeconds % 60).toString().padLeft(2, '0');
+      countdown = "$h:$m:$s";
+    }
+
+    return {
+      "nextName": nextName,
+      "countdown": countdown,
+    };
+  }
+
+  // --- KODE LAMA KAMU ---
   Future<void> fetchAndSaveSixMonths() async {
+    // ... (kode fetchAndSaveSixMonths kamu tetap sama)
     SharedPreferences prefs = await SharedPreferences.getInstance();
     DateTime now = DateTime.now();
 
@@ -34,6 +83,7 @@ class PrayerService {
   }
 
   Future<Map<String, String>?> getTodayJadwalMap() async {
+    // ... (kode getTodayJadwalMap kamu tetap sama)
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? rawData = prefs.getString('offline_prayer_data');
     if (rawData == null) return null;
@@ -41,24 +91,19 @@ class PrayerService {
     Map<String, dynamic> allData = jsonDecode(rawData);
     DateTime now = DateTime.now();
     
-    // KUNCI: API MyQuran pakai format DD/MM/YYYY di field 'tanggal'
     String todayDate = DateFormat('dd/MM/yyyy').format(now);
     String monthKey = DateFormat('yyyy-MM').format(now);
 
     if (allData.containsKey(monthKey)) {
       List monthList = allData[monthKey];
       
-      // Cari data yang string tanggalnya mengandung DD/MM/YYYY hari ini
       var foundData = monthList.firstWhere(
         (item) => item['tanggal'].contains(todayDate),
         orElse: () => null,
       );
 
       if (foundData != null) {
-        // Gunakan Model untuk parsing
         PrayerSchedule schedule = PrayerSchedule.fromJson(foundData);
-        
-        // Kembalikan dalam bentuk Map agar main.dart mudah pakai
         return {
           "Subuh": schedule.subuh,
           "Syuruq": schedule.syuruq,

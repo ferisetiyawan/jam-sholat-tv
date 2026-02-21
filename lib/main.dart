@@ -46,7 +46,7 @@ class MainController extends StatefulWidget {
 class _MainControllerState extends State<MainController> {
   // KONFIGURASI SIKLUS (Detik)
   static const int DURASI_HOME = !kDebugMode ? 60 : 10;
-  static const int DURASI_EVENT = !kDebugMode ? 10 : 3;
+  static const int DURASI_EVENT = !kDebugMode ? 10 : 0;
   static const int DURASI_ADZAN = 180;
   static const int DURASI_IQOMAH_SUBUH = 900;
   static const int DURASI_IQOMAH_DEFAULT = !kDebugMode ? 600 : 15;
@@ -59,6 +59,9 @@ class _MainControllerState extends State<MainController> {
   int _adzanCounter = 0;
   bool _isEventMode = false;
   int _currentEventIndex = 0;
+
+  String _nextPrayerName = "";
+  String _countdownString = "";
 
   // Sound Beep Player
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -101,6 +104,10 @@ class _MainControllerState extends State<MainController> {
     final now = DateTime.now();
     setState(() {
       _timeString = DateFormat('HH:mm').format(now);
+
+      final result = PrayerService.calculateCountdown(_jadwal);
+      _nextPrayerName = result["nextName"]!;
+      _countdownString = result["countdown"]!;
       
       // KONTROL SIKLUS HOME/EVENT (hanya jika sedang status HOME)
       if (_appStatus == "HOME") {
@@ -188,16 +195,44 @@ class _MainControllerState extends State<MainController> {
   }
 
   Widget _buildPrayerItem(String label, String time) {
-    bool isActive = (_timeString == time.replaceAll(':', '.'));
-    
+    bool isNext = (label == _nextPrayerName);
+
     return Expanded(
-      child: Container(
-        decoration: BoxDecoration(color: isActive ? Colors.white.withValues(alpha: 0.2) : Colors.transparent),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 500),
+        decoration: BoxDecoration(
+          color: isNext ? Colors.white.withOpacity(0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(15),
+        ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(label, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-            Text(time, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.w900)),
+            Text(
+              label, 
+              style: TextStyle(
+                fontSize: 22, 
+                fontWeight: FontWeight.bold,
+                color: isNext ? Colors.white : const Color.fromARGB(150, 0, 0, 0), // Putih jika next, hitam jika tidak
+              )
+            ),
+            Text(
+              time, 
+              style: TextStyle(
+                fontSize: 48, 
+                fontWeight: FontWeight.w900,
+                color: isNext ? Colors.white : const Color.fromARGB(150, 0, 0, 0), // Putih jika next, hitam jika tidak
+              )
+            ),
+            if (isNext)
+              Text(
+                "-$_countdownString",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontFeatures: [FontFeature.tabularFigures()],
+                ),
+              ),
           ],
         ),
       ),

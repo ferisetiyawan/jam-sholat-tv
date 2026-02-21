@@ -12,6 +12,7 @@ import 'services/prayer_service.dart';
 import 'screens/adzan_screen.dart';
 import 'screens/iqomah_screen.dart';
 import 'screens/event_screen.dart';
+import 'screens/jumat_screen.dart';
 
 // wrappers
 import 'wrappers/home_wrapper.dart';
@@ -50,11 +51,13 @@ class _MainControllerState extends State<MainController> {
   static const int DURASI_ADZAN = 180;
   static const int DURASI_IQOMAH_SUBUH = 900;
   static const int DURASI_IQOMAH_DEFAULT = !kDebugMode ? 600 : 15;
+  static const int DURASI_JUMAT = 2700; // 45 menit
 
   // STATE
   String _timeString = "";
   String _appStatus = "HOME"; // HOME, ADZAN, IQOMAH
   String _currentPrayerName = "";
+  int _jumatCounter = 0;
   int _iqomahCounter = 0;
   int _adzanCounter = 0;
   bool _isEventMode = false;
@@ -136,8 +139,13 @@ class _MainControllerState extends State<MainController> {
       if (_appStatus == "ADZAN") {
         _adzanCounter--;
         if (_adzanCounter <= 0) {
-          _appStatus = "IQOMAH";
-          _iqomahCounter = (_currentPrayerName == "Subuh") ? DURASI_IQOMAH_SUBUH : DURASI_IQOMAH_DEFAULT;
+          if (_currentPrayerName == "Jumat") {
+            _appStatus = "JUMAT_MODE";
+            _jumatCounter = DURASI_JUMAT;
+          } else {
+            _appStatus = "IQOMAH";
+            _iqomahCounter = (_currentPrayerName == "Subuh") ? DURASI_IQOMAH_SUBUH : DURASI_IQOMAH_DEFAULT;
+          }
         }
       }
 
@@ -155,6 +163,13 @@ class _MainControllerState extends State<MainController> {
           _playSound('beep_adzan.wav');
         }
       }
+
+      if (_appStatus == "JUMAT_MODE") {
+        _jumatCounter--;
+        if (_jumatCounter <= 0) {
+          _appStatus = "HOME";
+        }
+      }
     });
   }
 
@@ -165,6 +180,8 @@ class _MainControllerState extends State<MainController> {
       screen = AdzanScreen(namaSholat: _currentPrayerName);
     } else if (_appStatus == "IQOMAH") {
       screen = IqomahScreen(namaSholat: _currentPrayerName, countdown: _iqomahCounter);
+    } else if (_appStatus == "JUMAT_MODE") {
+      screen = const JumatScreen();
     } else if (_isEventMode) {
       screen = EventScreen(key: const ValueKey("event_screen_fixed"), images: _eventImages, currentIndex: _currentEventIndex, currentTime: _timeString);
     } else {

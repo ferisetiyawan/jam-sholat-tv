@@ -12,7 +12,7 @@ class PrayerService {
     final now = DateTime.now();
     DateTime? nextTime;
     String nextName = "";
-    
+
     List<String> order = ["Subuh", "Syuruq", "Dzuhur", "Ashar", "Maghrib", "Isya"];
 
     for (String name in order) {
@@ -54,9 +54,7 @@ class PrayerService {
     };
   }
 
-  // --- KODE LAMA KAMU ---
   Future<void> fetchAndSaveSixMonths() async {
-    // ... (kode fetchAndSaveSixMonths kamu tetap sama)
     SharedPreferences prefs = await SharedPreferences.getInstance();
     DateTime now = DateTime.now();
 
@@ -82,7 +80,6 @@ class PrayerService {
   }
 
   Future<Map<String, String>?> getTodayJadwalMap() async {
-    // ... (kode getTodayJadwalMap kamu tetap sama)
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? rawData = prefs.getString('offline_prayer_data');
     if (rawData == null) return null;
@@ -103,10 +100,14 @@ class PrayerService {
 
       if (foundData != null) {
         PrayerSchedule schedule = PrayerSchedule.fromJson(foundData);
+
+        // Cek apakah hari ini Jumat
+        bool isFriday = DateTime.now().weekday == DateTime.friday;
+
         return {
           "Subuh": schedule.subuh,
           "Syuruq": schedule.syuruq,
-          "Dzuhur": schedule.dzuhur,
+          isFriday ? "Jumat" : "Dzuhur": schedule.dzuhur,
           "Ashar": schedule.ashar,
           "Maghrib": schedule.maghrib,
           "Isya": schedule.isya,

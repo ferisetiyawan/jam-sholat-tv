@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -44,9 +45,11 @@ class MainController extends StatefulWidget {
 
 class _MainControllerState extends State<MainController> {
   // KONFIGURASI SIKLUS (Detik)
-  static const int DURASI_HOME = 10;
-  static const int DURASI_EVENT = 3;
-  static const int DURASI_ADZAN = 180; // 3 Menit
+  static const int DURASI_HOME = !kDebugMode ? 60 : 10;
+  static const int DURASI_EVENT = !kDebugMode ? 10 : 3;
+  static const int DURASI_ADZAN = 180;
+  static const int DURASI_IQOMAH_SUBUH = 900;
+  static const int DURASI_IQOMAH_DEFAULT = !kDebugMode ? 600 : 15;
 
   // STATE
   String _timeString = "";
@@ -56,8 +59,6 @@ class _MainControllerState extends State<MainController> {
   int _adzanCounter = 0;
   bool _isEventMode = false;
   int _currentEventIndex = 0;
-
-  bool _isTestMode = false;
 
   // Sound Beep Player
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -129,7 +130,7 @@ class _MainControllerState extends State<MainController> {
         _adzanCounter--;
         if (_adzanCounter <= 0) {
           _appStatus = "IQOMAH";
-          _iqomahCounter = (_currentPrayerName == "Subuh") ? 900 : 600;
+          _iqomahCounter = (_currentPrayerName == "Subuh") ? DURASI_IQOMAH_SUBUH : DURASI_IQOMAH_DEFAULT;
         }
       }
 
@@ -141,7 +142,11 @@ class _MainControllerState extends State<MainController> {
           _playSound('beep_iqomah.wav');
         }
 
-        if (_iqomahCounter <= 0) _appStatus = "HOME";
+        if (_iqomahCounter <= 0) {
+          _appStatus = "HOME";
+
+          _playSound('beep_adzan.wav');
+        }
       }
     });
   }
@@ -152,13 +157,6 @@ class _MainControllerState extends State<MainController> {
     if (_appStatus == "ADZAN") {
       screen = AdzanScreen(namaSholat: _currentPrayerName);
     } else if (_appStatus == "IQOMAH") {
-      /*
-      if (_isTestMode) {
-        _iqomahCounter = 15;
-
-        _isTestMode = false;
-      }
-      */
       screen = IqomahScreen(namaSholat: _currentPrayerName, countdown: _iqomahCounter);
     } else if (_isEventMode) {
       screen = EventScreen(key: const ValueKey("event_screen_fixed"), images: _eventImages, currentIndex: _currentEventIndex, currentTime: _timeString);
@@ -172,24 +170,20 @@ class _MainControllerState extends State<MainController> {
 
     return Scaffold(
       body: AnimatedSwitcher(duration: const Duration(milliseconds: 800), child: screen),
-
-      /*
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.red.withOpacity(0.5), // Biar gak terlalu mencolok
+      
+      floatingActionButton: kDebugMode ? FloatingActionButton(
+        backgroundColor: Colors.red.withOpacity(0.5),
         onPressed: () {
           setState(() {
-            // Paksa pindah ke mode Adzan
             _appStatus = "ADZAN";
             _currentPrayerName = "Tes Adzan";
             _adzanCounter = 5;
-            _isTestMode = true;
             
             _playSound('beep_adzan.wav');
           });
         },
-        child: const Icon(Icons.bug_report), // Ikon serangga (simbol debugging)
-      ),
-      */
+        child: const Icon(Icons.bug_report),
+      ) : null,
     );
   }
 

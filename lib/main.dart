@@ -100,7 +100,7 @@ class _MainControllerState extends State<MainController> {
   void _onTick() {
     final now = DateTime.now();
     setState(() {
-      _timeString = DateFormat('HH.mm').format(now);
+      _timeString = DateFormat('HH:mm').format(now);
       
       // KONTROL SIKLUS HOME/EVENT (hanya jika sedang status HOME)
       if (_appStatus == "HOME") {
@@ -195,7 +195,7 @@ class _MainControllerState extends State<MainController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(label, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             Text(time, style: const TextStyle(fontSize: 50, fontWeight: FontWeight.w900)),
           ],
         ),

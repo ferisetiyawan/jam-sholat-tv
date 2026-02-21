@@ -51,7 +51,7 @@ class _MainControllerState extends State<MainController> {
   static const int DURASI_ADZAN = 180;
   static const int DURASI_IQOMAH_SUBUH = 900;
   static const int DURASI_IQOMAH_DEFAULT = !kDebugMode ? 600 : 15;
-  static const int DURASI_JUMAT = 2700; // 45 menit
+  static const int DURASI_JUMAT = !kDebugMode ? 2700 : 10;
 
   // STATE
   String _timeString = "";

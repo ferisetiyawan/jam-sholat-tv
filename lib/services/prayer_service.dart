@@ -12,9 +12,8 @@ class PrayerService {
     final now = DateTime.now();
     DateTime? nextTime;
     String nextName = "";
-
-    // Urutan sholat yang akan di-highlight (Syuruq dilewati karena bukan waktu sholat utama)
-    List<String> order = ["Subuh", "Dzuhur", "Ashar", "Maghrib", "Isya"];
+    
+    List<String> order = ["Subuh", "Syuruq", "Dzuhur", "Ashar", "Maghrib", "Isya"];
 
     for (String name in order) {
       String? t = jadwal[name];

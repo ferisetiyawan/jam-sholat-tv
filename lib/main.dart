@@ -201,7 +201,7 @@ class _MainControllerState extends State<MainController> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         decoration: BoxDecoration(
-          color: isNext ? Colors.white.withOpacity(0.2) : Colors.transparent,
+          color: isNext ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(15),
         ),
         child: Column(
@@ -225,7 +225,7 @@ class _MainControllerState extends State<MainController> {
             ),
             if (isNext)
               Text(
-                "-$_countdownString",
+                label == "Syuruq" ? "Terbit: -$_countdownString" : "-$_countdownString",
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,

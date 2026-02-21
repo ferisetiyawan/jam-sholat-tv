@@ -16,8 +16,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Logika cek waktu (jika tahun < 2024 berarti jam TV belum sinkron)
-    bool isTimeValid = DateTime.now().year >= 2024;
+    bool isTimeValid = DateTime.now().year >= 2025;
 
     return Stack(
       children: [
@@ -46,11 +45,11 @@ class HomeScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(8),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                   child: Container(
-                    height: 165, 
+                    height: 100, 
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.12),
                       border: Border.all(color: Colors.white.withOpacity(0.2)),
@@ -79,7 +78,7 @@ class HomeScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             height: double.infinity,
-            color: Colors.black.withOpacity(0.85), // Gelapkan background
+            color: Colors.black.withOpacity(0.85),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: Center(

@@ -46,8 +46,8 @@ class MainController extends StatefulWidget {
 
 class _MainControllerState extends State<MainController> {
   // KONFIGURASI SIKLUS (Detik)
-  static const int DURASI_HOME = !kDebugMode ? 60 : 5;
-  static const int DURASI_EVENT = !kDebugMode ? 10 : 3;
+  static const int DURASI_HOME = !kDebugMode ? 10 : 3;
+  static const int DURASI_EVENT = !kDebugMode ? 20 : 5;
   static const int DURASI_ADZAN = 180;
   static const int DURASI_IQOMAH_SUBUH = !kDebugMode ? 900 : 15;
   static const int DURASI_IQOMAH_DEFAULT = !kDebugMode ? 600 : 15;

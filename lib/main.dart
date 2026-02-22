@@ -182,8 +182,9 @@ class _MainControllerState extends State<MainController> {
 
         // CEK WAKTU ADZAN
         _jadwal.forEach((name, time) {
-          if (name != "Syuruq" && _timeString == time.replaceAll(':', '.') && now.second == 0) {
-            if (_appStatus == "HOME") { // Pastikan tidak memutus status yang sudah ada
+          // Pastikan format string sama persis (contoh: "18:15" == "18:15")
+          if (name != "Syuruq" && _timeString == time && now.second == 0) {
+            if (_appStatus == "HOME") {
               _appStatus = "ADZAN";
               _currentPrayerName = name;
               _adzanCounter = DURASI_ADZAN;

@@ -63,6 +63,9 @@ class _MainControllerState extends State<MainController> {
   bool _isEventMode = false;
   int _currentEventIndex = 0;
 
+  // Fake Time for Testing
+  DateTime? _fakeTime;
+
   String _nextPrayerName = "";
   String _countdownString = "";
 
@@ -157,7 +160,13 @@ class _MainControllerState extends State<MainController> {
   }
 
   void _onTick() {
-    final now = DateTime.now();
+    // Jika _fakeTime ada, gunakan itu dan tambahkan 1 detik setiap tick
+    if (_fakeTime != null) {
+      _fakeTime = _fakeTime!.add(const Duration(seconds: 1));
+    }
+    
+    final now = _fakeTime ?? DateTime.now();
+
     setState(() {
       _timeString = DateFormat('HH:mm').format(now);
 
@@ -187,7 +196,7 @@ class _MainControllerState extends State<MainController> {
             if (_appStatus == "HOME") {
               _appStatus = "ADZAN";
               _currentPrayerName = name;
-              _adzanCounter = DURASI_ADZAN;
+              _adzanCounter = (_fakeTime == null) ? DURASI_ADZAN : 5;
               _playSound('beep_adzan.wav');
             }
           }
@@ -259,15 +268,23 @@ class _MainControllerState extends State<MainController> {
       floatingActionButton: kDebugMode ? FloatingActionButton(
         backgroundColor: Colors.red.withValues(alpha: 0.5),
         onPressed: () {
+          String maghrib = _jadwal["Maghrib"] ?? "18:00";
+          List<String> p = maghrib.split(':');
+
           setState(() {
-            _appStatus = "ADZAN";
-            _currentPrayerName = "Subuh";
-            _adzanCounter = 5;
+            _fakeTime = DateTime(
+              DateTime.now().year, 
+              DateTime.now().month, 
+              DateTime.now().day, 
+              int.parse(p[0]), 
+              int.parse(p[1]) - 1, // 1 menit sebelum
+              55 // detik ke 55
+            );
             
-            _playSound('beep_adzan.wav');
+            _appStatus = "HOME";
           });
         },
-        child: const Icon(Icons.bug_report),
+        child: const Icon(Icons.fast_forward),
       ) : null,
     );
   }

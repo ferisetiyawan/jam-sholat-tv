@@ -21,6 +21,7 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_launcher_icons: ^0.14.4
   hijriyah_indonesia: ^0.1.7
+  flutter_svg: ^2.2.3
 
 dev_dependencies:
   flutter_test:
@@ -30,9 +31,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/background_masjid.jpeg
-    - assets/sounds/beep_adzan.wav
-    - assets/sounds/beep_iqomah.wav
+    - assets/images/
+    - assets/sounds/
 
 flutter_launcher_icons:
   android: true

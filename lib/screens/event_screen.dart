@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class EventScreen extends StatefulWidget {
@@ -30,7 +30,6 @@ class _EventScreenState extends State<EventScreen> {
   @override
   void didUpdateWidget(EventScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (oldWidget.currentIndex != widget.currentIndex) {
       _pageController.animateToPage(
         widget.currentIndex,
@@ -46,6 +45,36 @@ class _EventScreenState extends State<EventScreen> {
     super.dispose();
   }
 
+  /// Fungsi "Sakti" untuk merender segala jenis gambar (Local/Network & SVG/Bitmap)
+  Widget _buildSmartImage(String path) {
+    final bool isNetwork = path.startsWith('http');
+    final bool isSvg = path.toLowerCase().endsWith('.svg');
+
+    if (isNetwork) {
+      if (isSvg) {
+        return SvgPicture.network(
+          path,
+          fit: BoxFit.cover,
+          placeholderBuilder: (context) => const Center(child: CircularProgressIndicator()),
+        );
+      } else {
+        return CachedNetworkImage(
+          imageUrl: path,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
+          errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 50),
+        );
+      }
+    } else {
+      // Logic untuk Local Asset
+      if (isSvg) {
+        return SvgPicture.asset(path, fit: BoxFit.cover);
+      } else {
+        return Image.asset(path, fit: BoxFit.cover);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -55,25 +84,8 @@ class _EventScreenState extends State<EventScreen> {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: widget.images.length,
           itemBuilder: (context, index) {
-            return CachedNetworkImage(
-              imageUrl: widget.images[index],
-              fit: BoxFit.cover,
-              placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-              errorWidget: (context, url, error) => const Icon(Icons.error),
-            );
+            return _buildSmartImage(widget.images[index]);
           },
-        ),
-        Positioned(
-          bottom: 30, right: 40,
-          child: Text(
-            widget.currentTime,
-            style: const TextStyle(
-              fontSize: 45, 
-              color: Colors.white, 
-              fontWeight: FontWeight.bold,
-              shadows: [Shadow(blurRadius: 10, color: Colors.black)],
-            ),
-          ),
         ),
       ],
     );

@@ -73,10 +73,11 @@ class _MainControllerState extends State<MainController> {
   final AudioPlayer _audioPlayer = AudioPlayer();
   
   Map<String, String> _jadwal = {"Subuh": "--:--", "Syuruq": "--:--", "Dzuhur": "--:--", "Ashar": "--:--", "Maghrib": "--:--", "Isya": "--:--"};
+  
   final List<String> _eventImages = [
-    'https://i.ibb.co.com/v4XVCXxm/kajian1.jpg',
-    'https://i.ibb.co.com/fdjQytfY/kajian2.jpg',
-    'https://i.ibb.co.com/qY3QbqHQ/kajian3.jpg'
+    'assets/images/kajian1.svg',
+    'assets/images/kajian2.svg',
+    'assets/images/kajian3.svg',
   ];
 
   final PrayerService _prayerService = PrayerService();

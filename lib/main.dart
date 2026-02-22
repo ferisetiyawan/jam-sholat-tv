@@ -91,16 +91,64 @@ class _MainControllerState extends State<MainController> {
 
   // Ambil data saat aplikasi pertama buka
   Future<void> _initData() async {
-    // 1. Ambil data lokal dulu biar cepat
     var local = await _prayerService.getTodayJadwalMap();
-    if (local != null) setState(() => _jadwal = local);
+    if (local != null) {
+      setState(() => _jadwal = local);
+      // Cek apakah saat ini sedang dalam rentang waktu Adzan atau Iqomah
+      _checkInitialStatus(local); 
+    }
     
-    // 2. Update data 6 bulan di background
     await _prayerService.fetchAndSaveSixMonths();
     
-    // 3. Refresh lagi setelah download selesai
     var fresh = await _prayerService.getTodayJadwalMap();
-    if (fresh != null) setState(() => _jadwal = fresh);
+    if (fresh != null) {
+      setState(() => _jadwal = fresh);
+      // Cek ulang jika ada perubahan jadwal dari API
+      if (_appStatus == "HOME") _checkInitialStatus(fresh); 
+    }
+  }
+
+  void _checkInitialStatus(Map<String, String> jadwal) {
+    final now = DateTime.now();
+    
+    jadwal.forEach((name, time) {
+      if (name == "Syuruq") return; // Syuruq tidak punya siklus adzan/iqomah
+
+      final parts = time.split(':');
+      final prayerTime = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+      
+      int durasiIqomah = (name == "Subuh") ? DURASI_IQOMAH_SUBUH : DURASI_IQOMAH_DEFAULT;
+      if (name == "Jumat") durasiIqomah = 0; // Jumat langsung ke mode JUMAT_MODE setelah adzan
+
+      // 1. CEK RENTANG ADZAN
+      final endAdzanTime = prayerTime.add(Duration(seconds: DURASI_ADZAN));
+      if (now.isAfter(prayerTime) && now.isBefore(endAdzanTime)) {
+        int remainingAdzan = endAdzanTime.difference(now).inSeconds;
+        setState(() {
+          _appStatus = "ADZAN";
+          _currentPrayerName = name;
+          _adzanCounter = remainingAdzan;
+        });
+        return;
+      }
+
+      // 2. CEK RENTANG IQOMAH / JUMAT MODE
+      final endIqomahTime = endAdzanTime.add(Duration(seconds: (name == "Jumat") ? DURASI_JUMAT : durasiIqomah));
+      if (now.isAfter(endAdzanTime) && now.isBefore(endIqomahTime)) {
+        int remainingContent = endIqomahTime.difference(now).inSeconds;
+        setState(() {
+          if (name == "Jumat") {
+            _appStatus = "JUMAT_MODE";
+            _jumatCounter = remainingContent;
+          } else {
+            _appStatus = "IQOMAH";
+            _currentPrayerName = name;
+            _iqomahCounter = remainingContent;
+          }
+        });
+        return;
+      }
+    });
   }
 
   void _playSound(String fileName) async {
@@ -133,12 +181,13 @@ class _MainControllerState extends State<MainController> {
 
         // CEK WAKTU ADZAN
         _jadwal.forEach((name, time) {
-          if (name != "Syuruq" && _timeString == time.replaceAll(':', '.')) {
-            _appStatus = "ADZAN";
-            _currentPrayerName = name;
-            _adzanCounter = DURASI_ADZAN;
-
-            _playSound('beep_adzan.wav');
+          if (name != "Syuruq" && _timeString == time.replaceAll(':', '.') && now.second == 0) {
+            if (_appStatus == "HOME") { // Pastikan tidak memutus status yang sudah ada
+              _appStatus = "ADZAN";
+              _currentPrayerName = name;
+              _adzanCounter = DURASI_ADZAN;
+              _playSound('beep_adzan.wav');
+            }
           }
         });
       }

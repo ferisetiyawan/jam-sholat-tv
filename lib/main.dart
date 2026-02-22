@@ -46,10 +46,10 @@ class MainController extends StatefulWidget {
 
 class _MainControllerState extends State<MainController> {
   // KONFIGURASI SIKLUS (Detik)
-  static const int DURASI_HOME = !kDebugMode ? 60 : 10;
-  static const int DURASI_EVENT = !kDebugMode ? 10 : 0;
+  static const int DURASI_HOME = !kDebugMode ? 60 : 5;
+  static const int DURASI_EVENT = !kDebugMode ? 10 : 3;
   static const int DURASI_ADZAN = 180;
-  static const int DURASI_IQOMAH_SUBUH = 900;
+  static const int DURASI_IQOMAH_SUBUH = !kDebugMode ? 900 : 15;
   static const int DURASI_IQOMAH_DEFAULT = !kDebugMode ? 600 : 15;
   static const int DURASI_JUMAT = !kDebugMode ? 2700 : 10;
 
@@ -74,8 +74,9 @@ class _MainControllerState extends State<MainController> {
   
   Map<String, String> _jadwal = {"Subuh": "--:--", "Syuruq": "--:--", "Dzuhur": "--:--", "Ashar": "--:--", "Maghrib": "--:--", "Isya": "--:--"};
   final List<String> _eventImages = [
-    'https://i.ibb.co.com/chKB1B9Z/bg1.jpg',
-    'https://i.ibb.co.com/msXhZ9M/bg2.jpg',
+    'https://i.ibb.co.com/v4XVCXxm/kajian1.jpg',
+    'https://i.ibb.co.com/fdjQytfY/kajian2.jpg',
+    'https://i.ibb.co.com/qY3QbqHQ/kajian3.jpg'
   ];
 
   final PrayerService _prayerService = PrayerService();
@@ -209,7 +210,7 @@ class _MainControllerState extends State<MainController> {
         onPressed: () {
           setState(() {
             _appStatus = "ADZAN";
-            _currentPrayerName = "Jumat";
+            _currentPrayerName = "Subuh";
             _adzanCounter = 5;
             
             _playSound('beep_adzan.wav');
@@ -236,7 +237,7 @@ class _MainControllerState extends State<MainController> {
             Text(
               label, 
               style: TextStyle(
-                fontSize: 22, 
+                fontSize: 18, 
                 fontWeight: FontWeight.bold,
                 color: isNext ? Colors.white : const Color.fromARGB(150, 0, 0, 0), // Putih jika next, hitam jika tidak
               )
@@ -244,16 +245,16 @@ class _MainControllerState extends State<MainController> {
             Text(
               time, 
               style: TextStyle(
-                fontSize: 48, 
+                fontSize: 40, 
                 fontWeight: FontWeight.w900,
                 color: isNext ? Colors.white : const Color.fromARGB(150, 0, 0, 0), // Putih jika next, hitam jika tidak
               )
             ),
             if (isNext)
               Text(
-                label == "Syuruq" ? "Terbit: -$_countdownString" : "-$_countdownString",
+                "-$_countdownString",
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                   fontFeatures: [FontFeature.tabularFigures()],

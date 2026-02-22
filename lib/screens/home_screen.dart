@@ -41,7 +41,7 @@ class HomeScreen extends StatelessWidget {
                       Text(
                         time, 
                         style: const TextStyle(
-                          fontSize: 110, 
+                          fontSize: 110,
                           fontWeight: FontWeight.w900, 
                           letterSpacing: -5,
                           height: 1.0, // Mengurangi spasi bawah bawaan font

@@ -122,12 +122,10 @@ class PrayerService {
   static Map<String, String> getFullDate() {
     final now = DateTime.now();
     
-    // 1. Format Masehi (Contoh: Sabtu, 21 Februari 2026)
     String masehi = DateFormat('d MMMM yyyy', 'id_ID').format(now);
     
-    // 2. Format Hijriah (Contoh: 3 Ramadhan 1447 H)
-    // Anda bisa menambah/mengurangi H+1 jika tanggal Hijriah kurang pas
     var hijri = Hijriyah.now(); 
+    hijri.hDay -= 1;
     String hijriah = "${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} H";
 
     return {

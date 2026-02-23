@@ -49,8 +49,6 @@ class _MainControllerState extends State<MainController> {
   static const int DURASI_HOME = !kDebugMode ? 10 : 3;
   static const int DURASI_EVENT = !kDebugMode ? 20 : 5;
   static const int DURASI_ADZAN = 180;
-  static const int DURASI_IQOMAH_SUBUH = !kDebugMode ? 900 : 15;
-  static const int DURASI_IQOMAH_DEFAULT = !kDebugMode ? 600 : 15;
   static const int DURASI_JUMAT = !kDebugMode ? 2700 : 10;
 
   // STATE
@@ -121,7 +119,8 @@ class _MainControllerState extends State<MainController> {
       final parts = time.split(':');
       final prayerTime = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
       
-      int durasiIqomah = (name == "Subuh") ? DURASI_IQOMAH_SUBUH : DURASI_IQOMAH_DEFAULT;
+      int durasiIqomah = PrayerService.getIqomahDuration(name);
+      
       if (name == "Jumat") durasiIqomah = 0; // Jumat langsung ke mode JUMAT_MODE setelah adzan
 
       // 1. CEK RENTANG ADZAN
@@ -212,7 +211,8 @@ class _MainControllerState extends State<MainController> {
             _jumatCounter = DURASI_JUMAT;
           } else {
             _appStatus = "IQOMAH";
-            _iqomahCounter = (_currentPrayerName == "Subuh") ? DURASI_IQOMAH_SUBUH : DURASI_IQOMAH_DEFAULT;
+
+            _iqomahCounter = !kDebugMode ? PrayerService.getIqomahDuration(_currentPrayerName) : 15;
           }
         }
       }

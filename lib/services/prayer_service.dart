@@ -10,6 +10,11 @@ class PrayerService {
   final Dio _dio = Dio();
   final String cityId = "1225"; 
 
+  static const int DURASI_IQOMAH_SUBUH = 900;
+  static const int DURASI_IQOMAH_MAGHRIB_RAMADHAN = 900;
+  static const int DURASI_IQOMAH_DEFAULT = 600;
+  static const int DURASI_IQOMAH_TESTING = 15;
+
   static Map<String, String> calculateCountdown(Map<String, String> jadwal) {
     final now = DateTime.now();
     DateTime? nextTime;
@@ -132,5 +137,18 @@ class PrayerService {
       "masehi": masehi,
       "hijriah": hijriah,
     };
+  }
+
+  static int getIqomahDuration(String prayerName) {
+    final hijri = Hijriyah.now();
+    bool isRamadhan = hijri.hMonth == 9; // 9 = Ramadhan
+
+    if (prayerName == "Subuh") {
+      return DURASI_IQOMAH_SUBUH;
+    } else if (prayerName == "Maghrib" && isRamadhan) {
+      return DURASI_IQOMAH_MAGHRIB_RAMADHAN;
+    } else {
+      return DURASI_IQOMAH_DEFAULT;
+    }
   }
 }

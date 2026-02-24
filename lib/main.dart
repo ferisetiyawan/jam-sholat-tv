@@ -13,6 +13,7 @@ import 'screens/adzan_screen.dart';
 import 'screens/iqomah_screen.dart';
 import 'screens/event_screen.dart';
 import 'screens/jumat_screen.dart';
+import 'screens/live_makkah_screen.dart';
 
 // wrappers
 import 'wrappers/home_wrapper.dart';
@@ -251,7 +252,14 @@ class _MainControllerState extends State<MainController> {
     } else if (_appStatus == "JUMAT_MODE") {
       screen = const JumatScreen();
     } else if (_isEventMode) {
-      screen = EventScreen(key: const ValueKey("event_screen_fixed"), images: _eventImages, currentIndex: _currentEventIndex, currentTime: _timeString);
+      // screen = EventScreen(key: const ValueKey("event_screen_fixed"), images: _eventImages, currentIndex: _currentEventIndex, currentTime: _timeString);
+      screen = LiveMakkahScreen(
+        time: _timeString,
+        dateMasehi: _dateMasehi,
+        dateHijriah: _dateHijriah,
+        jadwal: _jadwal,
+        nextPrayerName: _nextPrayerName, // <--- Kirim state ini
+      );
     } else {
       screen = HomeWrapper(
         time: _timeString,

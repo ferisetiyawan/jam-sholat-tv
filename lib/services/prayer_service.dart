@@ -120,21 +120,6 @@ class PrayerService {
     return null;
   }
 
-  static Map<String, String> getFullDate() {
-    final now = DateTime.now();
-    
-    String masehi = DateFormat('d MMMM yyyy', 'id_ID').format(now);
-    
-    var hijri = Hijriyah.now(); 
-    hijri.hDay -= 1;
-    String hijriah = "${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} H";
-
-    return {
-      "masehi": masehi,
-      "hijriah": hijriah,
-    };
-  }
-
   static int getIqomahDuration(String prayerName) {
     if (AppConstants.isDebug) return AppConstants.iqomahTestingDuration;
 

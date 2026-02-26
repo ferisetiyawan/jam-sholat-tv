@@ -10,6 +10,9 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import 'core/constants/app_constants.dart';
 import 'core/constants/app_enum.dart';
 
+// utils
+import 'core/utils/date_formatter.dart';
+
 // widgets
 import 'widgets/prayer_card.dart';
 
@@ -173,7 +176,8 @@ class _MainControllerState extends State<MainController> {
 
   void _updateDateTime(DateTime now) {
     _timeString = DateFormat('HH:mm').format(now);
-    final dates = PrayerService.getFullDate();
+    
+    final dates = DateFormatter.getFullDate();
     _dateMasehi = dates['masehi']!;
     _dateHijriah = dates['hijriah']!;
     

@@ -23,7 +23,6 @@ class HomeWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // BACKGROUND IMAGE DENGAN FALLBACK
         Positioned.fill(
           child: CachedNetworkImage(
             imageUrl: 'https://i.ibb.co.com/mPvfRZ7/Whats-App-Image-2026-02-19-at-4-29-11-PM.jpg',
@@ -35,11 +34,9 @@ class HomeWrapper extends StatelessWidget {
             ),
           ),
         ),
-
-        // OVERLAY GELAP
+        
         Container(color: Colors.black.withValues(alpha: 0.5)),
 
-        // KONTEN UTAMA
         HomeScreen(
           time: time,
           jadwal: jadwal,

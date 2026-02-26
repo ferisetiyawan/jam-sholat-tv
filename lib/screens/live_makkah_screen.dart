@@ -57,14 +57,14 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
             ),
           ),
 
-          // --- LAYER 2: KONTEN UTAMA (Sidebar & Video) ---
+          // --- LAYER 2: MAIN CONTENT ---
           Column(
             children: [
               Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // --- SIDEBAR KIRI ---
+                    // --- LEFT: TIME, DATE, PRAYER SCHEDULE ---
                     Container(
                       width: MediaQuery.of(context).size.width * 0.33,
                       padding: const EdgeInsets.all(15),
@@ -122,7 +122,7 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                       ),
                     ),
 
-                    // --- KANAN: VIDEO ---
+                    // --- RIGHT: VIDEO ---
                     Expanded(
                       child: Container(
                         margin: const EdgeInsets.fromLTRB(5, 15, 15, 15),
@@ -140,7 +140,7 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                 ),
               ),
 
-              // --- LAYER 3: RUNNING TEXT (Paling Bawah) ---
+              // --- LAYER 3: RUNNING TEXT ---
               Container(
                 height: 40,
                 width: double.infinity,

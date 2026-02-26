@@ -31,8 +31,7 @@ class PrayerService {
         break; 
       }
     }
-
-    // Jika sudah lewat Isya, targetnya adalah Subuh besok
+    
     if (nextTime == null) {
       nextName = "Subuh";
       String? t = jadwal["Subuh"];
@@ -104,7 +103,6 @@ class PrayerService {
       if (foundData != null) {
         PrayerSchedule schedule = PrayerSchedule.fromJson(foundData);
 
-        // Cek apakah hari ini Jumat
         bool isFriday = DateTime.now().weekday == DateTime.friday;
 
         return {

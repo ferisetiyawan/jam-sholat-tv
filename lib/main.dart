@@ -13,6 +13,9 @@ import 'core/constants/app_enum.dart';
 // utils
 import 'core/utils/date_formatter.dart';
 
+// theme
+import 'core/theme/app_theme.dart';
+
 // widgets
 import 'widgets/prayer_card.dart';
 
@@ -45,7 +48,7 @@ class MasjidApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(brightness: Brightness.dark, fontFamily: 'Roboto'),
+      theme: AppTheme.darkTheme,
       home: const MainController(),
     );
   }

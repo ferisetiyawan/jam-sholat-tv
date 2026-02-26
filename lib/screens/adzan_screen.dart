@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AdzanScreen extends StatelessWidget {
-  final String namaSholat;
+  final String prayerName;
 
-  const AdzanScreen({super.key, required this.namaSholat});
+  const AdzanScreen({super.key, required this.prayerName});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class AdzanScreen extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            namaSholat.toUpperCase(),
+            prayerName.toUpperCase(),
             style: const TextStyle(fontSize: 80, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 50),

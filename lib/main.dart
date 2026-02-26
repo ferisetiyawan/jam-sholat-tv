@@ -78,9 +78,9 @@ class MainController extends StatelessWidget {
 
     // Navigate screen based on AppStatus
     final Widget screen = switch (app.status) {
-      AppStatus.adzan => AdzanScreen(namaSholat: app.currentPrayerName),
+      AppStatus.adzan => AdzanScreen(prayerName: app.currentPrayerName),
       AppStatus.iqomah => IqomahScreen(
-          namaSholat: app.currentPrayerName, 
+          prayerName: app.currentPrayerName, 
           countdown: app.iqomahCounter
         ),
       AppStatus.jumatMode => const JumatScreen(),

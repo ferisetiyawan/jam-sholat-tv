@@ -24,7 +24,7 @@ class HomeScreen extends StatelessWidget {
 
     return Stack(
       children: [
-        // --- LAYER 1: KONTEN UTAMA ---
+        // --- LAYER 1: MAIN CONTENT ---
         Column(
           children: [
             // Header
@@ -32,9 +32,9 @@ class HomeScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 25),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start, // Agar rata atas
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- BAGIAN KIRI: JAM & TANGGAL ---
+                  // --- LEFT: TIME, DATE, PRAYER SCHEDULE ---
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -44,7 +44,7 @@ class HomeScreen extends StatelessWidget {
                           fontSize: 110,
                           fontWeight: FontWeight.w900, 
                           letterSpacing: -5,
-                          height: 1.0, // Mengurangi spasi bawah bawaan font
+                          height: 1.0,
                         )
                       ),
                       const SizedBox(height: 8),
@@ -67,7 +67,7 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                   
-                  // --- BAGIAN KANAN: NAMA MASJID ---
+                  // --- RIGHT: MASJID NAME ---
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: const [
@@ -79,7 +79,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            // Grid Jadwal
+            // Prayer Schedule Cards
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: ClipRRect(
@@ -111,7 +111,7 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
 
-        // --- LAYER 2: OVERLAY PERINGATAN (Hanya muncul jika jam salah) ---
+        // --- LAYER 2: OVERLAY WARNING (If Time Not Valid) ---
         if (!isTimeValid)
           Container(
             width: double.infinity,

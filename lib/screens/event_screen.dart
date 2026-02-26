@@ -45,7 +45,6 @@ class _EventScreenState extends State<EventScreen> {
     super.dispose();
   }
 
-  /// Fungsi "Sakti" untuk merender segala jenis gambar (Local/Network & SVG/Bitmap)
   Widget _buildSmartImage(String path) {
     final bool isNetwork = path.startsWith('http');
     final bool isSvg = path.toLowerCase().endsWith('.svg');
@@ -66,7 +65,6 @@ class _EventScreenState extends State<EventScreen> {
         );
       }
     } else {
-      // Logic untuk Local Asset
       if (isSvg) {
         return SvgPicture.asset(path, fit: BoxFit.cover);
       } else {

@@ -21,7 +21,7 @@ class PrayerSchedule {
     return PrayerSchedule(
       tanggal: json['tanggal'] ?? "",
       subuh: json['subuh'] ?? "--:--",
-      syuruq: json['terbit'] ?? "--:--", // MyQuran pakai 'terbit' untuk syuruq
+      syuruq: json['terbit'] ?? "--:--",
       dzuhur: json['dzuhur'] ?? "--:--",
       ashar: json['ashar'] ?? "--:--",
       maghrib: json['maghrib'] ?? "--:--",

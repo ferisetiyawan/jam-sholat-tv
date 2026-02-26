@@ -23,6 +23,7 @@ dependencies:
   hijriyah_indonesia: ^0.1.7
   flutter_svg: ^2.2.3
   youtube_player_flutter: ^9.1.3
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_test:

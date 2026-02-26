@@ -17,7 +17,6 @@ class JumatScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Simbol HP Silent Custom
                 Stack(
                   alignment: Alignment.bottomRight,
                   children: [
@@ -42,7 +41,6 @@ class JumatScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 40),
                 
-                // Teks Judul Utama
                 const Text(
                   "WAKTUNYA SHOLAT JUMAT",
                   textAlign: TextAlign.center,
@@ -54,8 +52,7 @@ class JumatScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 25),
-
-                // Kotak Peringatan Adab Khutbah
+                
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 25),
                   decoration: BoxDecoration(

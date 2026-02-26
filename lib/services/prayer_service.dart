@@ -6,14 +6,10 @@ import '../models/prayer_model.dart';
 
 import 'package:hijriyah_indonesia/hijriyah_indonesia.dart';
 
+import '../core/constants/app_constants.dart';
+
 class PrayerService {
   final Dio _dio = Dio();
-  final String cityId = "1225"; 
-
-  static const int DURASI_IQOMAH_SUBUH = 900;
-  static const int DURASI_IQOMAH_MAGHRIB_RAMADHAN = 900;
-  static const int DURASI_IQOMAH_DEFAULT = 600;
-  static const int DURASI_IQOMAH_TESTING = 15;
 
   static Map<String, String> calculateCountdown(Map<String, String> jadwal) {
     final now = DateTime.now();
@@ -35,8 +31,7 @@ class PrayerService {
         break; 
       }
     }
-
-    // Jika sudah lewat Isya, targetnya adalah Subuh besok
+    
     if (nextTime == null) {
       nextName = "Subuh";
       String? t = jadwal["Subuh"];
@@ -73,7 +68,7 @@ class PrayerService {
         String month = targetDate.month.toString().padLeft(2, '0');
 
         final response = await _dio.get(
-          'https://api.myquran.com/v2/sholat/jadwal/$cityId/$year/$month'
+          'https://api.myquran.com/v2/sholat/jadwal/${AppConstants.cityId}/$year/$month'
         );
 
         if (response.statusCode == 200) {
@@ -108,7 +103,6 @@ class PrayerService {
       if (foundData != null) {
         PrayerSchedule schedule = PrayerSchedule.fromJson(foundData);
 
-        // Cek apakah hari ini Jumat
         bool isFriday = DateTime.now().weekday == DateTime.friday;
 
         return {
@@ -124,31 +118,18 @@ class PrayerService {
     return null;
   }
 
-  static Map<String, String> getFullDate() {
-    final now = DateTime.now();
-    
-    String masehi = DateFormat('d MMMM yyyy', 'id_ID').format(now);
-    
-    var hijri = Hijriyah.now(); 
-    hijri.hDay -= 1;
-    String hijriah = "${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} H";
-
-    return {
-      "masehi": masehi,
-      "hijriah": hijriah,
-    };
-  }
-
   static int getIqomahDuration(String prayerName) {
+    if (AppConstants.isDebug) return AppConstants.iqomahTestingDuration;
+
     final hijri = Hijriyah.now();
-    bool isRamadhan = hijri.hMonth == 9; // 9 = Ramadhan
+    bool isRamadhan = hijri.hMonth == AppConstants.monthOfRamadhan;
 
     if (prayerName == "Subuh") {
-      return DURASI_IQOMAH_SUBUH;
+      return AppConstants.iqomahSubuhDuration;
     } else if (prayerName == "Maghrib" && isRamadhan) {
-      return DURASI_IQOMAH_MAGHRIB_RAMADHAN;
+      return AppConstants.iqomahMaghribRamadhanDuration;
     } else {
-      return DURASI_IQOMAH_DEFAULT;
+      return AppConstants.iqomahDefaultDuration;
     }
   }
 }

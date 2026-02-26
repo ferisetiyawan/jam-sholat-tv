@@ -2,12 +2,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class IqomahScreen extends StatelessWidget {
-  final String namaSholat;
+  final String prayerName;
   final int countdown;
 
   const IqomahScreen({
     super.key, 
-    required this.namaSholat, 
+    required this.prayerName, 
     required this.countdown
   });
 
@@ -40,7 +40,7 @@ class IqomahScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 35, fontWeight: FontWeight.w300, letterSpacing: 8)
                 ),
                 Text(
-                  namaSholat.toUpperCase(), 
+                  prayerName.toUpperCase(), 
                   style: const TextStyle(fontSize: 25, color: Colors.white70)
                 ),
                 

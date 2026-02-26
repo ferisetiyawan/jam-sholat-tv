@@ -5,10 +5,19 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:audioplayers/audioplayers.dart';
+
+// constants & enums
+import 'core/constants/app_constants.dart';
+import 'core/constants/app_enum.dart';
+
+// widgets
+import 'widgets/prayer_card.dart';
+
+// services
+import 'services/prayer_service.dart';
+import 'services/audio_service.dart';
 
 // screens
-import 'services/prayer_service.dart';
 import 'screens/adzan_screen.dart';
 import 'screens/iqomah_screen.dart';
 import 'screens/event_screen.dart';
@@ -70,9 +79,6 @@ class _MainControllerState extends State<MainController> {
 
   String _dateMasehi = "";
   String _dateHijriah = "";
-
-  // Sound Beep Player
-  final AudioPlayer _audioPlayer = AudioPlayer();
   
   Map<String, String> _jadwal = {"Subuh": "--:--", "Syuruq": "--:--", "Dzuhur": "--:--", "Ashar": "--:--", "Maghrib": "--:--", "Isya": "--:--"};
   
@@ -155,10 +161,6 @@ class _MainControllerState extends State<MainController> {
     });
   }
 
-  void _playSound(String fileName) async {
-    await _audioPlayer.play(AssetSource('sounds/$fileName'));
-  }
-
   void _onTick() {
     // Jika _fakeTime ada, gunakan itu dan tambahkan 1 detik setiap tick
     if (_fakeTime != null) {
@@ -197,7 +199,7 @@ class _MainControllerState extends State<MainController> {
               _appStatus = "ADZAN";
               _currentPrayerName = name;
               _adzanCounter = (_fakeTime == null) ? DURASI_ADZAN : 5;
-              _playSound('beep_adzan.wav');
+              AudioService.playAdzanBeep();
             }
           }
         });
@@ -223,13 +225,13 @@ class _MainControllerState extends State<MainController> {
         _iqomahCounter--;
 
         if (_iqomahCounter <= 10 && _iqomahCounter > 0) {
-          _playSound('beep_iqomah.wav');
+          AudioService.playIqomahBeep();
         }
 
         if (_iqomahCounter <= 0) {
           _appStatus = "HOME";
 
-          _playSound('beep_adzan.wav');
+          AudioService.playAdzanBeep();
         }
       }
 
@@ -298,47 +300,11 @@ class _MainControllerState extends State<MainController> {
   }
 
   Widget _buildPrayerItem(String label, String time) {
-    bool isNext = (label == _nextPrayerName);
-
-    return Expanded(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 500),
-        decoration: BoxDecoration(
-          color: isNext ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              label, 
-              style: TextStyle(
-                fontSize: 18, 
-                fontWeight: FontWeight.bold,
-                color: isNext ? Colors.white : const Color.fromARGB(150, 0, 0, 0), // Putih jika next, hitam jika tidak
-              )
-            ),
-            Text(
-              time, 
-              style: TextStyle(
-                fontSize: 40, 
-                fontWeight: FontWeight.w900,
-                color: isNext ? Colors.white : const Color.fromARGB(150, 0, 0, 0), // Putih jika next, hitam jika tidak
-              )
-            ),
-            if (isNext)
-              Text(
-                "-$_countdownString",
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontFeatures: [FontFeature.tabularFigures()],
-                ),
-              ),
-          ],
-        ),
-      ),
+    return PrayerCard(
+      label: label,
+      time: time,
+      isNext: (label == _nextPrayerName),
+      countdown: _countdownString,
     );
   }
 }

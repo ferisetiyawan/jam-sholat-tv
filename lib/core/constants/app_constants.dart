@@ -15,8 +15,12 @@ class AppConstants {
   static const int iqomahDefaultDuration = 600; // 10 minutes
   static const int iqomahTestingDuration = 15;
   static const int monthOfRamadhan = 9; // 9 = Ramadhan in Hijri Calendar
+
+  // --- audio_service.dart ---
+  static const String adzanBeepAssetPath = 'sounds/beep_adzan.wav';
+  static const String iqomahBeepAssetPath = 'sounds/beep_iqomah.wav';
   
-  // ID Kota untuk API
+  // City ID form Adzan API, can be used to fetch prayer times for specific location
   static const String cityId = "1225"; 
 
   // --- ASSETS ---

@@ -222,7 +222,7 @@ class _MainControllerState extends State<MainController> {
         }
       }
     }
-    
+
     if (_appStatus == AppStatus.iqomah) {
       _iqomahCounter--;
 
@@ -247,56 +247,51 @@ class _MainControllerState extends State<MainController> {
 
   @override
   Widget build(BuildContext context) {
-    Widget screen;
-    if (_appStatus == AppStatus.adzan) {
-      screen = AdzanScreen(namaSholat: _currentPrayerName);
-    } else if (_appStatus == AppStatus.iqomah) {
-      screen = IqomahScreen(namaSholat: _currentPrayerName, countdown: _iqomahCounter);
-    } else if (_appStatus == AppStatus.jumatMode) {
-      screen = const JumatScreen();
-    } else if (_isEventMode) {
-      // screen = EventScreen(key: const ValueKey("event_screen_fixed"), images: _eventImages, currentIndex: _currentEventIndex, currentTime: _timeString);
-      screen = LiveMakkahScreen(
-        time: _timeString,
-        dateMasehi: _dateMasehi,
-        dateHijriah: _dateHijriah,
-        jadwal: _jadwal,
-        nextPrayerName: _nextPrayerName, // <--- Kirim state ini
-      );
-    } else {
-      screen = HomeWrapper(
-        time: _timeString,
-        dateMasehi: _dateMasehi, // Ambil dari variabel state di main.dart
-        dateHijriah: _dateHijriah,
-        jadwal: _jadwal,
-        prayerItemBuilder: _buildPrayerItem,
-      );
-    }
+    final Widget screen = switch (_appStatus) {
+      AppStatus.adzan => AdzanScreen(namaSholat: _currentPrayerName),
+      AppStatus.iqomah => IqomahScreen(namaSholat: _currentPrayerName, countdown: _iqomahCounter),
+      AppStatus.jumatMode => const JumatScreen(),
+      AppStatus.home when _isEventMode => EventScreen(
+        key: const ValueKey("event_screen_fixed"),
+        images: _eventImages,
+        currentIndex: _currentEventIndex,
+        currentTime: _timeString
+        ),
+      _ => HomeWrapper(
+          time: _timeString,
+          dateMasehi: _dateMasehi,
+          dateHijriah: _dateHijriah,
+          jadwal: _jadwal,
+          prayerItemBuilder: _buildPrayerItem,
+        ),
+    };
 
     return Scaffold(
-      body: AnimatedSwitcher(duration: const Duration(milliseconds: 800), child: screen),
-      
-      floatingActionButton: kDebugMode ? FloatingActionButton(
-        backgroundColor: Colors.red.withValues(alpha: 0.5),
-        onPressed: () {
-          String maghrib = _jadwal["Maghrib"] ?? "18:00";
-          List<String> p = maghrib.split(':');
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 800),
+        child: screen,
+      ),
+      floatingActionButton: _buildDebugFab(),
+    );
+  }
 
-          setState(() {
-            _fakeTime = DateTime(
-              DateTime.now().year, 
-              DateTime.now().month, 
-              DateTime.now().day, 
-              int.parse(p[0]), 
-              int.parse(p[1]) - 1, // 1 menit sebelum
-              55 // detik ke 55
-            );
-            
-            _appStatus = AppStatus.home;
-          });
-        },
-        child: const Icon(Icons.fast_forward),
-      ) : null,
+  Widget? _buildDebugFab() {
+    if (!kDebugMode) return null;
+  
+    return FloatingActionButton(
+      backgroundColor: Colors.red.withValues(alpha: 0.5),
+      onPressed: () {
+        final maghrib = _jadwal["Maghrib"] ?? "18:00";
+        final p = maghrib.split(':');
+        setState(() {
+          _fakeTime = DateTime(
+            DateTime.now().year, DateTime.now().month, DateTime.now().day, 
+            int.parse(p[0]), int.parse(p[1]) - 1, 55
+          );
+          _appStatus = AppStatus.home;
+        });
+      },
+      child: const Icon(Icons.fast_forward),
     );
   }
 

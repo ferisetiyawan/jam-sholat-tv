@@ -4,10 +4,10 @@ class AppConstants {
   static const bool isDebug = kDebugMode;
 
   // --- main.dart ---
-  static const int homeDuration = 10;
-  static const int eventDuration = 20;
+  static const int homeDuration = isDebug ? 3 : 10;
+  static const int eventDuration = isDebug ? 5 : 20;
   static const int adzanDuration = 180;
-  static const int jumatDuration = 2700;
+  static const int jumatDuration = isDebug ? 10 : 2700;
 
   // --- prayer_service.dart ---
   static const int iqomahSubuhDuration = 900; // 15 minutes

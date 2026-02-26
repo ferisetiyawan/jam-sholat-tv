@@ -55,15 +55,11 @@ class MainController extends StatefulWidget {
 }
 
 class _MainControllerState extends State<MainController> {
-  // KONFIGURASI SIKLUS (Detik)
-  static const int DURASI_HOME = !kDebugMode ? 10 : 3;
-  static const int DURASI_EVENT = !kDebugMode ? 20 : 5;
-  static const int DURASI_ADZAN = 180;
-  static const int DURASI_JUMAT = !kDebugMode ? 2700 : 10;
-
   // STATE
   String _timeString = "";
-  String _appStatus = "HOME"; // HOME, ADZAN, IQOMAH
+  
+  AppStatus _appStatus = AppStatus.home;
+
   String _currentPrayerName = "";
   int _jumatCounter = 0;
   int _iqomahCounter = 0;
@@ -113,7 +109,7 @@ class _MainControllerState extends State<MainController> {
     if (fresh != null) {
       setState(() => _jadwal = fresh);
       // Cek ulang jika ada perubahan jadwal dari API
-      if (_appStatus == "HOME") _checkInitialStatus(fresh); 
+      if (_appStatus == AppStatus.home) _checkInitialStatus(fresh); 
     }
   }
 
@@ -131,11 +127,11 @@ class _MainControllerState extends State<MainController> {
       if (name == "Jumat") durasiIqomah = 0; // Jumat langsung ke mode JUMAT_MODE setelah adzan
 
       // 1. CEK RENTANG ADZAN
-      final endAdzanTime = prayerTime.add(Duration(seconds: DURASI_ADZAN));
+      final endAdzanTime = prayerTime.add(Duration(seconds: AppConstants.adzanDuration));
       if (now.isAfter(prayerTime) && now.isBefore(endAdzanTime)) {
         int remainingAdzan = endAdzanTime.difference(now).inSeconds;
         setState(() {
-          _appStatus = "ADZAN";
+          _appStatus = AppStatus.adzan;
           _currentPrayerName = name;
           _adzanCounter = remainingAdzan;
         });
@@ -143,15 +139,15 @@ class _MainControllerState extends State<MainController> {
       }
 
       // 2. CEK RENTANG IQOMAH / JUMAT MODE
-      final endIqomahTime = endAdzanTime.add(Duration(seconds: (name == "Jumat") ? DURASI_JUMAT : durasiIqomah));
+      final endIqomahTime = endAdzanTime.add(Duration(seconds: (name == "Jumat") ? AppConstants.jumatDuration : durasiIqomah));
       if (now.isAfter(endAdzanTime) && now.isBefore(endIqomahTime)) {
         int remainingContent = endIqomahTime.difference(now).inSeconds;
         setState(() {
           if (name == "Jumat") {
-            _appStatus = "JUMAT_MODE";
+            _appStatus = AppStatus.jumatMode;
             _jumatCounter = remainingContent;
           } else {
-            _appStatus = "IQOMAH";
+            _appStatus = AppStatus.iqomah;
             _currentPrayerName = name;
             _iqomahCounter = remainingContent;
           }
@@ -166,92 +162,97 @@ class _MainControllerState extends State<MainController> {
     if (_fakeTime != null) {
       _fakeTime = _fakeTime!.add(const Duration(seconds: 1));
     }
-    
     final now = _fakeTime ?? DateTime.now();
 
     setState(() {
-      _timeString = DateFormat('HH:mm').format(now);
+      _updateDateTime(now);
+      _handleCycleLogic(now);
+      _handlePrayerStatusLogic();
+    });
+  }
 
-      final dates = PrayerService.getFullDate();
-      _dateMasehi = dates['masehi']!;
-      _dateHijriah = dates['hijriah']!;
+  void _updateDateTime(DateTime now) {
+    _timeString = DateFormat('HH:mm').format(now);
+    final dates = PrayerService.getFullDate();
+    _dateMasehi = dates['masehi']!;
+    _dateHijriah = dates['hijriah']!;
+    
+    final result = PrayerService.calculateCountdown(_jadwal);
+    _nextPrayerName = result["nextName"]!;
+    _countdownString = result["countdown"]!;
+  }
 
-      final result = PrayerService.calculateCountdown(_jadwal);
-      _nextPrayerName = result["nextName"]!;
-      _countdownString = result["countdown"]!;
-      
-      // KONTROL SIKLUS HOME/EVENT (hanya jika sedang status HOME)
-      if (_appStatus == "HOME") {
-        int totalCycle = DURASI_HOME + DURASI_EVENT;
-        int currentSec = _timer!.tick % totalCycle;
-        if (currentSec < DURASI_HOME) {
-          _isEventMode = false;
-        } else {
-          if (!_isEventMode) _currentEventIndex = (_currentEventIndex + 1) % _eventImages.length;
-          _isEventMode = true;
-        }
+  void _handleCycleLogic(DateTime now) {
+    if (_appStatus != AppStatus.home) return;
 
-        // CEK WAKTU ADZAN
-        _jadwal.forEach((name, time) {
-          // Pastikan format string sama persis (contoh: "18:15" == "18:15")
-          if (name != "Syuruq" && _timeString == time && now.second == 0) {
-            if (_appStatus == "HOME") {
-              _appStatus = "ADZAN";
-              _currentPrayerName = name;
-              _adzanCounter = (_fakeTime == null) ? DURASI_ADZAN : 5;
-              AudioService.playAdzanBeep();
-            }
-          }
-        });
-      }
+    int totalCycle = AppConstants.homeDuration + AppConstants.eventDuration;
+    int currentSec = _timer!.tick % totalCycle;
+    if (currentSec < AppConstants.homeDuration) {
+      _isEventMode = false;
+    } else {
+      if (!_isEventMode) _currentEventIndex = (_currentEventIndex + 1) % _eventImages.length;
+      _isEventMode = true;
+    }
 
-      // KONTROL ADZAN -> IQOMAH
-      if (_appStatus == "ADZAN") {
-        _adzanCounter--;
-        if (_adzanCounter <= 0) {
-          if (_currentPrayerName == "Jumat") {
-            _appStatus = "JUMAT_MODE";
-            _jumatCounter = DURASI_JUMAT;
-          } else {
-            _appStatus = "IQOMAH";
-
-            _iqomahCounter = !kDebugMode ? PrayerService.getIqomahDuration(_currentPrayerName) : 15;
-          }
-        }
-      }
-
-      // KONTROL IQOMAH -> HOME
-      if (_appStatus == "IQOMAH") {
-        _iqomahCounter--;
-
-        if (_iqomahCounter <= 10 && _iqomahCounter > 0) {
-          AudioService.playIqomahBeep();
-        }
-
-        if (_iqomahCounter <= 0) {
-          _appStatus = "HOME";
-
+    // CEK WAKTU ADZAN
+    _jadwal.forEach((name, time) {
+      // Pastikan format string sama persis (contoh: "18:15" == "18:15")
+      if (name != "Syuruq" && _timeString == time && now.second == 0) {
+        if (_appStatus == AppStatus.home) {
+          _appStatus = AppStatus.adzan;
+          _currentPrayerName = name;
+          _adzanCounter = (_fakeTime == null) ? AppConstants.adzanDuration : 5;
           AudioService.playAdzanBeep();
-        }
-      }
-
-      if (_appStatus == "JUMAT_MODE") {
-        _jumatCounter--;
-        if (_jumatCounter <= 0) {
-          _appStatus = "HOME";
         }
       }
     });
   }
 
+  void _handlePrayerStatusLogic(){
+    if (_appStatus == AppStatus.adzan) {
+      _adzanCounter--;
+      if (_adzanCounter <= 0) {
+        if (_currentPrayerName == "Jumat") {
+          _appStatus = AppStatus.jumatMode;
+          _jumatCounter = AppConstants.jumatDuration;
+        } else {
+          _appStatus = AppStatus.iqomah;
+
+          _iqomahCounter = !kDebugMode ? PrayerService.getIqomahDuration(_currentPrayerName) : 15;
+        }
+      }
+    }
+    
+    if (_appStatus == AppStatus.iqomah) {
+      _iqomahCounter--;
+
+      if (_iqomahCounter <= 10 && _iqomahCounter > 0) {
+        AudioService.playIqomahBeep();
+      }
+
+      if (_iqomahCounter <= 0) {
+        _appStatus = AppStatus.home;
+
+        AudioService.playAdzanBeep();
+      }
+    }
+
+    if (_appStatus == AppStatus.jumatMode) {
+      _jumatCounter--;
+      if (_jumatCounter <= 0) {
+        _appStatus = AppStatus.home;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget screen;
-    if (_appStatus == "ADZAN") {
+    if (_appStatus == AppStatus.adzan) {
       screen = AdzanScreen(namaSholat: _currentPrayerName);
-    } else if (_appStatus == "IQOMAH") {
+    } else if (_appStatus == AppStatus.iqomah) {
       screen = IqomahScreen(namaSholat: _currentPrayerName, countdown: _iqomahCounter);
-    } else if (_appStatus == "JUMAT_MODE") {
+    } else if (_appStatus == AppStatus.jumatMode) {
       screen = const JumatScreen();
     } else if (_isEventMode) {
       // screen = EventScreen(key: const ValueKey("event_screen_fixed"), images: _eventImages, currentIndex: _currentEventIndex, currentTime: _timeString);
@@ -291,7 +292,7 @@ class _MainControllerState extends State<MainController> {
               55 // detik ke 55
             );
             
-            _appStatus = "HOME";
+            _appStatus = AppStatus.home;
           });
         },
         child: const Icon(Icons.fast_forward),

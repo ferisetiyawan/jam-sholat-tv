@@ -24,14 +24,9 @@ class HomeWrapper extends StatelessWidget {
     return Stack(
       children: [
         Positioned.fill(
-          child: CachedNetworkImage(
-            imageUrl: 'https://i.ibb.co.com/mPvfRZ7/Whats-App-Image-2026-02-19-at-4-29-11-PM.jpg',
+          child: Image.asset(
+            'assets/images/background_masjid.jpeg',
             fit: BoxFit.cover,
-            placeholder: (context, url) => Container(color: Colors.black),
-            errorWidget: (context, url, error) => Image.asset(
-              'assets/background_masjid.jpeg',
-              fit: BoxFit.cover,
-            ),
           ),
         ),
         

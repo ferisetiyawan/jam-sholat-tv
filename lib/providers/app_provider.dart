@@ -24,6 +24,8 @@ class AppProvider extends ChangeNotifier {
   String countdownString = "";
   String dateMasehi = "";
   String dateHijriah = "";
+
+  bool isSpecialLiveMode = false;
   
   Map<String, String> jadwal = {
     "Subuh": "--:--", "Syuruq": "--:--", "Dzuhur": "--:--", 
@@ -72,6 +74,7 @@ class AppProvider extends ChangeNotifier {
     _updateDateTime(now);
     _handleCycleLogic(now);
     _handlePrayerStatusLogic();
+    _checkSpecialLiveConditions(now);
 
     notifyListeners();
   }
@@ -184,5 +187,26 @@ class AppProvider extends ChangeNotifier {
         }
       }
     });
+  }
+
+  void _checkSpecialLiveConditions(DateTime now) {
+    final bool isNearMaghrib = _isMinutesBeforePrayer("Maghrib", AppConstants.minutesBeforeMaghrib, now);
+    
+    final bool isFriday = now.weekday == DateTime.friday;
+    final bool isNearJumat = isFriday && _isMinutesBeforePrayer("Jumat", AppConstants.minutesBeforeJumat, now);
+
+    isSpecialLiveMode = isNearMaghrib || isNearJumat;
+  }
+
+  bool _isMinutesBeforePrayer(String prayerName, int minutes, DateTime now) {
+    final String? timeString = jadwal[prayerName];
+    if (timeString == null || timeString == "--:--") return false;
+
+    final parts = timeString.split(':');
+    final prayerTime = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+    
+    final difference = prayerTime.difference(now).inMinutes;
+
+    return difference >= 0 && difference < minutes;
   }
 }

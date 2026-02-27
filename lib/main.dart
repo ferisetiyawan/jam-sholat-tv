@@ -84,6 +84,13 @@ class MainController extends StatelessWidget {
           countdown: app.iqomahCounter
         ),
       AppStatus.jumatMode => const JumatScreen(),
+      AppStatus.home when app.isSpecialLiveMode => LiveMakkahScreen(
+          time: app.timeString,
+          dateMasehi: app.dateMasehi,
+          dateHijriah: app.dateHijriah,
+          jadwal: app.jadwal,
+          nextPrayerName: app.nextPrayerName,
+        ),
       AppStatus.home when app.isEventMode => EventScreen(
           images: AppConstants.eventImages,
           currentIndex: app.currentEventIndex,

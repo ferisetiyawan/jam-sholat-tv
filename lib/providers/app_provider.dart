@@ -208,9 +208,9 @@ class AppProvider extends ChangeNotifier {
 
     final parts = timeString.split(':');
     final prayerTime = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
-    
-    final difference = prayerTime.difference(now).inMinutes;
 
-    return difference >= 0 && difference < minutes;
+    final difference = prayerTime.difference(now).inSeconds;
+    
+    return difference >= 0 && difference <= (minutes * 60);
   }
 }

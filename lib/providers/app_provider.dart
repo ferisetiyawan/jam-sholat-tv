@@ -199,7 +199,11 @@ class AppProvider extends ChangeNotifier {
   }
 
   bool _isMinutesBeforePrayer(String prayerName, int minutes, DateTime now) {
-    final String? timeString = jadwal[prayerName];
+    String key = prayerName;
+    if (prayerName == "Jumat" && !jadwal.containsKey("Jumat")) key = "Dzuhur";
+    if (prayerName == "Dzuhur" && jadwal.containsKey("Jumat")) key = "Jumat";
+
+    final String? timeString = jadwal[key];
     if (timeString == null || timeString == "--:--") return false;
 
     final parts = timeString.split(':');

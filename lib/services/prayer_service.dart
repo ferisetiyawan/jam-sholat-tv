@@ -17,6 +17,9 @@ class PrayerService {
     String nextName = "";
 
     List<String> order = ["Subuh", "Syuruq", "Dzuhur", "Ashar", "Maghrib", "Isya"];
+    if (jadwal.containsKey("Jumat")) {
+      order = ["Subuh", "Syuruq", "Jumat", "Ashar", "Maghrib", "Isya"];
+    }
 
     for (String name in order) {
       String? t = jadwal[name];

@@ -23,7 +23,6 @@ class AppProvider extends ChangeNotifier {
   String countdownString = "";
   String dateMasehi = "";
   String dateHijriah = "";
-
   bool isSpecialLiveMode = false;
 
   Map<String, String> jadwal = {
@@ -35,13 +34,12 @@ class AppProvider extends ChangeNotifier {
     "Isya": "--:--",
   };
 
-  // Fake Time for Testing Purposes
   DateTime? _fakeTime;
   Timer? _timer;
   final PrayerService _prayerService = PrayerService();
 
   void init() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (t) => _onTick());
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
     loadInitialData();
   }
 
@@ -74,7 +72,7 @@ class AppProvider extends ChangeNotifier {
     }
     final now = _fakeTime ?? DateTime.now();
 
-    _updateDateTime(now);
+    _updateDateTimeStrings(now);
     _handleCycleLogic(now);
     _handlePrayerStatusLogic();
     _checkSpecialLiveConditions(now);
@@ -82,7 +80,7 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _updateDateTime(DateTime now) {
+  void _updateDateTimeStrings(DateTime now) {
     timeString = DateFormat('HH:mm').format(now);
     final dates = DateFormatter.getFullDate();
     dateMasehi = dates['masehi']!;
@@ -99,117 +97,71 @@ class AppProvider extends ChangeNotifier {
     int totalCycle = AppConstants.homeDuration + AppConstants.eventDuration;
     int currentSec = _timer!.tick % totalCycle;
 
-    if (currentSec < AppConstants.homeDuration) {
-      isEventMode = false;
-    } else {
-      if (!isEventMode) {
-        currentEventIndex =
-            (currentEventIndex + 1) % AppConstants.eventImages.length;
-      }
-      isEventMode = true;
+    bool oldEventMode = isEventMode;
+    isEventMode = currentSec >= AppConstants.homeDuration;
+
+    if (isEventMode && !oldEventMode) {
+      currentEventIndex =
+          (currentEventIndex + 1) % AppConstants.eventImages.length;
     }
 
-    jadwal.forEach((name, time) {
-      if (name != "Syuruq" && timeString == time && now.second == 0) {
-        status = AppStatus.adzan;
-        currentPrayerName = name;
-        adzanCounter = (_fakeTime == null) ? AppConstants.adzanDuration : 5;
-        AudioService.playAdzanBeep();
+    for (var entry in jadwal.entries) {
+      if (entry.key != "Syuruq" &&
+          entry.value == timeString &&
+          now.second == 0) {
+        _startAdzan(entry.key);
+        break;
       }
-    });
+    }
+  }
+
+  void _startAdzan(String prayerName) {
+    status = AppStatus.adzan;
+    currentPrayerName = prayerName;
+    adzanCounter = (_fakeTime == null) ? AppConstants.adzanDuration : 5;
+    AudioService.playAdzanBeep();
   }
 
   void _handlePrayerStatusLogic() {
-    if (status == AppStatus.adzan) {
-      adzanCounter--;
-      if (adzanCounter <= 0) {
-        if (currentPrayerName == "Jumat") {
-          status = AppStatus.jumatMode;
-          jumatCounter = AppConstants.jumatDuration;
-        } else {
-          status = AppStatus.iqomah;
-          iqomahCounter = !kDebugMode
-              ? PrayerService.getIqomahDuration(currentPrayerName)
-              : 15;
+    switch (status) {
+      case AppStatus.adzan:
+        adzanCounter--;
+        if (adzanCounter <= 0) _handleAdzanTransition();
+        break;
+
+      case AppStatus.iqomah:
+        iqomahCounter--;
+        if (iqomahCounter <= 10 && iqomahCounter > 0) {
+          AudioService.playIqomahBeep();
         }
-      }
-    }
+        if (iqomahCounter <= 0) _finishPrayerCycle();
+        break;
 
-    if (status == AppStatus.iqomah) {
-      iqomahCounter--;
-      if (iqomahCounter <= 10 && iqomahCounter > 0)
-        AudioService.playIqomahBeep();
-      if (iqomahCounter <= 0) {
-        status = AppStatus.home;
-        AudioService.playAdzanBeep();
-      }
-    }
+      case AppStatus.jumatMode:
+        jumatCounter--;
+        if (jumatCounter <= 0) status = AppStatus.home;
+        break;
 
-    if (status == AppStatus.jumatMode) {
-      jumatCounter--;
-      if (jumatCounter <= 0) status = AppStatus.home;
+      default:
+        break;
     }
   }
 
-  // Helper method to enable fake time for testing
-  void enableFakeTime() {
-    final maghrib = jadwal["Maghrib"] ?? "18:00";
-    final p = maghrib.split(':');
-    _fakeTime = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-      int.parse(p[0]),
-      int.parse(p[1]) - 1,
-      55,
-    );
+  void _handleAdzanTransition() {
+    if (currentPrayerName == "Jumat") {
+      status = AppStatus.jumatMode;
+      jumatCounter = AppConstants.jumatDuration;
+    } else {
+      status = AppStatus.iqomah;
+      iqomahCounter = !kDebugMode
+          ? PrayerService.getIqomahDuration(currentPrayerName)
+          : AppConstants.iqomahTestingDuration;
+    }
+  }
+
+  void _finishPrayerCycle() {
     status = AppStatus.home;
-    notifyListeners();
-  }
-
-  void checkInitialStatus(Map<String, String> currentJadwal) {
-    final now = DateTime.now();
-    currentJadwal.forEach((name, time) {
-      if (name == "Syuruq") return;
-
-      final parts = time.split(':');
-      final prayerTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        int.parse(parts[0]),
-        int.parse(parts[1]),
-      );
-
-      int durasiIqomah = (name == "Jumat")
-          ? 0
-          : PrayerService.getIqomahDuration(name);
-
-      final endAdzanTime = prayerTime.add(
-        Duration(seconds: AppConstants.adzanDuration),
-      );
-      if (now.isAfter(prayerTime) && now.isBefore(endAdzanTime)) {
-        status = AppStatus.adzan;
-        currentPrayerName = name;
-        adzanCounter = endAdzanTime.difference(now).inSeconds;
-        return;
-      }
-
-      final durasiIsi = (name == "Jumat")
-          ? AppConstants.jumatDuration
-          : durasiIqomah;
-      final endIqomahTime = endAdzanTime.add(Duration(seconds: durasiIsi));
-      if (now.isAfter(endAdzanTime) && now.isBefore(endIqomahTime)) {
-        if (name == "Jumat") {
-          status = AppStatus.jumatMode;
-          jumatCounter = endIqomahTime.difference(now).inSeconds;
-        } else {
-          status = AppStatus.iqomah;
-          currentPrayerName = name;
-          iqomahCounter = endIqomahTime.difference(now).inSeconds;
-        }
-      }
-    });
+    AudioService.playAdzanBeep();
   }
 
   void _checkSpecialLiveConditions(DateTime now) {
@@ -218,7 +170,6 @@ class AppProvider extends ChangeNotifier {
       AppConstants.minutesBeforeMaghrib,
       now,
     );
-
     final bool isFriday = now.weekday == DateTime.friday;
     final bool isNearJumat =
         isFriday &&
@@ -232,20 +183,78 @@ class AppProvider extends ChangeNotifier {
     if (prayerName == "Jumat" && !jadwal.containsKey("Jumat")) key = "Dzuhur";
     if (prayerName == "Dzuhur" && jadwal.containsKey("Jumat")) key = "Jumat";
 
-    final String? timeString = jadwal[key];
-    if (timeString == null || timeString == "--:--") return false;
+    final String? tStr = jadwal[key];
+    if (tStr == null || tStr == "--:--") return false;
 
-    final parts = timeString.split(':');
-    final prayerTime = DateTime(
+    final parts = tStr.split(':');
+    final pTime = DateTime(
       now.year,
       now.month,
       now.day,
       int.parse(parts[0]),
       int.parse(parts[1]),
     );
+    final diff = pTime.difference(now).inSeconds;
 
-    final difference = prayerTime.difference(now).inSeconds;
+    return diff >= 0 && diff <= (minutes * 60);
+  }
 
-    return difference >= 0 && difference <= (minutes * 60);
+  void enableFakeTime() {
+    final now = DateTime.now();
+    final maghrib = jadwal["Maghrib"] ?? "18:00";
+    final p = maghrib.split(':');
+    _fakeTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      int.parse(p[0]),
+      int.parse(p[1]) - 1,
+      55,
+    );
+    status = AppStatus.home;
+    notifyListeners();
+  }
+
+  void checkInitialStatus(Map<String, String> data) {
+    final now = DateTime.now();
+    data.forEach((name, time) {
+      if (name == "Syuruq") return;
+
+      final parts = time.split(':');
+      final pTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
+      final endAdzan = pTime.add(Duration(seconds: AppConstants.adzanDuration));
+
+      if (now.isAfter(pTime) && now.isBefore(endAdzan)) {
+        status = AppStatus.adzan;
+        currentPrayerName = name;
+        adzanCounter = endAdzan.difference(now).inSeconds;
+        return;
+      }
+
+      int currentIqomahDuration = (name == "Jumat")
+          ? 0
+          : PrayerService.getIqomahDuration(name);
+      final currentContentDuration = (name == "Jumat")
+          ? AppConstants.jumatDuration
+          : currentIqomahDuration;
+      final endCycle = endAdzan.add(Duration(seconds: currentContentDuration));
+
+      if (now.isAfter(endAdzan) && now.isBefore(endCycle)) {
+        currentPrayerName = name;
+        if (name == "Jumat") {
+          status = AppStatus.jumatMode;
+          jumatCounter = endCycle.difference(now).inSeconds;
+        } else {
+          status = AppStatus.iqomah;
+          iqomahCounter = endCycle.difference(now).inSeconds;
+        }
+      }
+    });
   }
 }

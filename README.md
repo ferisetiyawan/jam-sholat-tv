@@ -4,23 +4,22 @@ A specialized Flutter application designed for Masjid display screens. This proj
 ## 🚀 Quick Start (Onboarding)
 This project uses FVM (Flutter Version Management) to ensure everyone is on the exact same Flutter version (3.41.1).
 
-1. Prerequisites
+### 1. Prerequisites
 If you haven't installed FVM yet, run:
 ```bash
 dart pub global activate fvm
 ```
-2. Setup SDK & Packages
+### 2. Setup SDK & Packages
 Once you've cloned the repo, run these commands in order:
-### Install the specific Flutter version defined in .fvmrc
+Install the specific Flutter version defined in .fvmrc
 ```bash
 fvm install
 ```
-#### Link the project to the local SDK
+Link the project to the local SDK
 ```bash
 fvm use
 ```
-
-### Get all necessary packages
+Get all necessary packages
 ```bash
 fvm flutter pub get
 ```
@@ -28,13 +27,14 @@ fvm flutter pub get
 ## 🛠 Running the App (Android Focus)
 Since we are using FVM, always prefix your flutter commands with fvm.
 
-Debugging
+### Debugging
 To run the app on your connected device or emulator in debug mode:
 ```bash
 fvm flutter run
 ```
 ### Building for Production (Release)
-When you're ready to deploy to the Masjid's Android TV or Tablet, generate the APK:
+When you're ready to deploy to the Masjid's Android TV or Tablet, generate the APK
+
 Build a universal APK
 ```bash
 fvm flutter build apk --release

@@ -1,7 +1,7 @@
 name: jam_sholat_tv
 description: "Jam Sholat TV"
 
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none"
 
 version: 1.0.0+1
 
@@ -43,4 +43,4 @@ flutter_launcher_icons:
   ios: false
   image_path: "assets/images/icon.png"
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/icon.png"
+  adaptive_icon_foreground: "assets/images/adaptive_icon_foreground.png"

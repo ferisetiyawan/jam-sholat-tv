@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/constants/app_enum.dart';
@@ -11,8 +12,13 @@ import '../services/audio_service.dart';
 import '../services/prayer_service.dart';
 
 class AppProvider extends ChangeNotifier {
+  final Logger _logger = Logger();
+
   bool hasInternet = true;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+
+  bool _isDataUpdatedFromServer = false;
+  bool _isFetching = false;
 
   String timeString = "";
   AppStatus status = AppStatus.home;
@@ -64,7 +70,13 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _updateConnectionStatus(List<ConnectivityResult> results) {
+    bool oldInternetStatus = hasInternet;
     hasInternet = !results.contains(ConnectivityResult.none);
+
+    if (hasInternet && !oldInternetStatus && !_isDataUpdatedFromServer) {
+      _fetchServerDataWithRetry();
+    }
+
     notifyListeners();
   }
 
@@ -76,12 +88,34 @@ class AppProvider extends ChangeNotifier {
       notifyListeners();
     }
 
-    await _prayerService.fetchAndSaveSixMonths();
-    var fresh = await _prayerService.getTodayJadwalMap();
-    if (fresh != null) {
-      jadwal = fresh;
-      if (status == AppStatus.home) checkInitialStatus(fresh);
-      notifyListeners();
+    _fetchServerDataWithRetry();
+  }
+
+  Future<void> _fetchServerDataWithRetry() async {
+    if (_isFetching || _isDataUpdatedFromServer || !hasInternet) return;
+
+    _isFetching = true;
+    try {
+      _logger.d("Try fetching prayer data from server...");
+      await _prayerService.fetchAndSaveSixMonths();
+
+      var fresh = await _prayerService.getTodayJadwalMap();
+      if (fresh != null) {
+        jadwal = fresh;
+        if (status == AppStatus.home) checkInitialStatus(fresh);
+        _isDataUpdatedFromServer = true;
+        _logger.d("Synchronization successful!");
+        notifyListeners();
+      }
+    } catch (e) {
+      _logger.e("Synchronization failed: $e. Retrying in 30 seconds...");
+
+      Future.delayed(const Duration(seconds: 30), () {
+        _isFetching = false;
+        _fetchServerDataWithRetry();
+      });
+    } finally {
+      _isFetching = false;
     }
   }
 

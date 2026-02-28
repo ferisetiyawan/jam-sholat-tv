@@ -90,6 +90,10 @@ class PrayerService {
 
         final response = await _dio.get(
           'https://api.myquran.com/v2/sholat/jadwal/${AppConstants.cityId}/$year/$month',
+          options: Options(
+            sendTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 10),
+          ),
         );
 
         if (response.statusCode == 200) {
@@ -99,6 +103,8 @@ class PrayerService {
       await prefs.setString('offline_prayer_data', jsonEncode(allSchedules));
     } catch (e) {
       _logger.e('Error fetching prayer data', error: e);
+
+      rethrow;
     }
   }
 

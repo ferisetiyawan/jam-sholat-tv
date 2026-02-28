@@ -24,7 +24,7 @@ class AppConstants {
 
   // --- app_provider.dart ---
   static const int minutesBeforeMaghrib =
-      30; // live makkah before maghrib, in minutes
+      120; // live makkah before maghrib, in minutes
   static const int minutesBeforeJumat =
       30; // live makkah before jumat, in minutes
 

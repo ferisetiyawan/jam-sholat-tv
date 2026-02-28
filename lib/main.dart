@@ -107,10 +107,23 @@ class MainController extends StatelessWidget {
     };
 
     return Scaffold(
-      // Transition
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 800),
-        child: screen,
+      body: Stack(
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 800),
+            child: screen,
+          ),
+          if (!app.hasInternet)
+            Positioned(
+              top: 3,
+              left: 3,
+              child: Container(
+                padding: EdgeInsets.all(5),
+                color: Colors.red,
+                child: Icon(Icons.wifi_off, color: Colors.white, size: 12),
+              ),
+            ),
+        ],
       ),
       floatingActionButton: _buildDebugFab(context),
     );

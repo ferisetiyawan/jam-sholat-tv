@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
@@ -10,6 +11,9 @@ import '../services/audio_service.dart';
 import '../services/prayer_service.dart';
 
 class AppProvider extends ChangeNotifier {
+  bool hasInternet = true;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+
   String timeString = "";
   AppStatus status = AppStatus.home;
   String currentPrayerName = "";
@@ -40,13 +44,28 @@ class AppProvider extends ChangeNotifier {
 
   void init() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
+    _initConnectivity();
     loadInitialData();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _connectivitySubscription?.cancel();
     super.dispose();
+  }
+
+  void _initConnectivity() {
+    Connectivity().checkConnectivity().then(_updateConnectionStatus);
+
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
+      _updateConnectionStatus,
+    );
+  }
+
+  void _updateConnectionStatus(List<ConnectivityResult> results) {
+    hasInternet = !results.contains(ConnectivityResult.none);
+    notifyListeners();
   }
 
   Future<void> loadInitialData() async {
@@ -175,7 +194,7 @@ class AppProvider extends ChangeNotifier {
         isFriday &&
         _isMinutesBeforePrayer("Jumat", AppConstants.minutesBeforeJumat, now);
 
-    isSpecialLiveMode = isNearMaghrib || isNearJumat;
+    isSpecialLiveMode = (isNearMaghrib || isNearJumat) && hasInternet;
   }
 
   bool _isMinutesBeforePrayer(String prayerName, int minutes, DateTime now) {

@@ -32,6 +32,5 @@ class AppConstants {
   static const List<String> eventImages = [
     'assets/images/kajian1.svg',
     'assets/images/kajian2.svg',
-    'assets/images/kajian3.svg',
   ];
 }

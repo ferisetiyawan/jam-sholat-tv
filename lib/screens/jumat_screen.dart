@@ -59,7 +59,7 @@ class JumatScreen extends StatelessWidget {
                     vertical: 25,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.white12, width: 2),
                   ),

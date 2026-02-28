@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:hijriyah_indonesia/hijriyah_indonesia.dart';
 import 'package:intl/intl.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_constants.dart';
@@ -10,6 +11,7 @@ import '../models/prayer_model.dart';
 
 class PrayerService {
   final Dio _dio = Dio();
+  final Logger _logger = Logger();
 
   static Map<String, String> calculateCountdown(Map<String, String> jadwal) {
     final now = DateTime.now();
@@ -96,7 +98,7 @@ class PrayerService {
       }
       await prefs.setString('offline_prayer_data', jsonEncode(allSchedules));
     } catch (e) {
-      print("Error fetching: $e");
+      _logger.e('Error fetching prayer data', error: e);
     }
   }
 

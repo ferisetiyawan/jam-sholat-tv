@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../screens/home_screen.dart';
 
-import 'package:cached_network_image/cached_network_image.dart';
+import '../screens/home_screen.dart';
 
 class HomeWrapper extends StatelessWidget {
   final String time;
@@ -29,7 +28,7 @@ class HomeWrapper extends StatelessWidget {
             fit: BoxFit.cover,
           ),
         ),
-        
+
         Container(color: Colors.black.withValues(alpha: 0.5)),
 
         HomeScreen(

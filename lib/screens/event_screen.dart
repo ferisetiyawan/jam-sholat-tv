@@ -1,6 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class EventScreen extends StatefulWidget {
   final List<String> images;
@@ -54,14 +54,17 @@ class _EventScreenState extends State<EventScreen> {
         return SvgPicture.network(
           path,
           fit: BoxFit.cover,
-          placeholderBuilder: (context) => const Center(child: CircularProgressIndicator()),
+          placeholderBuilder: (context) =>
+              const Center(child: CircularProgressIndicator()),
         );
       } else {
         return CachedNetworkImage(
           imageUrl: path,
           fit: BoxFit.cover,
-          placeholder: (context, url) => const Center(child: CircularProgressIndicator()),
-          errorWidget: (context, url, error) => const Icon(Icons.broken_image, size: 50),
+          placeholder: (context, url) =>
+              const Center(child: CircularProgressIndicator()),
+          errorWidget: (context, url, error) =>
+              const Icon(Icons.broken_image, size: 50),
         );
       }
     } else {

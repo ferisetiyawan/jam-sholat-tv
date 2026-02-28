@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
 
@@ -10,8 +11,8 @@ class HomeScreen extends StatelessWidget {
   final Widget Function(String, String) prayerItemBuilder;
 
   const HomeScreen({
-    super.key, 
-    required this.time, 
+    super.key,
+    required this.time,
     required this.dateMasehi,
     required this.dateHijriah,
     required this.jadwal,
@@ -39,40 +40,49 @@ class HomeScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        time, 
+                        time,
                         style: const TextStyle(
                           fontSize: 110,
-                          fontWeight: FontWeight.w900, 
+                          fontWeight: FontWeight.w900,
                           letterSpacing: -5,
                           height: 1.0,
-                        )
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         dateHijriah,
                         style: const TextStyle(
-                          fontSize: 26, 
-                          color: Colors.amber, 
-                          fontWeight: FontWeight.bold
+                          fontSize: 26,
+                          color: Colors.amber,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
                         dateMasehi,
                         style: const TextStyle(
-                          fontSize: 22, 
+                          fontSize: 22,
                           color: Colors.white70,
-                          fontWeight: FontWeight.w500
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  
+
                   // --- RIGHT: MASJID NAME ---
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: const [
-                      Text("MASJID AL HIJRAH CGE", style: TextStyle(fontSize: 38, fontWeight: FontWeight.bold)),
-                      Text("Cimanggis Golf Estate", style: TextStyle(fontSize: 24, color: Colors.white70)),
+                      Text(
+                        "MASJID AL HIJRAH CGE",
+                        style: TextStyle(
+                          fontSize: 38,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        "Cimanggis Golf Estate",
+                        style: TextStyle(fontSize: 24, color: Colors.white70),
+                      ),
                     ],
                   ),
                 ],
@@ -87,13 +97,17 @@ class HomeScreen extends StatelessWidget {
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                   child: Container(
-                    height: 110, 
+                    height: 110,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.12),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Row(
-                      children: jadwal.entries.map((e) => prayerItemBuilder(e.key, e.value)).toList(),
+                      children: jadwal.entries
+                          .map((e) => prayerItemBuilder(e.key, e.value))
+                          .toList(),
                     ),
                   ),
                 ),
@@ -101,10 +115,17 @@ class HomeScreen extends StatelessWidget {
             ),
             // Running Text
             Container(
-              height: 35, width: double.infinity, color: Colors.black.withValues(alpha: 0.8),
+              height: 35,
+              width: double.infinity,
+              color: Colors.black.withValues(alpha: 0.8),
               child: Marquee(
-                text: 'Selamat Datang di Masjid Al Hijrah CGE - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ',
-                style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                text:
+                    'Selamat Datang di Masjid Al Hijrah CGE - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ',
+                style: const TextStyle(
+                  fontSize: 22,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
                 velocity: 45.0,
               ),
             ),
@@ -130,17 +151,28 @@ class HomeScreen extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 100),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.white,
+                        size: 100,
+                      ),
                       const SizedBox(height: 20),
                       const Text(
                         "JAM TV BELUM DIATUR!",
-                        style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold, color: Colors.white),
+                        style: TextStyle(
+                          fontSize: 50,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       Text(
                         "Tahun terdeteksi: ${DateTime.now().year}\nJadwal sholat tidak akan muncul sebelum jam TV sinkron.",
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 24, color: Colors.white),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),

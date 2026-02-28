@@ -1,14 +1,13 @@
 import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/constants/app_enum.dart';
-
 import '../core/utils/date_formatter.dart';
-
-import '../services/prayer_service.dart';
 import '../services/audio_service.dart';
+import '../services/prayer_service.dart';
 
 class AppProvider extends ChangeNotifier {
   String timeString = "";
@@ -19,17 +18,21 @@ class AppProvider extends ChangeNotifier {
   int adzanCounter = 0;
   bool isEventMode = false;
   int currentEventIndex = 0;
-  
+
   String nextPrayerName = "";
   String countdownString = "";
   String dateMasehi = "";
   String dateHijriah = "";
 
   bool isSpecialLiveMode = false;
-  
+
   Map<String, String> jadwal = {
-    "Subuh": "--:--", "Syuruq": "--:--", "Dzuhur": "--:--", 
-    "Ashar": "--:--", "Maghrib": "--:--", "Isya": "--:--"
+    "Subuh": "--:--",
+    "Syuruq": "--:--",
+    "Dzuhur": "--:--",
+    "Ashar": "--:--",
+    "Maghrib": "--:--",
+    "Isya": "--:--",
   };
 
   // Fake Time for Testing Purposes
@@ -55,7 +58,7 @@ class AppProvider extends ChangeNotifier {
       checkInitialStatus(local);
       notifyListeners();
     }
-    
+
     await _prayerService.fetchAndSaveSixMonths();
     var fresh = await _prayerService.getTodayJadwalMap();
     if (fresh != null) {
@@ -84,7 +87,7 @@ class AppProvider extends ChangeNotifier {
     final dates = DateFormatter.getFullDate();
     dateMasehi = dates['masehi']!;
     dateHijriah = dates['hijriah']!;
-    
+
     final result = PrayerService.calculateCountdown(jadwal);
     nextPrayerName = result["nextName"]!;
     countdownString = result["countdown"]!;
@@ -95,12 +98,13 @@ class AppProvider extends ChangeNotifier {
 
     int totalCycle = AppConstants.homeDuration + AppConstants.eventDuration;
     int currentSec = _timer!.tick % totalCycle;
-    
+
     if (currentSec < AppConstants.homeDuration) {
       isEventMode = false;
     } else {
       if (!isEventMode) {
-        currentEventIndex = (currentEventIndex + 1) % AppConstants.eventImages.length;
+        currentEventIndex =
+            (currentEventIndex + 1) % AppConstants.eventImages.length;
       }
       isEventMode = true;
     }
@@ -124,14 +128,17 @@ class AppProvider extends ChangeNotifier {
           jumatCounter = AppConstants.jumatDuration;
         } else {
           status = AppStatus.iqomah;
-          iqomahCounter = !kDebugMode ? PrayerService.getIqomahDuration(currentPrayerName) : 15;
+          iqomahCounter = !kDebugMode
+              ? PrayerService.getIqomahDuration(currentPrayerName)
+              : 15;
         }
       }
     }
 
     if (status == AppStatus.iqomah) {
       iqomahCounter--;
-      if (iqomahCounter <= 10 && iqomahCounter > 0) AudioService.playIqomahBeep();
+      if (iqomahCounter <= 10 && iqomahCounter > 0)
+        AudioService.playIqomahBeep();
       if (iqomahCounter <= 0) {
         status = AppStatus.home;
         AudioService.playAdzanBeep();
@@ -149,8 +156,12 @@ class AppProvider extends ChangeNotifier {
     final maghrib = jadwal["Maghrib"] ?? "18:00";
     final p = maghrib.split(':');
     _fakeTime = DateTime(
-      DateTime.now().year, DateTime.now().month, DateTime.now().day, 
-      int.parse(p[0]), int.parse(p[1]) - 1, 55
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+      int.parse(p[0]),
+      int.parse(p[1]) - 1,
+      55,
     );
     status = AppStatus.home;
     notifyListeners();
@@ -162,11 +173,21 @@ class AppProvider extends ChangeNotifier {
       if (name == "Syuruq") return;
 
       final parts = time.split(':');
-      final prayerTime = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
-      
-      int durasiIqomah = (name == "Jumat") ? 0 : PrayerService.getIqomahDuration(name);
-      
-      final endAdzanTime = prayerTime.add(Duration(seconds: AppConstants.adzanDuration));
+      final prayerTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
+
+      int durasiIqomah = (name == "Jumat")
+          ? 0
+          : PrayerService.getIqomahDuration(name);
+
+      final endAdzanTime = prayerTime.add(
+        Duration(seconds: AppConstants.adzanDuration),
+      );
       if (now.isAfter(prayerTime) && now.isBefore(endAdzanTime)) {
         status = AppStatus.adzan;
         currentPrayerName = name;
@@ -174,7 +195,9 @@ class AppProvider extends ChangeNotifier {
         return;
       }
 
-      final durasiIsi = (name == "Jumat") ? AppConstants.jumatDuration : durasiIqomah;
+      final durasiIsi = (name == "Jumat")
+          ? AppConstants.jumatDuration
+          : durasiIqomah;
       final endIqomahTime = endAdzanTime.add(Duration(seconds: durasiIsi));
       if (now.isAfter(endAdzanTime) && now.isBefore(endIqomahTime)) {
         if (name == "Jumat") {
@@ -190,10 +213,16 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _checkSpecialLiveConditions(DateTime now) {
-    final bool isNearMaghrib = _isMinutesBeforePrayer("Maghrib", AppConstants.minutesBeforeMaghrib, now);
-    
+    final bool isNearMaghrib = _isMinutesBeforePrayer(
+      "Maghrib",
+      AppConstants.minutesBeforeMaghrib,
+      now,
+    );
+
     final bool isFriday = now.weekday == DateTime.friday;
-    final bool isNearJumat = isFriday && _isMinutesBeforePrayer("Jumat", AppConstants.minutesBeforeJumat, now);
+    final bool isNearJumat =
+        isFriday &&
+        _isMinutesBeforePrayer("Jumat", AppConstants.minutesBeforeJumat, now);
 
     isSpecialLiveMode = isNearMaghrib || isNearJumat;
   }
@@ -207,10 +236,16 @@ class AppProvider extends ChangeNotifier {
     if (timeString == null || timeString == "--:--") return false;
 
     final parts = timeString.split(':');
-    final prayerTime = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+    final prayerTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+    );
 
     final difference = prayerTime.difference(now).inSeconds;
-    
+
     return difference >= 0 && difference <= (minutes * 60);
   }
 }

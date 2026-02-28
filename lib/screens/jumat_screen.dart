@@ -13,7 +13,7 @@ class JumatScreen extends StatelessWidget {
         padding: const EdgeInsets.all(40.0),
         child: Center(
           child: FittedBox(
-            fit: BoxFit.scaleDown, 
+            fit: BoxFit.scaleDown,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -23,7 +23,7 @@ class JumatScreen extends StatelessWidget {
                     const Icon(
                       Icons.smartphone_rounded,
                       color: Colors.white,
-                      size: 200, 
+                      size: 200,
                     ),
                     Container(
                       padding: const EdgeInsets.all(4),
@@ -40,7 +40,7 @@ class JumatScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 40),
-                
+
                 const Text(
                   "WAKTUNYA SHOLAT JUMAT",
                   textAlign: TextAlign.center,
@@ -52,9 +52,12 @@ class JumatScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 25),
-                
+
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 25),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 25,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(20),

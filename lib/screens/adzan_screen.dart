@@ -17,7 +17,11 @@ class AdzanScreen extends StatelessWidget {
           const SizedBox(height: 30),
           const Text(
             "WAKTU ADZAN BERKUMANDANG",
-            style: TextStyle(fontSize: 40, fontWeight: FontWeight.w300, letterSpacing: 10),
+            style: TextStyle(
+              fontSize: 40,
+              fontWeight: FontWeight.w300,
+              letterSpacing: 10,
+            ),
           ),
           const SizedBox(height: 10),
           Text(
@@ -27,7 +31,11 @@ class AdzanScreen extends StatelessWidget {
           const SizedBox(height: 50),
           const Text(
             "Waktunya Berhenti Sejenak dari Aktivitas Dunia",
-            style: TextStyle(fontSize: 24, fontStyle: FontStyle.italic, color: Colors.white70),
+            style: TextStyle(
+              fontSize: 24,
+              fontStyle: FontStyle.italic,
+              color: Colors.white70,
+            ),
           ),
         ],
       ),

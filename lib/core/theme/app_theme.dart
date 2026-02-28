@@ -11,10 +11,14 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: backgroundColor,
       fontFamily: 'Roboto',
-      
+
       // default text theme for the app
       textTheme: const TextTheme(
-        displayLarge: TextStyle(fontSize: 110, fontWeight: FontWeight.w900, color: Colors.white),
+        displayLarge: TextStyle(
+          fontSize: 110,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+        ),
         bodyLarge: TextStyle(fontSize: 18, color: Colors.white),
       ),
 

@@ -20,7 +20,9 @@ class PrayerCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         decoration: BoxDecoration(
-          color: isNext ? Colors.white.withValues(alpha: 0.2) : Colors.transparent,
+          color: isNext
+              ? Colors.white.withValues(alpha: 0.2)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
@@ -31,7 +33,9 @@ class PrayerCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: isNext ? Colors.white : const Color.fromARGB(150, 0, 0, 0),
+                color: isNext
+                    ? Colors.white
+                    : const Color.fromARGB(150, 0, 0, 0),
               ),
             ),
             Text(
@@ -39,7 +43,9 @@ class PrayerCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 40,
                 fontWeight: FontWeight.w900,
-                color: isNext ? Colors.white : const Color.fromARGB(150, 0, 0, 0),
+                color: isNext
+                    ? Colors.white
+                    : const Color.fromARGB(150, 0, 0, 0),
               ),
             ),
             if (isNext)

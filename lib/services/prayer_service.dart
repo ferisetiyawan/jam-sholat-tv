@@ -1,12 +1,12 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
-import '../models/prayer_model.dart';
 
+import 'package:dio/dio.dart';
 import 'package:hijriyah_indonesia/hijriyah_indonesia.dart';
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_constants.dart';
+import '../models/prayer_model.dart';
 
 class PrayerService {
   final Dio _dio = Dio();
@@ -16,7 +16,14 @@ class PrayerService {
     DateTime? nextTime;
     String nextName = "";
 
-    List<String> order = ["Subuh", "Syuruq", "Dzuhur", "Ashar", "Maghrib", "Isya"];
+    List<String> order = [
+      "Subuh",
+      "Syuruq",
+      "Dzuhur",
+      "Ashar",
+      "Maghrib",
+      "Isya",
+    ];
     if (jadwal.containsKey("Jumat")) {
       order = ["Subuh", "Syuruq", "Jumat", "Ashar", "Maghrib", "Isya"];
     }
@@ -26,21 +33,33 @@ class PrayerService {
       if (t == null || t == "--:--" || t.isEmpty) continue;
 
       final parts = t.split(':');
-      var pTime = DateTime(now.year, now.month, now.day, int.parse(parts[0]), int.parse(parts[1]));
+      var pTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        int.parse(parts[0]),
+        int.parse(parts[1]),
+      );
 
       if (pTime.isAfter(now)) {
         nextTime = pTime;
         nextName = name;
-        break; 
+        break;
       }
     }
-    
+
     if (nextTime == null) {
       nextName = "Subuh";
       String? t = jadwal["Subuh"];
       if (t != null && t != "--:--") {
         final parts = t.split(':');
-        nextTime = DateTime(now.year, now.month, now.day + 1, int.parse(parts[0]), int.parse(parts[1]));
+        nextTime = DateTime(
+          now.year,
+          now.month,
+          now.day + 1,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+        );
       }
     }
 
@@ -53,10 +72,7 @@ class PrayerService {
       countdown = "$h:$m:$s";
     }
 
-    return {
-      "nextName": nextName,
-      "countdown": countdown,
-    };
+    return {"nextName": nextName, "countdown": countdown};
   }
 
   Future<void> fetchAndSaveSixMonths() async {
@@ -71,7 +87,7 @@ class PrayerService {
         String month = targetDate.month.toString().padLeft(2, '0');
 
         final response = await _dio.get(
-          'https://api.myquran.com/v2/sholat/jadwal/${AppConstants.cityId}/$year/$month'
+          'https://api.myquran.com/v2/sholat/jadwal/${AppConstants.cityId}/$year/$month',
         );
 
         if (response.statusCode == 200) {
@@ -91,13 +107,13 @@ class PrayerService {
 
     Map<String, dynamic> allData = jsonDecode(rawData);
     DateTime now = DateTime.now();
-    
+
     String todayDate = DateFormat('dd/MM/yyyy').format(now);
     String monthKey = DateFormat('yyyy-MM').format(now);
 
     if (allData.containsKey(monthKey)) {
       List monthList = allData[monthKey];
-      
+
       var foundData = monthList.firstWhere(
         (item) => item['tanggal'].contains(todayDate),
         orElse: () => null,

@@ -1,7 +1,8 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:marquee/marquee.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class LiveMakkahScreen extends StatefulWidget {
   final String time;
@@ -73,17 +74,27 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                         child: BackdropFilter(
                           filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 15,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                width: 1.5,
+                              ),
                             ),
                             child: Column(
                               children: [
                                 const Text(
                                   "Masjid Al Hijrah CGE",
-                                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 Expanded(
                                   flex: 3,
@@ -91,15 +102,32 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                                     fit: BoxFit.contain,
                                     child: Text(
                                       widget.time,
-                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, height: 1.0),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                        height: 1.0,
+                                      ),
                                     ),
                                   ),
                                 ),
                                 FittedBox(
                                   child: Column(
                                     children: [
-                                      Text(widget.dateHijriah, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-                                      Text(widget.dateMasehi, style: TextStyle(color: Colors.white, fontSize: 12)),
+                                      Text(
+                                        widget.dateHijriah,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        widget.dateMasehi,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -107,12 +135,22 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                                 Expanded(
                                   flex: 10,
                                   child: Column(
-                                    children: widget.jadwal.entries.map((e) => Expanded(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 2),
-                                        child: _buildPrayerItem(e.key, e.value),
-                                      ),
-                                    )).toList(),
+                                    children: widget.jadwal.entries
+                                        .map(
+                                          (e) => Expanded(
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    vertical: 2,
+                                                  ),
+                                              child: _buildPrayerItem(
+                                                e.key,
+                                                e.value,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
                                   ),
                                 ),
                               ],
@@ -128,7 +166,12 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                         margin: const EdgeInsets.fromLTRB(5, 15, 15, 15),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(15),
-                          boxShadow: [BoxShadow(blurRadius: 30, color: Colors.black.withValues(alpha: 0.5))],
+                          boxShadow: [
+                            BoxShadow(
+                              blurRadius: 30,
+                              color: Colors.black.withValues(alpha: 0.5),
+                            ),
+                          ],
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(15),
@@ -146,8 +189,13 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                 width: double.infinity,
                 color: Colors.black.withValues(alpha: 0.8),
                 child: Marquee(
-                  text: 'Selamat Datang di Masjid Al Hijrah CGE - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ',
-                  style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
+                  text:
+                      'Selamat Datang di Masjid Al Hijrah CGE - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                   velocity: 45.0,
                 ),
               ),
@@ -163,7 +211,9 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15),
       decoration: BoxDecoration(
-        color: isNext ? Colors.amber.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.08),
+        color: isNext
+            ? Colors.amber.withValues(alpha: 0.3)
+            : Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isNext ? Colors.amber : Colors.white.withValues(alpha: 0.1),
@@ -175,14 +225,18 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.access_time_filled, color: isNext ? Colors.amber : Colors.white38, size: 18),
+              Icon(
+                Icons.access_time_filled,
+                color: isNext ? Colors.amber : Colors.white38,
+                size: 18,
+              ),
               const SizedBox(width: 12),
               Text(
                 label,
                 style: TextStyle(
                   color: isNext ? Colors.white : Colors.white38,
                   fontSize: 14,
-                  fontWeight: isNext ? FontWeight.w900 : FontWeight.bold
+                  fontWeight: isNext ? FontWeight.w900 : FontWeight.bold,
                 ),
               ),
             ],
@@ -192,7 +246,7 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
             style: TextStyle(
               color: isNext ? Colors.white : Colors.white38,
               fontSize: 14,
-              fontWeight: FontWeight.w900
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],

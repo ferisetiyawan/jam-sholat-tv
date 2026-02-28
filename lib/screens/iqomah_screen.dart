@@ -1,4 +1,5 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 class IqomahScreen extends StatelessWidget {
@@ -6,9 +7,9 @@ class IqomahScreen extends StatelessWidget {
   final int countdown;
 
   const IqomahScreen({
-    super.key, 
-    required this.prayerName, 
-    required this.countdown
+    super.key,
+    required this.prayerName,
+    required this.countdown,
   });
 
   @override
@@ -16,7 +17,9 @@ class IqomahScreen extends StatelessWidget {
     String minutes = (countdown ~/ 60).toString().padLeft(2, '0');
     String seconds = (countdown % 60).toString().padLeft(2, '0');
 
-    Color timerColor = (countdown <= 10) ? Colors.redAccent : Colors.greenAccent;
+    Color timerColor = (countdown <= 10)
+        ? Colors.redAccent
+        : Colors.greenAccent;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -36,22 +39,26 @@ class IqomahScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  "MENUJU IQOMAH", 
-                  style: TextStyle(fontSize: 35, fontWeight: FontWeight.w300, letterSpacing: 8)
+                  "MENUJU IQOMAH",
+                  style: TextStyle(
+                    fontSize: 35,
+                    fontWeight: FontWeight.w300,
+                    letterSpacing: 8,
+                  ),
                 ),
                 Text(
-                  prayerName.toUpperCase(), 
-                  style: const TextStyle(fontSize: 25, color: Colors.white70)
+                  prayerName.toUpperCase(),
+                  style: const TextStyle(fontSize: 25, color: Colors.white70),
                 ),
-                
+
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
                       "$minutes:$seconds",
                       style: TextStyle(
-                        fontSize: 250, 
-                        fontWeight: FontWeight.w900, 
+                        fontSize: 250,
+                        fontWeight: FontWeight.w900,
                         color: timerColor,
                         fontFeatures: const [FontFeature.tabularFigures()],
                         height: 1.1,
@@ -59,11 +66,15 @@ class IqomahScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 const Text(
-                  "LURUSKAN DAN RAPATKAN SHAF", 
+                  "LURUSKAN DAN RAPATKAN SHAF",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 2)
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 2,
+                  ),
                 ),
               ],
             ),

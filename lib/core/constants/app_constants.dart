@@ -30,9 +30,14 @@ class AppConstants {
       30; // live makkah before jumat, in minutes
 
   // --- ASSETS ---
-  static const List<String> eventImages = [
-    'assets/images/kajian1.svg',
-    'assets/images/kajian2.svg',
+  static const List<String> eventImages = ['assets/images/kajian1.svg'];
+  static const List<String> prayerScheduleFiles = [
+    '202603.json',
+    '202604.json',
+    '202605.json',
+    '202606.json',
+    '202607.json',
+    '202608.json',
   ];
   static const String backgroundImage = 'assets/images/background_masjid.jpeg';
 

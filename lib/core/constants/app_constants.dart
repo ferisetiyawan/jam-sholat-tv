@@ -4,8 +4,9 @@ class AppConstants {
   static const bool isDebug = kDebugMode;
 
   // --- main.dart ---
-  static const int homeDuration = isDebug ? 3 : 10;
-  static const int eventDuration = isDebug ? 5 : 20;
+  static const int homeDuration = isDebug ? 2 : 10;
+  static const int eventDuration = isDebug ? 3 : 20;
+  static const int reportDuration = isDebug ? 3 : 20;
   static const int adzanDuration = 180;
   static const int jumatDuration = isDebug ? 10 : 2700;
 
@@ -33,4 +34,5 @@ class AppConstants {
     'assets/images/kajian1.svg',
     'assets/images/kajian2.svg',
   ];
+  static const String backgroundImage = 'assets/images/background_masjid.jpeg';
 }

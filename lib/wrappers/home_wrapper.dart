@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jam_sholat_tv/core/constants/app_constants.dart';
 
 import '../screens/home_screen.dart';
 
@@ -23,10 +24,7 @@ class HomeWrapper extends StatelessWidget {
     return Stack(
       children: [
         Positioned.fill(
-          child: Image.asset(
-            'assets/images/background_masjid.jpeg',
-            fit: BoxFit.cover,
-          ),
+          child: Image.asset(AppConstants.backgroundImage, fit: BoxFit.cover),
         ),
 
         Container(color: Colors.black.withValues(alpha: 0.5)),

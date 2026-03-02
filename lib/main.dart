@@ -15,6 +15,7 @@ import 'providers/app_provider.dart';
 // Screens
 import 'screens/adzan_screen.dart';
 import 'screens/event_screen.dart';
+import 'screens/financial_report_screen.dart';
 import 'screens/iqomah_screen.dart';
 import 'screens/jumat_screen.dart';
 import 'screens/live_makkah_screen.dart';
@@ -86,6 +87,15 @@ class MainController extends StatelessWidget {
         jadwal: app.jadwal,
         nextPrayerName: app.nextPrayerName,
       ),
+      AppStatus.home when app.isReportMode && app.hasInternet =>
+        FinancialReportScreen(
+          time: app.timeString,
+          dateMasehi: app.dateMasehi,
+          dateHijriah: app.dateHijriah,
+          jadwal: app.jadwal,
+          nextPrayerName: app.nextPrayerName,
+          data: app.financialData,
+        ),
       AppStatus.home when app.isEventMode => EventScreen(
         images: AppConstants.eventImages,
         currentIndex: app.currentEventIndex,

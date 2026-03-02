@@ -9,6 +9,7 @@ import '../core/constants/app_constants.dart';
 import '../core/constants/app_enum.dart';
 import '../core/utils/date_formatter.dart';
 import '../services/audio_service.dart';
+import '../services/financial_service.dart';
 import '../services/prayer_service.dart';
 
 class AppProvider extends ChangeNotifier {
@@ -18,7 +19,8 @@ class AppProvider extends ChangeNotifier {
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   bool _isDataUpdatedFromServer = false;
-  bool _isFetching = false;
+  bool _isFetchingPrayer = false;
+  bool _isFetchingFinance = false;
 
   String timeString = "";
   AppStatus status = AppStatus.home;
@@ -27,6 +29,7 @@ class AppProvider extends ChangeNotifier {
   int iqomahCounter = 0;
   int adzanCounter = 0;
   bool isEventMode = false;
+  bool isReportMode = false;
   int currentEventIndex = 0;
 
   String nextPrayerName = "";
@@ -43,6 +46,9 @@ class AppProvider extends ChangeNotifier {
     "Maghrib": "--:--",
     "Isya": "--:--",
   };
+
+  final FinancialService _financialService = FinancialService();
+  Map<String, dynamic> financialData = {};
 
   DateTime? _fakeTime;
   Timer? _timer;
@@ -73,10 +79,11 @@ class AppProvider extends ChangeNotifier {
     bool oldInternetStatus = hasInternet;
     hasInternet = !results.contains(ConnectivityResult.none);
 
-    if (hasInternet && !oldInternetStatus && !_isDataUpdatedFromServer) {
-      _fetchServerDataWithRetry();
-    }
+    if (hasInternet && !oldInternetStatus) {
+      if (!_isDataUpdatedFromServer) _fetchServerDataWithRetry();
 
+      updateFinancialReport();
+    }
     notifyListeners();
   }
 
@@ -89,12 +96,13 @@ class AppProvider extends ChangeNotifier {
     }
 
     _fetchServerDataWithRetry();
+    updateFinancialReport();
   }
 
   Future<void> _fetchServerDataWithRetry() async {
-    if (_isFetching || _isDataUpdatedFromServer || !hasInternet) return;
+    if (_isFetchingPrayer || _isDataUpdatedFromServer || !hasInternet) return;
 
-    _isFetching = true;
+    _isFetchingPrayer = true;
     try {
       _logger.d("Try fetching prayer data from server...");
       await _prayerService.fetchAndSaveSixMonths();
@@ -111,11 +119,29 @@ class AppProvider extends ChangeNotifier {
       _logger.e("Synchronization failed: $e. Retrying in 30 seconds...");
 
       Future.delayed(const Duration(seconds: 30), () {
-        _isFetching = false;
+        _isFetchingPrayer = false;
         _fetchServerDataWithRetry();
       });
     } finally {
-      _isFetching = false;
+      _isFetchingPrayer = false;
+    }
+  }
+
+  Future<void> updateFinancialReport() async {
+    if (_isFetchingFinance || !hasInternet) return;
+
+    _isFetchingFinance = true;
+    try {
+      final data = await _financialService.fetchSummary();
+      if (data != null) {
+        financialData = data;
+        _logger.d("Report updated: $data");
+        notifyListeners();
+      }
+    } catch (e) {
+      _logger.e("Failed to fetch financial report: $e");
+    } finally {
+      _isFetchingFinance = false;
     }
   }
 
@@ -129,8 +155,17 @@ class AppProvider extends ChangeNotifier {
     _handleCycleLogic(now);
     _handlePrayerStatusLogic();
     _checkSpecialLiveConditions(now);
+    _handleMidnightSync(now);
 
     notifyListeners();
+  }
+
+  void _handleMidnightSync(DateTime now) {
+    if (now.hour == 0 && now.minute == 0 && now.second == 0) {
+      _isDataUpdatedFromServer = false;
+      _fetchServerDataWithRetry();
+      updateFinancialReport();
+    }
   }
 
   void _updateDateTimeStrings(DateTime now) {
@@ -147,15 +182,39 @@ class AppProvider extends ChangeNotifier {
   void _handleCycleLogic(DateTime now) {
     if (status != AppStatus.home) return;
 
-    int totalCycle = AppConstants.homeDuration + AppConstants.eventDuration;
+    int totalCycle =
+        AppConstants.homeDuration +
+        AppConstants.eventDuration +
+        AppConstants.reportDuration;
     int currentSec = _timer!.tick % totalCycle;
 
     bool oldEventMode = isEventMode;
-    isEventMode = currentSec >= AppConstants.homeDuration;
+    bool oldReportMode = isReportMode;
+
+    if (currentSec < AppConstants.homeDuration) {
+      isEventMode = false;
+      isReportMode = false;
+    } else if (currentSec <
+        (AppConstants.homeDuration + AppConstants.eventDuration)) {
+      isEventMode = true;
+      isReportMode = false;
+    } else {
+      if (hasInternet && financialData.isNotEmpty) {
+        isEventMode = false;
+        isReportMode = true;
+      } else {
+        isEventMode = true;
+        isReportMode = false;
+      }
+    }
 
     if (isEventMode && !oldEventMode) {
       currentEventIndex =
           (currentEventIndex + 1) % AppConstants.eventImages.length;
+    }
+
+    if (isReportMode && !oldReportMode) {
+      updateFinancialReport();
     }
 
     for (var entry in jadwal.entries) {

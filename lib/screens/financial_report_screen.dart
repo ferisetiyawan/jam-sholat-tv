@@ -46,7 +46,6 @@ class FinancialReportScreen extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // --- LEFT: TIME, DATE, PRAYER SCHEDULE (IDENTIK) ---
                     SidePrayerPanel(
                       time: time,
                       dateMasehi: dateMasehi,
@@ -55,7 +54,6 @@ class FinancialReportScreen extends StatelessWidget {
                       nextPrayerName: nextPrayerName,
                     ),
 
-                    // --- RIGHT: FINANCIAL REPORT ---
                     Expanded(
                       child: Container(
                         margin: const EdgeInsets.fromLTRB(5, 15, 15, 15),

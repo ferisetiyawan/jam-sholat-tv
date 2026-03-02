@@ -55,7 +55,6 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // --- LEFT: TIME, DATE, PRAYER SCHEDULE ---
                     SidePrayerPanel(
                       time: widget.time,
                       dateMasehi: widget.dateMasehi,
@@ -64,7 +63,6 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                       nextPrayerName: widget.nextPrayerName,
                     ),
 
-                    // --- RIGHT: VIDEO ---
                     Expanded(
                       child: Container(
                         margin: const EdgeInsets.fromLTRB(5, 15, 15, 15),

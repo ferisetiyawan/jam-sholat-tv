@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:jam_sholat_tv/core/constants/app_constants.dart';
 
 import '../screens/home_screen.dart';
+import '../widgets/background_image.dart';
 
 class HomeWrapper extends StatelessWidget {
   final String time;
@@ -23,11 +23,7 @@ class HomeWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned.fill(
-          child: Image.asset(AppConstants.backgroundImage, fit: BoxFit.cover),
-        ),
-
-        Container(color: Colors.black.withValues(alpha: 0.5)),
+        const BackgroundImage(),
 
         HomeScreen(
           time: time,

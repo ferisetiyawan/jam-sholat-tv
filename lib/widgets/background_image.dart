@@ -4,14 +4,12 @@ import '../core/constants/app_constants.dart';
 
 class BackgroundImage extends StatelessWidget {
   final String imagePath;
-  final double opacity;
-  final Color? overlayColor;
+  final double overlayOpacity;
 
   const BackgroundImage({
     super.key,
     this.imagePath = AppConstants.backgroundImage,
-    this.opacity = 1.0,
-    this.overlayColor,
+    this.overlayOpacity = 0.5,
   });
 
   @override
@@ -23,9 +21,10 @@ class BackgroundImage extends StatelessWidget {
         image: DecorationImage(
           image: AssetImage(imagePath),
           fit: BoxFit.cover,
-          colorFilter: overlayColor != null
-              ? ColorFilter.mode(overlayColor!, BlendMode.darken)
-              : null,
+          colorFilter: ColorFilter.mode(
+            Colors.black.withValues(alpha: overlayOpacity),
+            BlendMode.srcOver,
+          ),
         ),
       ),
     );

@@ -1,27 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
 
+import '../core/constants/app_constants.dart';
+
 class BottomMarqueeBar extends StatelessWidget {
   final String text;
   final double fontSize;
   final double velocity;
-  final Color backgroundColor;
 
   const BottomMarqueeBar({
     super.key,
-    this.text =
-        'Selamat Datang di Masjid Al Hijrah CGE - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ',
+    this.text = AppConstants.marqueeText,
     this.fontSize = 22,
     this.velocity = 45.0,
-    this.backgroundColor = Colors.black87,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 40,
+      height: 35,
       width: double.infinity,
-      color: backgroundColor,
+      color: Colors.black.withValues(alpha: 0.5),
       child: Marquee(
         text: text,
         style: TextStyle(
@@ -30,13 +29,6 @@ class BottomMarqueeBar extends StatelessWidget {
           fontWeight: FontWeight.bold,
         ),
         velocity: velocity,
-        blankSpace: 100.0,
-        pauseAfterRound: const Duration(seconds: 1),
-        startPadding: 10.0,
-        accelerationDuration: const Duration(seconds: 1),
-        accelerationCurve: Curves.linear,
-        decelerationDuration: const Duration(milliseconds: 500),
-        decelerationCurve: Curves.easeOut,
       ),
     );
   }

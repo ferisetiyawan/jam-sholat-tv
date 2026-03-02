@@ -1,7 +1,8 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:marquee/marquee.dart';
+
+import '../widgets/bottom_marquee_bar.dart';
 
 class HomeScreen extends StatelessWidget {
   final String time;
@@ -113,22 +114,8 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-            // Running Text
-            Container(
-              height: 35,
-              width: double.infinity,
-              color: Colors.black.withValues(alpha: 0.8),
-              child: Marquee(
-                text:
-                    'Selamat Datang di Masjid Al Hijrah CGE - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ',
-                style: const TextStyle(
-                  fontSize: 22,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-                velocity: 45.0,
-              ),
-            ),
+
+            const BottomMarqueeBar(),
           ],
         ),
 

@@ -35,4 +35,8 @@ class AppConstants {
     'assets/images/kajian2.svg',
   ];
   static const String backgroundImage = 'assets/images/background_masjid.jpeg';
+
+  // marquee text
+  static const String marqueeText =
+      'Selamat Datang di Masjid Al Hijrah CGE - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ';
 }

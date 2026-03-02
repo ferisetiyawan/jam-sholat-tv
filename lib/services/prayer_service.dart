@@ -84,6 +84,9 @@ class PrayerService {
     try {
       Map<String, dynamic> allSchedules = {};
       for (int i = 0; i < 6; i++) {
+        // prevent too many requests in a short time
+        await Future.delayed(const Duration(seconds: 2));
+
         DateTime targetDate = DateTime(now.year, now.month + i, 1);
         String year = targetDate.year.toString();
         String month = targetDate.month.toString().padLeft(2, '0');

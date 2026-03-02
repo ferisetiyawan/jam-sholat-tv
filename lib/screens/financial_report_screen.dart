@@ -35,11 +35,15 @@ class FinancialReportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final String todayDate = DateFormat(
+      'dd MMMM yyyy',
+      'id_ID',
+    ).format(DateTime.now());
+
     return Scaffold(
       body: Stack(
         children: [
           const BackgroundImage(),
-
           Column(
             children: [
               Expanded(
@@ -53,17 +57,15 @@ class FinancialReportScreen extends StatelessWidget {
                       jadwal: jadwal,
                       nextPrayerName: nextPrayerName,
                     ),
-
                     Expanded(
                       child: Container(
                         margin: const EdgeInsets.fromLTRB(5, 15, 15, 15),
-                        child: _buildFinancialContent(),
+                        child: _buildFinancialContent(todayDate),
                       ),
                     ),
                   ],
                 ),
               ),
-
               const BottomMarqueeBar(),
             ],
           ),
@@ -72,71 +74,94 @@ class FinancialReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFinancialContent() {
+  Widget _buildFinancialContent(String todayDate) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(15),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
-          padding: const EdgeInsets.all(25),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: Colors.white10),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "LAPORAN KEUANGAN BULANAN",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        "Data terbaru: $todayDate",
+                        style: TextStyle(color: Colors.white70, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                  const Icon(
                     Icons.account_balance_wallet,
                     color: Colors.amber,
                     size: 30,
                   ),
-                  SizedBox(width: 15),
-                  Text(
-                    "LAPORAN KEUANGAN BULANAN",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
                 ],
               ),
-              const Divider(color: Colors.white24, height: 40),
+              const Divider(color: Colors.white24, height: 20),
+
               Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  childAspectRatio: 2.8,
-                  mainAxisSpacing: 15,
-                  crossAxisSpacing: 15,
+                child: Column(
                   children: [
-                    _buildFinanceCard(
-                      "SALDO AWAL",
-                      data['saldoAwal'],
-                      Colors.blue,
+                    Expanded(
+                      child: Row(
+                        children: [
+                          _buildFinanceCard(
+                            "SALDO AWAL",
+                            data['saldoAwal'],
+                            Colors.blue,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildFinanceCard(
+                            "TOTAL PEMASUKAN",
+                            data['kasmasuk'],
+                            Colors.green,
+                          ),
+                        ],
+                      ),
                     ),
-                    _buildFinanceCard(
-                      "TOTAL PEMASUKAN",
-                      data['kasmasuk'],
-                      Colors.green,
-                    ),
-                    _buildFinanceCard(
-                      "TOTAL PENGELUARAN",
-                      data['kasKeluar'],
-                      Colors.red,
-                    ),
-                    _buildFinanceCard(
-                      "SALDO AKHIR",
-                      data['saldoAkhir'],
-                      Colors.amber,
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          _buildFinanceCard(
+                            "TOTAL PENGELUARAN",
+                            data['kasKeluar'],
+                            Colors.red,
+                          ),
+                          const SizedBox(width: 12),
+                          _buildFinanceCard(
+                            "SALDO AKHIR",
+                            data['saldoAkhir'],
+                            Colors.amber,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
+
               const SizedBox(height: 15),
+
               _buildDetailedRow(
                 "Dana Prasarana",
                 data['saldoPrasarana'],
@@ -151,37 +176,44 @@ class FinancialReportScreen extends StatelessWidget {
   }
 
   Widget _buildFinanceCard(String title, dynamic value, Color accentColor) {
-    return Container(
-      padding: const EdgeInsets.all(15),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              color: accentColor,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 5),
-          FittedBox(
-            child: Text(
-              formatIdr(value),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.w900,
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: accentColor,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Flexible(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  formatIdr(value),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    height: 1.1,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -190,7 +222,7 @@ class FinancialReportScreen extends StatelessWidget {
     return Row(
       children: [
         Expanded(child: _buildSmallDetail(l1, v1)),
-        const SizedBox(width: 15),
+        const SizedBox(width: 12),
         Expanded(child: _buildSmallDetail(l2, v2)),
       ],
     );
@@ -198,23 +230,24 @@ class FinancialReportScreen extends StatelessWidget {
 
   Widget _buildSmallDetail(String label, dynamic value) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.black26,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
           ),
           Text(
             formatIdr(value),
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
+              fontSize: 13,
             ),
           ),
         ],

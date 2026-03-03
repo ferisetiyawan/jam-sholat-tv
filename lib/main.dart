@@ -12,6 +12,7 @@ import 'core/constants/app_enum.dart';
 import 'core/theme/app_theme.dart';
 // Providers
 import 'providers/app_provider.dart';
+import 'providers/config_provider.dart';
 // Screens
 import 'screens/adzan_screen.dart';
 import 'screens/event_screen.dart';
@@ -43,9 +44,12 @@ void main() async {
   WakelockPlus.enable();
 
   runApp(
-    // Provider will manage state and notify widgets to rebuild on changes
-    ChangeNotifierProvider(
-      create: (_) => AppProvider()..init(),
+    // GANTI: Gunakan MultiProvider agar ConfigProvider tersedia
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ConfigProvider()..init()),
+        ChangeNotifierProvider(create: (_) => AppProvider()..init()),
+      ],
       child: const MasjidApp(),
     ),
   );

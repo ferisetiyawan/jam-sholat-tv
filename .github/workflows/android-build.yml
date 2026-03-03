@@ -17,7 +17,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          
+
+      - uses: dart-lang/setup-dart@v1
+
       - name: Cache FVM
         uses: actions/cache@v3
         with:
@@ -25,9 +27,14 @@ jobs:
           key: ${{ runner.os }}-fvm-${{ hashFiles('.fvmrc') }}
           restore-keys: |
             ${{ runner.os }}-fvm-
-            
-      - name: Setup Flutter via FVM
-        uses: kuyichi/fvm-action@v3
+
+      - name: Setup FVM
+        run: |
+          dart pub global activate fvm
+          echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
+      - name: FVM Install Flutter
+        run: fvm install
 
       - name: Cache Pub dependencies
         uses: actions/cache@v3
@@ -38,7 +45,7 @@ jobs:
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
             ${{ runner.os }}-pub-
-            
+
       - name: Install dependencies
         run: fvm flutter pub get
         

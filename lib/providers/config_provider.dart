@@ -32,10 +32,10 @@ class ConfigProvider extends ChangeNotifier {
       _settings['iqomahTestingDuration'] ?? AppConstants.iqomahTestingDuration;
 
   String get cityId => _settings['cityId']?.toString() ?? AppConstants.cityId;
-  int get minsBeforeMaghrib =>
-      _settings['minsBeforeMaghrib'] ?? AppConstants.minutesBeforeMaghrib;
-  int get minsBeforeJumat =>
-      _settings['minsBeforeJumat'] ?? AppConstants.minutesBeforeJumat;
+  int get minutesBeforeMaghrib =>
+      _settings['minutesBeforeMaghrib'] ?? AppConstants.minutesBeforeMaghrib;
+  int get minutesBeforeJumat =>
+      _settings['minutesBeforeJumat'] ?? AppConstants.minutesBeforeJumat;
   String get marqueeText =>
       _settings['marqueeText'] ?? AppConstants.marqueeText;
 
@@ -49,7 +49,7 @@ class ConfigProvider extends ChangeNotifier {
   Future<void> init() async {
     await loadConfig();
 
-    Timer.periodic(const Duration(minutes: 10), (timer) async {
+    Timer.periodic(const Duration(minutes: 1), (timer) async {
       await loadConfig();
     });
   }

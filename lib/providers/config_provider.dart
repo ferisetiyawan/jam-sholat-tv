@@ -31,7 +31,6 @@ class ConfigProvider extends ChangeNotifier {
   int get iqomahTestingDuration =>
       _settings['iqomahTestingDuration'] ?? AppConstants.iqomahTestingDuration;
 
-  String get cityId => _settings['cityId']?.toString() ?? AppConstants.cityId;
   int get minutesBeforeMaghrib =>
       _settings['minutesBeforeMaghrib'] ?? AppConstants.minutesBeforeMaghrib;
   int get minutesBeforeJumat =>

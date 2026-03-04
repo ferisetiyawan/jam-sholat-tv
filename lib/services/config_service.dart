@@ -56,7 +56,6 @@ class ConfigService {
       'iqomahDefaultDuration':
           source['iqomahDefaultDuration'] ?? AppConstants.iqomahDefaultDuration,
 
-      'cityId': source['cityId'] ?? AppConstants.cityId,
       'minutesBeforeMaghrib':
           source['minutesBeforeMaghrib'] ?? AppConstants.minutesBeforeMaghrib,
       'minutesBeforeJumat':

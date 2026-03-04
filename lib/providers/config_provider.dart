@@ -39,6 +39,9 @@ class ConfigProvider extends ChangeNotifier {
   String get marqueeText =>
       _settings['marqueeText'] ?? AppConstants.marqueeText;
 
+  String get backgroundImage =>
+      _settings['backgroundImage'] ?? AppConstants.backgroundImage;
+
   List<String> get eventImages {
     if (_settings['eventImages'] != null) {
       return List<String>.from(_settings['eventImages']);

@@ -5,8 +5,6 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
-// Constants & Enums
-import 'core/constants/app_constants.dart';
 import 'core/constants/app_enum.dart';
 // Theme
 import 'core/theme/app_theme.dart';
@@ -79,6 +77,7 @@ class MainController extends StatelessWidget {
   Widget build(BuildContext context) {
     // Listen to AppProvider for changes and rebuild when it updates
     final app = context.watch<AppProvider>();
+    final config = context.watch<ConfigProvider>();
 
     // Navigate screen based on AppStatus
     final Widget screen = switch (app.status) {
@@ -105,7 +104,7 @@ class MainController extends StatelessWidget {
           data: app.financialData,
         ),
       AppStatus.home when app.isEventMode => EventScreen(
-        images: AppConstants.eventImages,
+        images: config.eventImages,
         currentIndex: app.currentEventIndex,
         currentTime: app.timeString,
       ),

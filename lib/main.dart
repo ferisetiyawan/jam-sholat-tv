@@ -48,7 +48,11 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ConfigProvider()..init()),
-        ChangeNotifierProvider(create: (_) => AppProvider()..init()),
+
+        ChangeNotifierProxyProvider<ConfigProvider, AppProvider>(
+          create: (_) => AppProvider()..init(),
+          update: (_, config, app) => app!..updateConfig(config),
+        ),
       ],
       child: const MasjidApp(),
     ),

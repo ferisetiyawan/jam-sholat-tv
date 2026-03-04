@@ -5,12 +5,12 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
-import '../core/constants/app_constants.dart';
 import '../core/constants/app_enum.dart';
 import '../core/utils/date_formatter.dart';
 import '../services/audio_service.dart';
 import '../services/financial_service.dart';
 import '../services/prayer_service.dart';
+import 'config_provider.dart';
 
 class AppProvider extends ChangeNotifier {
   final Logger _logger = Logger();
@@ -54,6 +54,9 @@ class AppProvider extends ChangeNotifier {
   Timer? _timer;
   final PrayerService _prayerService = PrayerService();
 
+  ConfigProvider? _config;
+  ConfigProvider get config => _config ?? ConfigProvider();
+
   void init() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
     _initConnectivity();
@@ -65,6 +68,10 @@ class AppProvider extends ChangeNotifier {
     _timer?.cancel();
     _connectivitySubscription?.cancel();
     super.dispose();
+  }
+
+  void updateConfig(ConfigProvider config) {
+    _config = config;
   }
 
   void _initConnectivity() {
@@ -146,6 +153,8 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _onTick() {
+    if (_config == null) return;
+
     if (_fakeTime != null) {
       _fakeTime = _fakeTime!.add(const Duration(seconds: 1));
     }
@@ -183,19 +192,16 @@ class AppProvider extends ChangeNotifier {
     if (status != AppStatus.home) return;
 
     int totalCycle =
-        AppConstants.homeDuration +
-        AppConstants.eventDuration +
-        AppConstants.reportDuration;
+        config.homeDuration + config.eventDuration + config.reportDuration;
     int currentSec = _timer!.tick % totalCycle;
 
     bool oldEventMode = isEventMode;
     bool oldReportMode = isReportMode;
 
-    if (currentSec < AppConstants.homeDuration) {
+    if (currentSec < config.homeDuration) {
       isEventMode = false;
       isReportMode = false;
-    } else if (currentSec <
-        (AppConstants.homeDuration + AppConstants.eventDuration)) {
+    } else if (currentSec < (config.homeDuration + config.eventDuration)) {
       isEventMode = true;
       isReportMode = false;
     } else {
@@ -209,8 +215,7 @@ class AppProvider extends ChangeNotifier {
     }
 
     if (isEventMode && !oldEventMode) {
-      currentEventIndex =
-          (currentEventIndex + 1) % AppConstants.eventImages.length;
+      currentEventIndex = (currentEventIndex + 1) % config.eventImages.length;
     }
 
     if (isReportMode && !oldReportMode) {
@@ -230,7 +235,7 @@ class AppProvider extends ChangeNotifier {
   void _startAdzan(String prayerName) {
     status = AppStatus.adzan;
     currentPrayerName = prayerName;
-    adzanCounter = (_fakeTime == null) ? AppConstants.adzanDuration : 5;
+    adzanCounter = (_fakeTime == null) ? config.adzanDuration : 5;
     AudioService.playAdzanBeep();
   }
 
@@ -262,12 +267,12 @@ class AppProvider extends ChangeNotifier {
   void _handleAdzanTransition() {
     if (currentPrayerName == "Jumat") {
       status = AppStatus.jumatMode;
-      jumatCounter = AppConstants.jumatDuration;
+      jumatCounter = config.jumatDuration;
     } else {
       status = AppStatus.iqomah;
       iqomahCounter = !kDebugMode
           ? PrayerService.getIqomahDuration(currentPrayerName)
-          : AppConstants.iqomahTestingDuration;
+          : config.iqomahTestingDuration;
     }
   }
 
@@ -279,13 +284,13 @@ class AppProvider extends ChangeNotifier {
   void _checkSpecialLiveConditions(DateTime now) {
     final bool isNearMaghrib = _isMinutesBeforePrayer(
       "Maghrib",
-      AppConstants.minutesBeforeMaghrib,
+      config.minutesBeforeMaghrib,
       now,
     );
     final bool isFriday = now.weekday == DateTime.friday;
     final bool isNearJumat =
         isFriday &&
-        _isMinutesBeforePrayer("Jumat", AppConstants.minutesBeforeJumat, now);
+        _isMinutesBeforePrayer("Jumat", config.minutesBeforeJumat, now);
 
     isSpecialLiveMode = (isNearMaghrib || isNearJumat) && hasInternet;
   }
@@ -340,7 +345,7 @@ class AppProvider extends ChangeNotifier {
         int.parse(parts[0]),
         int.parse(parts[1]),
       );
-      final endAdzan = pTime.add(Duration(seconds: AppConstants.adzanDuration));
+      final endAdzan = pTime.add(Duration(seconds: config.adzanDuration));
 
       if (now.isAfter(pTime) && now.isBefore(endAdzan)) {
         status = AppStatus.adzan;
@@ -353,7 +358,7 @@ class AppProvider extends ChangeNotifier {
           ? 0
           : PrayerService.getIqomahDuration(name);
       final currentContentDuration = (name == "Jumat")
-          ? AppConstants.jumatDuration
+          ? config.jumatDuration
           : currentIqomahDuration;
       final endCycle = endAdzan.add(Duration(seconds: currentContentDuration));
 

@@ -43,7 +43,13 @@ class ConfigProvider extends ChangeNotifier {
 
   List<String> get eventImages {
     if (_settings['eventImages'] != null) {
-      return List<String>.from(_settings['eventImages']);
+      final List<String> remoteImages = List<String>.from(
+        _settings['eventImages'],
+      );
+
+      if (remoteImages.isNotEmpty) {
+        return remoteImages;
+      }
     }
     return AppConstants.eventImages;
   }

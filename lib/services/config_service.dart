@@ -61,7 +61,11 @@ class ConfigService {
       'minutesBeforeJumat':
           source['minutesBeforeJumat'] ?? AppConstants.minutesBeforeJumat,
 
-      'eventImages': source['eventImages'] ?? AppConstants.eventImages,
+      'eventImages':
+          (source['eventImages'] != null &&
+              (source['eventImages'] as List).isNotEmpty)
+          ? source['eventImages']
+          : AppConstants.eventImages,
       'backgroundImage':
           source['backgroundImage'] ?? AppConstants.backgroundImage,
       'marqueeText': source['marqueeText'] ?? AppConstants.marqueeText,

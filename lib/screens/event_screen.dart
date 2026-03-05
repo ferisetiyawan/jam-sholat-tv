@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class EventScreen extends StatefulWidget {
-  final List<String> images;
+  final List<Map<String, String>> images;
   final int currentIndex;
   final String currentTime;
 
@@ -45,9 +45,12 @@ class _EventScreenState extends State<EventScreen> {
     super.dispose();
   }
 
-  Widget _buildSmartImage(String path) {
+  Widget _buildSmartImage(Map<String, String> imageData) {
+    final String path = imageData['url'] ?? '';
+    final String type = imageData['type']?.toUpperCase() ?? 'IMAGE';
+
     final bool isNetwork = path.startsWith('http');
-    final bool isSvg = path.toLowerCase().endsWith('.svg');
+    final bool isSvg = type == 'SVG' || path.toLowerCase().endsWith('.svg');
 
     if (isNetwork) {
       if (isSvg) {
@@ -78,17 +81,15 @@ class _EventScreenState extends State<EventScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        PageView.builder(
-          controller: _pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: widget.images.length,
-          itemBuilder: (context, index) {
-            return _buildSmartImage(widget.images[index]);
-          },
-        ),
-      ],
+    if (widget.images.isEmpty) return const SizedBox.shrink();
+
+    return PageView.builder(
+      controller: _pageController,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: widget.images.length,
+      itemBuilder: (context, index) {
+        return _buildSmartImage(widget.images[index]);
+      },
     );
   }
 }

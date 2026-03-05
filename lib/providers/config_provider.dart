@@ -41,16 +41,17 @@ class ConfigProvider extends ChangeNotifier {
   String get backgroundImage =>
       _settings['backgroundImage'] ?? AppConstants.backgroundImage;
 
-  List<String> get eventImages {
-    if (_settings['eventImages'] != null) {
-      final List<String> remoteImages = List<String>.from(
-        _settings['eventImages'],
-      );
-
-      if (remoteImages.isNotEmpty) {
-        return remoteImages;
-      }
+  List<Map<String, String>> get eventImages {
+    if (_settings['eventImages'] != null &&
+        (_settings['eventImages'] as List).isNotEmpty) {
+      return (_settings['eventImages'] as List).map((item) {
+        return {
+          'type': item['type']?.toString() ?? 'IMAGE',
+          'url': item['url']?.toString() ?? '',
+        };
+      }).toList();
     }
+
     return AppConstants.eventImages;
   }
 

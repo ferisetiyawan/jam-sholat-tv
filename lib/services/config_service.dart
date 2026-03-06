@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core/constants/app_constants.dart';
@@ -12,8 +14,6 @@ class ConfigService {
   static const String _cacheKey = 'local_config_cache';
 
   Future<Map<String, dynamic>> fetchRemoteConfig() async {
-    Map<String, dynamic> finalData = {};
-
     try {
       final response = await _dio.get(
         'https://script.google.com/macros/s/AKfycbw4Gp-TV5gmqsBWfFmHYPW5d7_1nBRiAmfEbTBOxWEqzHDnOzUkxhASZ2Bq8m6VgnEZdg/exec?action=config',
@@ -25,19 +25,73 @@ class ConfigService {
       );
 
       if (response.statusCode == 200) {
-        final remoteData = response.data['data'] as Map<String, dynamic>;
+        var remoteData = response.data['data'] as Map<String, dynamic>;
 
-        finalData = _ensureFullConfig(remoteData);
+        remoteData = await _syncAssets(remoteData);
+
+        final finalData = _ensureFullConfig(remoteData);
 
         await _saveToCache(finalData);
-        _logger.i("Remote config fetched and cached successfully.");
+
+        _logger.i("Remote config & assets synced successfully.");
         return finalData;
       }
     } catch (e) {
-      _logger.e("Fetch failed, reverting to cache/backup: $e");
+      _logger.e("Sync failed: $e");
     }
 
     return await _loadFromCache();
+  }
+
+  Future<Map<String, dynamic>> _syncAssets(Map<String, dynamic> data) async {
+    if (data['eventImages'] == null) return data;
+
+    final directory = await getApplicationDocumentsDirectory();
+    final List<dynamic> images = List.from(data['eventImages']);
+    final List<String> downloadedPaths = [];
+
+    for (var i = 0; i < images.length; i++) {
+      String url = images[i]['url']?.toString() ?? '';
+      String type = images[i]['type']?.toString().toUpperCase() ?? 'IMAGE';
+
+      if (url.startsWith('http')) {
+        try {
+          String extension = type == 'SVG' ? '.svg' : '.jpg';
+          String fileName = "event_${url.hashCode}$extension";
+          String filePath = "${directory.path}/$fileName";
+          File file = File(filePath);
+
+          if (!await file.exists()) {
+            _logger.d("Downloading new asset: $url");
+            await _dio.download(url, filePath);
+          }
+
+          images[i]['url'] = filePath;
+          downloadedPaths.add(filePath);
+        } catch (e) {
+          _logger.e("Failed to sync asset $url: $e");
+        }
+      } else {
+        downloadedPaths.add(url);
+      }
+    }
+
+    try {
+      final allFiles = directory.listSync();
+      for (var f in allFiles) {
+        if (f is File &&
+            f.path.contains("event_") &&
+            !downloadedPaths.contains(f.path)) {
+          await f.delete();
+          _logger.d("Cleanup: Deleted old asset ${f.path}");
+        }
+      }
+    } catch (e) {
+      _logger.e("Cleanup error: $e");
+    }
+
+    data['eventImages'] = images;
+    return data;
   }
 
   Map<String, dynamic> _ensureFullConfig(Map<String, dynamic> source) {
@@ -80,11 +134,7 @@ class ConfigService {
   Future<Map<String, dynamic>> _loadFromCache() async {
     final prefs = await SharedPreferences.getInstance();
     final cachedStr = prefs.getString(_cacheKey);
-
-    if (cachedStr != null) {
-      return _ensureFullConfig(jsonDecode(cachedStr));
-    }
-
+    if (cachedStr != null) return _ensureFullConfig(jsonDecode(cachedStr));
     return _ensureFullConfig({});
   }
 }

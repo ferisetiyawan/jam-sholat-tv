@@ -2,6 +2,8 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../widgets/background_image.dart';
+
 class IqomahScreen extends StatelessWidget {
   final String prayerName;
   final int countdown;
@@ -22,64 +24,104 @@ class IqomahScreen extends StatelessWidget {
         : Colors.greenAccent;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Center(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.85,
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "MENUJU IQOMAH",
-                  style: TextStyle(
-                    fontSize: 35,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 8,
-                  ),
-                ),
-                Text(
-                  prayerName.toUpperCase(),
-                  style: const TextStyle(fontSize: 25, color: Colors.white70),
-                ),
+      body: Stack(
+        children: [
+          const BackgroundImage(),
 
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      "$minutes:$seconds",
-                      style: TextStyle(
-                        fontSize: 250,
-                        fontWeight: FontWeight.w900,
-                        color: timerColor,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                        height: 1.1,
-                      ),
+          Center(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.85,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 30,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      width: 1.5,
                     ),
                   ),
-                ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "MENUJU IQOMAH",
+                        style: TextStyle(
+                          fontSize: 35,
+                          fontWeight: FontWeight.w300,
+                          color: Colors.white,
+                          letterSpacing: 8,
+                        ),
+                      ),
 
-                const Text(
-                  "LURUSKAN DAN RAPATKAN SHAF",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 2,
+                      Text(
+                        prayerName.toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 25,
+                          color: Colors.white70,
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            "$minutes:$seconds",
+                            style: TextStyle(
+                              fontSize: 250,
+                              fontWeight: FontWeight.w900,
+                              color: timerColor,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                              height: 1.1,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 40,
+                          vertical: 15,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.1),
+                            width: 1,
+                          ),
+                        ),
+                        child: const Text(
+                          "LURUSKAN DAN RAPATKAN SHAF",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

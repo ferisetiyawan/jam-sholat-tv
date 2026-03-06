@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -50,32 +52,38 @@ class _EventScreenState extends State<EventScreen> {
     final String type = imageData['type']?.toUpperCase() ?? 'IMAGE';
 
     final bool isNetwork = path.startsWith('http');
-    final bool isSvg = type == 'SVG' || path.toLowerCase().endsWith('.svg');
+    final bool isAsset = path.startsWith('assets/');
+    final bool isSvg = type == 'SVG';
 
-    if (isNetwork) {
-      if (isSvg) {
-        return SvgPicture.network(
-          path,
-          fit: BoxFit.cover,
-          placeholderBuilder: (context) =>
-              const Center(child: CircularProgressIndicator()),
-        );
-      } else {
-        return CachedNetworkImage(
-          imageUrl: path,
-          fit: BoxFit.cover,
-          placeholder: (context, url) =>
-              const Center(child: CircularProgressIndicator()),
-          errorWidget: (context, url, error) =>
-              const Icon(Icons.broken_image, size: 50),
-        );
+    if (isAsset) {
+      return isSvg
+          ? SvgPicture.asset(path, fit: BoxFit.cover)
+          : Image.asset(path, fit: BoxFit.cover);
+    }
+
+    if (!isNetwork) {
+      final file = File(path);
+      if (file.existsSync()) {
+        return isSvg
+            ? SvgPicture.file(file, fit: BoxFit.cover)
+            : Image.file(file, fit: BoxFit.cover);
       }
+    }
+
+    if (isSvg) {
+      return SvgPicture.network(
+        path,
+        fit: BoxFit.cover,
+        placeholderBuilder: (_) =>
+            const Center(child: CircularProgressIndicator()),
+      );
     } else {
-      if (isSvg) {
-        return SvgPicture.asset(path, fit: BoxFit.cover);
-      } else {
-        return Image.asset(path, fit: BoxFit.cover);
-      }
+      return CachedNetworkImage(
+        imageUrl: path,
+        fit: BoxFit.cover,
+        placeholder: (_, _) => const Center(child: CircularProgressIndicator()),
+        errorWidget: (_, _, _) => const Icon(Icons.broken_image, size: 50),
+      );
     }
   }
 

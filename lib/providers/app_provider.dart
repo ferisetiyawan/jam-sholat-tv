@@ -191,12 +191,15 @@ class AppProvider extends ChangeNotifier {
   void _handleCycleLogic(DateTime now) {
     if (status != AppStatus.home) return;
 
+    bool canShowReport = hasInternet && financialData.isNotEmpty;
+
+    int effectiveReportDuration = canShowReport ? config.reportDuration : 0;
     int totalCycle =
-        config.homeDuration + config.eventDuration + config.reportDuration;
+        config.homeDuration + config.eventDuration + effectiveReportDuration;
+
     int currentSec = _timer!.tick % totalCycle;
 
     bool oldEventMode = isEventMode;
-    bool oldReportMode = isReportMode;
 
     if (currentSec < config.homeDuration) {
       isEventMode = false;
@@ -205,21 +208,14 @@ class AppProvider extends ChangeNotifier {
       isEventMode = true;
       isReportMode = false;
     } else {
-      if (hasInternet && financialData.isNotEmpty) {
-        isEventMode = false;
-        isReportMode = true;
-      } else {
-        isEventMode = true;
-        isReportMode = false;
-      }
+      isEventMode = false;
+      isReportMode = true;
     }
 
     if (isEventMode && !oldEventMode) {
-      currentEventIndex = (currentEventIndex + 1) % config.eventImages.length;
-    }
-
-    if (isReportMode && !oldReportMode) {
-      updateFinancialReport();
+      if (config.eventImages.isNotEmpty) {
+        currentEventIndex = (currentEventIndex + 1) % config.eventImages.length;
+      }
     }
 
     for (var entry in jadwal.entries) {

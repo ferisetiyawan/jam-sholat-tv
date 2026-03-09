@@ -193,10 +193,12 @@ class AppProvider extends ChangeNotifier {
     if (status != AppStatus.home) return;
 
     bool canShowReport = hasInternet && financialData.isNotEmpty;
+    bool canShowEvent = config.eventImages.isNotEmpty;
 
     int effectiveReportDuration = canShowReport ? config.reportDuration : 0;
+    int effectiveEventDuration = canShowEvent ? config.eventDuration : 0;
     int totalCycle =
-        config.homeDuration + config.eventDuration + effectiveReportDuration;
+        config.homeDuration + effectiveEventDuration + effectiveReportDuration;
 
     int currentSec = _timer!.tick % totalCycle;
 
@@ -205,7 +207,7 @@ class AppProvider extends ChangeNotifier {
     if (currentSec < config.homeDuration) {
       isEventMode = false;
       isReportMode = false;
-    } else if (currentSec < (config.homeDuration + config.eventDuration)) {
+    } else if (currentSec < (config.homeDuration + effectiveEventDuration)) {
       isEventMode = true;
       isReportMode = false;
     } else {
@@ -213,7 +215,7 @@ class AppProvider extends ChangeNotifier {
       isReportMode = true;
     }
 
-    if (isEventMode && !oldEventMode) {
+    if (isEventMode && !oldEventMode && canShowEvent) {
       if (config.eventImages.isNotEmpty) {
         currentEventIndex = (currentEventIndex + 1) % config.eventImages.length;
       }

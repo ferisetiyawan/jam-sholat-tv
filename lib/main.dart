@@ -96,19 +96,21 @@ class MainController extends StatelessWidget {
         jadwal: app.jadwal,
         nextPrayerName: app.nextPrayerName,
       ),
-      AppStatus.home when app.isReportMode => FinancialReportScreen(
-        time: app.timeString,
-        dateMasehi: app.dateMasehi,
-        dateHijriah: app.dateHijriah,
-        jadwal: app.jadwal,
-        nextPrayerName: app.nextPrayerName,
-        data: app.financialData,
-      ),
-      AppStatus.home when app.isEventMode => EventScreen(
-        images: config.eventImages,
-        currentIndex: app.currentEventIndex,
-        currentTime: app.timeString,
-      ),
+      AppStatus.home when app.isReportMode && app.financialData.isNotEmpty =>
+        FinancialReportScreen(
+          time: app.timeString,
+          dateMasehi: app.dateMasehi,
+          dateHijriah: app.dateHijriah,
+          jadwal: app.jadwal,
+          nextPrayerName: app.nextPrayerName,
+          data: app.financialData,
+        ),
+      AppStatus.home when app.isEventMode && config.eventImages.isNotEmpty =>
+        EventScreen(
+          images: config.eventImages,
+          currentIndex: app.currentEventIndex,
+          currentTime: app.timeString,
+        ),
       // Default to Home (Status Home & IsEventMode = false)
       _ => HomeWrapper(
         time: app.timeString,

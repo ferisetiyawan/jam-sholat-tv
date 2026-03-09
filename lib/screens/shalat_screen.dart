@@ -40,28 +40,20 @@ class ShalatScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // 1. JUDUL: SHALAT BERLANGSUNG (20%)
                         Expanded(flex: 20, child: Center(child: _buildBadge())),
 
-                        // 2. TULISAN ARAB (30%) - Dibuat Jauh Lebih Besar
-                        // Kita buang FittedBox luar agar dia bisa wrap,
-                        // lalu kita kunci ukurannya di dalam.
                         Expanded(
-                          flex: 35, // Ditambah sedikit flex-nya
+                          flex: 35,
                           child: Center(
                             child: SingleChildScrollView(
-                              // Pengaman ekstra agar tidak overflow
                               child: Text(
                                 "سَوُّوا صُفُوفَكُمْ، فَإِنَّ تَسْوِيَةَ الصَّفِّ مِنْ تَمَامِ الصَّلَاةِ",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  fontSize:
-                                      screenSize.height *
-                                      0.07, // Ukuran font dinamis berdasarkan tinggi layar
-                                  fontFamily:
-                                      'Amiri', // Gunakan font Arab jika ada
+                                  fontSize: screenSize.height * 0.07,
+                                  fontFamily: 'Amiri',
                                   height: 1.5,
                                 ),
                               ),
@@ -69,10 +61,8 @@ class ShalatScreen extends StatelessWidget {
                           ),
                         ),
 
-                        // 3. TULISAN LATIN / ARTI (20%)
                         Expanded(
-                          flex:
-                              15, // Dikurangi flex-nya agar Arab lebih dominan
+                          flex: 15,
                           child: Center(
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
@@ -90,7 +80,6 @@ class ShalatScreen extends StatelessWidget {
                           ),
                         ),
 
-                        // 4. GARIS PEMISAH (10%)
                         Expanded(
                           flex: 10,
                           child: Center(
@@ -110,12 +99,10 @@ class ShalatScreen extends StatelessWidget {
                           ),
                         ),
 
-                        // 5. KETERANGAN SHALAT (15%) - Kunci Anti-Overlap
                         Expanded(
-                          flex: 20, // Ditambah flex agar area box shalat aman
+                          flex: 20,
                           child: Align(
-                            alignment: Alignment
-                                .topCenter, // Taruh agak atas agar tidak mepet bawah
+                            alignment: Alignment.topCenter,
                             child: FittedBox(
                               fit: BoxFit.scaleDown,
                               child: _buildPrayerInfo(),

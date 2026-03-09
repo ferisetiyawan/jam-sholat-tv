@@ -31,9 +31,7 @@ class AppConstants {
       30; // live makkah before jumat, in minutes
 
   // --- ASSETS ---
-  static const List<Map<String, String>> eventImages = [
-    {"type": "SVG", "url": "assets/images/kajian1.svg"},
-  ];
+  static const List<Map<String, String>> eventImages = [];
   static const List<String> prayerScheduleFiles = [
     '202603.json',
     '202604.json',

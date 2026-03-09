@@ -18,6 +18,7 @@ import 'screens/financial_report_screen.dart';
 import 'screens/iqomah_screen.dart';
 import 'screens/jumat_screen.dart';
 import 'screens/live_makkah_screen.dart';
+import 'screens/shalat_screen.dart';
 // Widgets
 import 'widgets/prayer_card.dart';
 // Wrappers
@@ -87,6 +88,7 @@ class MainController extends StatelessWidget {
         countdown: app.iqomahCounter,
       ),
       AppStatus.jumatMode => const JumatScreen(),
+      AppStatus.shalat => ShalatScreen(prayerName: app.currentPrayerName),
       AppStatus.home when app.isSpecialLiveMode => LiveMakkahScreen(
         time: app.timeString,
         dateMasehi: app.dateMasehi,

@@ -9,12 +9,13 @@ class AppConstants {
   static const int reportDuration = isDebug ? 3 : 20;
   static const int adzanDuration = 180;
   static const int jumatDuration = isDebug ? 10 : 2700;
+  static const int shalatDuration = isDebug ? 10 : 600;
 
   // --- prayer_service.dart ---
   static const int iqomahSubuhDuration = 900; // 15 minutes
   static const int iqomahMaghribRamadhanDuration = 900; // 15 minutes
   static const int iqomahDefaultDuration = 600; // 10 minutes
-  static const int iqomahTestingDuration = 15;
+  static const int iqomahTestingDuration = 5;
   static const int monthOfRamadhan = 9; // 9 = Ramadhan in Hijri Calendar
   static const String cityId =
       "1225"; // City ID form Adzan API, can be used to fetch prayer times for specific location

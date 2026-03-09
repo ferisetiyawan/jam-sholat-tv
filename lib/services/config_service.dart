@@ -101,6 +101,7 @@ class ConfigService {
       'reportDuration': source['reportDuration'] ?? AppConstants.reportDuration,
       'adzanDuration': source['adzanDuration'] ?? AppConstants.adzanDuration,
       'jumatDuration': source['jumatDuration'] ?? AppConstants.jumatDuration,
+      'shalatDuration': source['shalatDuration'] ?? AppConstants.shalatDuration,
 
       'iqomahSubuhDuration':
           source['iqomahSubuhDuration'] ?? AppConstants.iqomahSubuhDuration,

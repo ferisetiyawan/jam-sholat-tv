@@ -28,6 +28,7 @@ class AppProvider extends ChangeNotifier {
   int jumatCounter = 0;
   int iqomahCounter = 0;
   int adzanCounter = 0;
+  int shalatCounter = 0;
   bool isEventMode = false;
   bool isReportMode = false;
   int currentEventIndex = 0;
@@ -255,6 +256,11 @@ class AppProvider extends ChangeNotifier {
         if (jumatCounter <= 0) status = AppStatus.home;
         break;
 
+      case AppStatus.shalat:
+        shalatCounter--;
+        if (shalatCounter <= 0) status = AppStatus.home;
+        break;
+
       default:
         break;
     }
@@ -273,8 +279,10 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _finishPrayerCycle() {
-    status = AppStatus.home;
+    status = AppStatus.shalat;
+    shalatCounter = config.shalatDuration;
     AudioService.playAdzanBeep();
+    notifyListeners();
   }
 
   void _checkSpecialLiveConditions(DateTime now) {

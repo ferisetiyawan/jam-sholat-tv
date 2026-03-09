@@ -10,6 +10,7 @@ class AppConstants {
   static const int adzanDuration = 180;
   static const int jumatDuration = isDebug ? 10 : 2700;
   static const int shalatDuration = isDebug ? 10 : 600;
+  static const int isyraqDuration = isDebug ? 10 : 600;
 
   // --- prayer_service.dart ---
   static const int iqomahSubuhDuration = 900; // 15 minutes

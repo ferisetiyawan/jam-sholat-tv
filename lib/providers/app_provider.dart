@@ -29,6 +29,7 @@ class AppProvider extends ChangeNotifier {
   int iqomahCounter = 0;
   int adzanCounter = 0;
   int shalatCounter = 0;
+  int isyraqCounter = 0;
   bool isEventMode = false;
   bool isReportMode = false;
   int currentEventIndex = 0;
@@ -222,6 +223,26 @@ class AppProvider extends ChangeNotifier {
     }
 
     for (var entry in jadwal.entries) {
+      if (entry.key == "Syuruq") {
+        final parts = entry.value.split(':');
+        final syuruqTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+        );
+
+        final isyraqStart = syuruqTime.add(const Duration(minutes: 15));
+
+        if (now.hour == isyraqStart.hour &&
+            now.minute == isyraqStart.minute &&
+            now.second == 0) {
+          _startIsyraq();
+          break;
+        }
+      }
+
       if (entry.key != "Syuruq" &&
           entry.value == timeString &&
           now.second == 0) {
@@ -236,6 +257,14 @@ class AppProvider extends ChangeNotifier {
     currentPrayerName = prayerName;
     adzanCounter = (_fakeTime == null) ? config.adzanDuration : 5;
     AudioService.playAdzanBeep();
+    notifyListeners();
+  }
+
+  void _startIsyraq() {
+    status = AppStatus.isyraq;
+    isyraqCounter = (_fakeTime == null) ? 600 : 5;
+    AudioService.playAdzanBeep();
+    notifyListeners();
   }
 
   void _handlePrayerStatusLogic() {
@@ -261,6 +290,11 @@ class AppProvider extends ChangeNotifier {
       case AppStatus.shalat:
         shalatCounter--;
         if (shalatCounter <= 0) status = AppStatus.home;
+        break;
+
+      case AppStatus.isyraq:
+        isyraqCounter--;
+        if (isyraqCounter <= 0) status = AppStatus.home;
         break;
 
       default:
@@ -332,6 +366,23 @@ class AppProvider extends ChangeNotifier {
       now.day,
       int.parse(p[0]),
       int.parse(p[1]) - 1,
+      55,
+    );
+    status = AppStatus.home;
+    notifyListeners();
+  }
+
+  void enableFakeSyuruqTime() {
+    final now = DateTime.now();
+    final syuruq = jadwal["Syuruq"] ?? "06:00";
+    final p = syuruq.split(':');
+
+    _fakeTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      int.parse(p[0]),
+      int.parse(p[1]) + 14,
       55,
     );
     status = AppStatus.home;

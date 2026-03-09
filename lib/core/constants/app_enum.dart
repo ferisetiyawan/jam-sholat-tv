@@ -1,1 +1,1 @@
-enum AppStatus { home, adzan, iqomah, jumatMode, shalat }
+enum AppStatus { home, adzan, iqomah, jumatMode, shalat, isyraq }

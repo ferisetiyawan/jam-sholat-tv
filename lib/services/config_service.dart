@@ -56,8 +56,9 @@ class ConfigService {
 
       if (url.startsWith('http')) {
         try {
-          String extension = type == 'SVG' ? '.svg' : '.jpg';
-          String fileName = "event_${url.hashCode}$extension";
+          String extName = type.toLowerCase();
+          String fileName = "event_${url.hashCode}.$extName";
+
           String filePath = "${directory.path}/$fileName";
           File file = File(filePath);
 
@@ -101,6 +102,7 @@ class ConfigService {
       'reportDuration': source['reportDuration'] ?? AppConstants.reportDuration,
       'adzanDuration': source['adzanDuration'] ?? AppConstants.adzanDuration,
       'jumatDuration': source['jumatDuration'] ?? AppConstants.jumatDuration,
+      'shalatDuration': source['shalatDuration'] ?? AppConstants.shalatDuration,
 
       'iqomahSubuhDuration':
           source['iqomahSubuhDuration'] ?? AppConstants.iqomahSubuhDuration,

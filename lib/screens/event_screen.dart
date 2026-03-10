@@ -66,7 +66,12 @@ class _EventScreenState extends State<EventScreen> {
       if (file.existsSync()) {
         return isSvg
             ? SvgPicture.file(file, fit: BoxFit.cover)
-            : Image.file(file, fit: BoxFit.cover);
+            : Image.file(
+                file,
+                fit: BoxFit.cover,
+                cacheWidth: 1920,
+                filterQuality: FilterQuality.high,
+              );
       }
     }
 
@@ -81,6 +86,8 @@ class _EventScreenState extends State<EventScreen> {
       return CachedNetworkImage(
         imageUrl: path,
         fit: BoxFit.cover,
+        memCacheWidth: 1920,
+        filterQuality: FilterQuality.high,
         placeholder: (_, _) => const Center(child: CircularProgressIndicator()),
         errorWidget: (_, _, _) => const Icon(Icons.broken_image, size: 50),
       );

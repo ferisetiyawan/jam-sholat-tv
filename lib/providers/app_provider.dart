@@ -28,6 +28,8 @@ class AppProvider extends ChangeNotifier {
   int jumatCounter = 0;
   int iqomahCounter = 0;
   int adzanCounter = 0;
+  int shalatCounter = 0;
+  int isyraqCounter = 0;
   bool isEventMode = false;
   bool isReportMode = false;
   int currentEventIndex = 0;
@@ -192,10 +194,12 @@ class AppProvider extends ChangeNotifier {
     if (status != AppStatus.home) return;
 
     bool canShowReport = hasInternet && financialData.isNotEmpty;
+    bool canShowEvent = config.eventImages.isNotEmpty;
 
     int effectiveReportDuration = canShowReport ? config.reportDuration : 0;
+    int effectiveEventDuration = canShowEvent ? config.eventDuration : 0;
     int totalCycle =
-        config.homeDuration + config.eventDuration + effectiveReportDuration;
+        config.homeDuration + effectiveEventDuration + effectiveReportDuration;
 
     int currentSec = _timer!.tick % totalCycle;
 
@@ -204,7 +208,7 @@ class AppProvider extends ChangeNotifier {
     if (currentSec < config.homeDuration) {
       isEventMode = false;
       isReportMode = false;
-    } else if (currentSec < (config.homeDuration + config.eventDuration)) {
+    } else if (currentSec < (config.homeDuration + effectiveEventDuration)) {
       isEventMode = true;
       isReportMode = false;
     } else {
@@ -212,13 +216,33 @@ class AppProvider extends ChangeNotifier {
       isReportMode = true;
     }
 
-    if (isEventMode && !oldEventMode) {
+    if (isEventMode && !oldEventMode && canShowEvent) {
       if (config.eventImages.isNotEmpty) {
         currentEventIndex = (currentEventIndex + 1) % config.eventImages.length;
       }
     }
 
     for (var entry in jadwal.entries) {
+      if (entry.key == "Syuruq") {
+        final parts = entry.value.split(':');
+        final syuruqTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+        );
+
+        final isyraqStart = syuruqTime.add(const Duration(minutes: 15));
+
+        if (now.hour == isyraqStart.hour &&
+            now.minute == isyraqStart.minute &&
+            now.second == 0) {
+          _startIsyraq();
+          break;
+        }
+      }
+
       if (entry.key != "Syuruq" &&
           entry.value == timeString &&
           now.second == 0) {
@@ -233,6 +257,14 @@ class AppProvider extends ChangeNotifier {
     currentPrayerName = prayerName;
     adzanCounter = (_fakeTime == null) ? config.adzanDuration : 5;
     AudioService.playAdzanBeep();
+    notifyListeners();
+  }
+
+  void _startIsyraq() {
+    status = AppStatus.isyraq;
+    isyraqCounter = (_fakeTime == null) ? 600 : 5;
+    AudioService.playAdzanBeep();
+    notifyListeners();
   }
 
   void _handlePrayerStatusLogic() {
@@ -255,6 +287,16 @@ class AppProvider extends ChangeNotifier {
         if (jumatCounter <= 0) status = AppStatus.home;
         break;
 
+      case AppStatus.shalat:
+        shalatCounter--;
+        if (shalatCounter <= 0) status = AppStatus.home;
+        break;
+
+      case AppStatus.isyraq:
+        isyraqCounter--;
+        if (isyraqCounter <= 0) status = AppStatus.home;
+        break;
+
       default:
         break;
     }
@@ -273,8 +315,10 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _finishPrayerCycle() {
-    status = AppStatus.home;
+    status = AppStatus.shalat;
+    shalatCounter = config.shalatDuration;
     AudioService.playAdzanBeep();
+    notifyListeners();
   }
 
   void _checkSpecialLiveConditions(DateTime now) {
@@ -322,6 +366,23 @@ class AppProvider extends ChangeNotifier {
       now.day,
       int.parse(p[0]),
       int.parse(p[1]) - 1,
+      55,
+    );
+    status = AppStatus.home;
+    notifyListeners();
+  }
+
+  void enableFakeSyuruqTime() {
+    final now = DateTime.now();
+    final syuruq = jadwal["Syuruq"] ?? "06:00";
+    final p = syuruq.split(':');
+
+    _fakeTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      int.parse(p[0]),
+      int.parse(p[1]) + 14,
       55,
     );
     status = AppStatus.home;

@@ -16,8 +16,10 @@ import 'screens/adzan_screen.dart';
 import 'screens/event_screen.dart';
 import 'screens/financial_report_screen.dart';
 import 'screens/iqomah_screen.dart';
+import 'screens/isyraq_screen.dart';
 import 'screens/jumat_screen.dart';
 import 'screens/live_makkah_screen.dart';
+import 'screens/shalat_screen.dart';
 // Widgets
 import 'widgets/prayer_card.dart';
 // Wrappers
@@ -86,7 +88,9 @@ class MainController extends StatelessWidget {
         prayerName: app.currentPrayerName,
         countdown: app.iqomahCounter,
       ),
+      AppStatus.isyraq => const IsyraqScreen(),
       AppStatus.jumatMode => const JumatScreen(),
+      AppStatus.shalat => ShalatScreen(prayerName: app.currentPrayerName),
       AppStatus.home when app.isSpecialLiveMode => LiveMakkahScreen(
         time: app.timeString,
         dateMasehi: app.dateMasehi,
@@ -94,19 +98,21 @@ class MainController extends StatelessWidget {
         jadwal: app.jadwal,
         nextPrayerName: app.nextPrayerName,
       ),
-      AppStatus.home when app.isReportMode => FinancialReportScreen(
-        time: app.timeString,
-        dateMasehi: app.dateMasehi,
-        dateHijriah: app.dateHijriah,
-        jadwal: app.jadwal,
-        nextPrayerName: app.nextPrayerName,
-        data: app.financialData,
-      ),
-      AppStatus.home when app.isEventMode => EventScreen(
-        images: config.eventImages,
-        currentIndex: app.currentEventIndex,
-        currentTime: app.timeString,
-      ),
+      AppStatus.home when app.isReportMode && app.financialData.isNotEmpty =>
+        FinancialReportScreen(
+          time: app.timeString,
+          dateMasehi: app.dateMasehi,
+          dateHijriah: app.dateHijriah,
+          jadwal: app.jadwal,
+          nextPrayerName: app.nextPrayerName,
+          data: app.financialData,
+        ),
+      AppStatus.home when app.isEventMode && config.eventImages.isNotEmpty =>
+        EventScreen(
+          images: config.eventImages,
+          currentIndex: app.currentEventIndex,
+          currentTime: app.timeString,
+        ),
       // Default to Home (Status Home & IsEventMode = false)
       _ => HomeWrapper(
         time: app.timeString,
@@ -148,10 +154,25 @@ class MainController extends StatelessWidget {
   // Simulation Button
   Widget? _buildDebugFab(BuildContext context) {
     if (!kDebugMode) return null;
-    return FloatingActionButton(
-      backgroundColor: Colors.red.withValues(alpha: 0.5),
-      onPressed: () => context.read<AppProvider>().enableFakeTime(),
-      child: const Icon(Icons.fast_forward),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FloatingActionButton.small(
+          heroTag: "btnSyuruq",
+          backgroundColor: Colors.orange.withValues(alpha: 0.6),
+          onPressed: () => context.read<AppProvider>().enableFakeSyuruqTime(),
+          child: const Icon(Icons.wb_sunny),
+        ),
+
+        const SizedBox(height: 10),
+
+        FloatingActionButton(
+          heroTag: "btnMaghrib",
+          backgroundColor: Colors.red.withValues(alpha: 0.5),
+          onPressed: () => context.read<AppProvider>().enableFakeTime(),
+          child: const Icon(Icons.fast_forward),
+        ),
+      ],
     );
   }
 }

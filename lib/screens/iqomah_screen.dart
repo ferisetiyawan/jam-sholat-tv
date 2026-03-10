@@ -51,9 +51,11 @@ class IqomahScreen extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        "MENUJU IQOMAH",
-                        style: TextStyle(
+                      Text(
+                        prayerName == "Syuruq"
+                            ? "MENANTI ISYRAQ"
+                            : "MENUJU IQOMAH",
+                        style: const TextStyle(
                           fontSize: 35,
                           fontWeight: FontWeight.w300,
                           color: Colors.white,
@@ -62,7 +64,9 @@ class IqomahScreen extends StatelessWidget {
                       ),
 
                       Text(
-                        prayerName.toUpperCase(),
+                        prayerName == "Syuruq"
+                            ? "AWAL WAKTU DHUHA"
+                            : prayerName.toUpperCase(),
                         style: const TextStyle(
                           fontSize: 25,
                           color: Colors.white70,
@@ -91,30 +95,32 @@ class IqomahScreen extends StatelessWidget {
 
                       const SizedBox(height: 15),
 
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 40,
-                          vertical: 15,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: const Text(
-                          "LURUSKAN DAN RAPATKAN SHAF",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 2,
-                          ),
-                        ),
-                      ),
+                      prayerName != "Syuruq"
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                                vertical: 15,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.1),
+                                  width: 1,
+                                ),
+                              ),
+                              child: const Text(
+                                "LURUSKAN DAN RAPATKAN SHAF",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: 2,
+                                ),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
                     ],
                   ),
                 ),

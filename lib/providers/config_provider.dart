@@ -22,7 +22,11 @@ class ConfigProvider extends ChangeNotifier {
       _settings['jumatDuration'] ?? AppConstants.jumatDuration;
   int get shalatDuration =>
       _settings['shalatDuration'] ?? AppConstants.shalatDuration;
+  int get isyraqDuration =>
+      _settings['isyraqDuration'] ?? AppConstants.isyraqDuration;
 
+  int get waitingIsyraqDuration =>
+      _settings['waitingIsyraqDuration'] ?? AppConstants.waitingIsyraqDuration;
   int get iqomahSubuhDuration =>
       _settings['iqomahSubuhDuration'] ?? AppConstants.iqomahSubuhDuration;
   int get iqomahMaghribRamadhanDuration =>

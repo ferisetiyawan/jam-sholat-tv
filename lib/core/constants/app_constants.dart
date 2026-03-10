@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class AppConstants {
   static const bool isDebug = kDebugMode;
 
-  // --- main.dart ---
+  // --- prayer_service.dart ---
   static const int homeDuration = isDebug ? 2 : 10;
   static const int eventDuration = isDebug ? 3 : 20;
   static const int reportDuration = isDebug ? 3 : 20;
@@ -11,8 +11,7 @@ class AppConstants {
   static const int jumatDuration = isDebug ? 10 : 2700;
   static const int shalatDuration = isDebug ? 10 : 600;
   static const int isyraqDuration = isDebug ? 10 : 600;
-
-  // --- prayer_service.dart ---
+  static const int waitingIsyraqDuration = isDebug ? 15 : 900; // 15 minutes
   static const int iqomahSubuhDuration = 900; // 15 minutes
   static const int iqomahMaghribRamadhanDuration = 900; // 15 minutes
   static const int iqomahDefaultDuration = 600; // 10 minutes

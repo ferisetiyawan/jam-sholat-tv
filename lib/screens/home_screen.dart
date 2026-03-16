@@ -26,17 +26,14 @@ class HomeScreen extends StatelessWidget {
 
     return Stack(
       children: [
-        // --- LAYER 1: MAIN CONTENT ---
         Column(
           children: [
-            // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 25),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // --- LEFT: TIME, DATE, PRAYER SCHEDULE ---
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -69,7 +66,6 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
 
-                  // --- RIGHT: MASJID NAME ---
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: const [
@@ -90,7 +86,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const Spacer(),
-            // Prayer Schedule Cards
+
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
               child: ClipRRect(
@@ -119,7 +115,6 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
 
-        // --- LAYER 2: OVERLAY WARNING (If Time Not Valid) ---
         if (!isTimeValid)
           Container(
             width: double.infinity,

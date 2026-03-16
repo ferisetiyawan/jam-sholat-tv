@@ -223,6 +223,8 @@ class AppProvider extends ChangeNotifier {
     }
 
     for (var entry in jadwal.entries) {
+      String prayerKey = entry.key;
+
       if (entry.key == "Syuruq" &&
           entry.value == timeString &&
           now.second == 0) {
@@ -234,10 +236,14 @@ class AppProvider extends ChangeNotifier {
         break;
       }
 
+      if (now.weekday == DateTime.friday && prayerKey == "Dzuhur") {
+        prayerKey = "Jumat";
+      }
+
       if (entry.key != "Syuruq" &&
           entry.value == timeString &&
           now.second == 0) {
-        _startAdzan(entry.key);
+        _startAdzan(prayerKey);
         break;
       }
     }
@@ -389,8 +395,11 @@ class AppProvider extends ChangeNotifier {
 
   void checkInitialStatus(Map<String, String> data) {
     final now = DateTime.now();
+    bool isFriday = now.weekday == DateTime.friday;
+
     data.forEach((name, time) {
-      if (name == "Syuruq") return;
+      String displayName = name;
+      if (isFriday && name == "Dzuhur") displayName = "Jumat";
 
       final parts = time.split(':');
       final pTime = DateTime(
@@ -422,7 +431,7 @@ class AppProvider extends ChangeNotifier {
 
       if (now.isAfter(pTime) && now.isBefore(endAdzan)) {
         status = AppStatus.adzan;
-        currentPrayerName = name;
+        currentPrayerName = displayName;
         adzanCounter = endAdzan.difference(now).inSeconds;
         return;
       }

@@ -44,7 +44,6 @@ void main() async {
   WakelockPlus.enable();
 
   runApp(
-    // GANTI: Gunakan MultiProvider agar ConfigProvider tersedia
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ConfigProvider()..init()),

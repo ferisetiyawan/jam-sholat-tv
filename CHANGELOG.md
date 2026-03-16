@@ -1,3 +1,6 @@
+## [1.2.1] - 2026-03-16
+- Bug Fixed: Jumat Screen not show during Friday
+
 ## [1.2.0] - 2026-03-10
 - change package name
 

@@ -9,8 +9,9 @@ class DateFormatter {
     String masehi = DateFormat('d MMMM yyyy', 'id_ID').format(now);
 
     // Hijriah
-    var hijri = Hijriyah.now();
-    hijri.hDay -= 1;
+    final adjustedDate = now.subtract(const Duration(days: 1));
+    var hijri = Hijriyah.fromDate(adjustedDate);
+
     String hijriah = "${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear} H";
 
     return {"masehi": masehi, "hijriah": hijriah};

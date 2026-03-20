@@ -19,10 +19,12 @@ class PrayerService {
     DateTime? nextTime;
     String nextName = "";
 
+    bool isFriday = now.weekday == DateTime.friday;
+
     List<String> order = [
       "Subuh",
       "Syuruq",
-      "Dzuhur",
+      isFriday ? "Jumat" : "Dzuhur",
       "Ashar",
       "Maghrib",
       "Isya",
@@ -32,7 +34,8 @@ class PrayerService {
     }
 
     for (String name in order) {
-      String? t = jadwal[name];
+      String? t = jadwal[name] ?? (name == "Jumat" ? jadwal["Dzuhur"] : null);
+
       if (t == null || t == "--:--" || t.isEmpty) continue;
 
       final parts = t.split(':');

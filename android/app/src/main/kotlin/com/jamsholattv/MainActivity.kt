@@ -1,4 +1,4 @@
-package com.example.jam_sholat_tv
+package com.jamsholattv
 
 import io.flutter.embedding.android.FlutterActivity
 

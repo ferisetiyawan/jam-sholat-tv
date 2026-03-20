@@ -223,30 +223,27 @@ class AppProvider extends ChangeNotifier {
     }
 
     for (var entry in jadwal.entries) {
-      if (entry.key == "Syuruq") {
-        final parts = entry.value.split(':');
-        final syuruqTime = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          int.parse(parts[0]),
-          int.parse(parts[1]),
-        );
+      String prayerKey = entry.key;
 
-        final isyraqStart = syuruqTime.add(const Duration(minutes: 15));
+      if (entry.key == "Syuruq" &&
+          entry.value == timeString &&
+          now.second == 0) {
+        status = AppStatus.iqomah;
+        currentPrayerName = "Syuruq";
+        iqomahCounter = config.waitingIsyraqDuration;
+        AudioService.playAdzanBeep();
+        notifyListeners();
+        break;
+      }
 
-        if (now.hour == isyraqStart.hour &&
-            now.minute == isyraqStart.minute &&
-            now.second == 0) {
-          _startIsyraq();
-          break;
-        }
+      if (now.weekday == DateTime.friday && prayerKey == "Dzuhur") {
+        prayerKey = "Jumat";
       }
 
       if (entry.key != "Syuruq" &&
           entry.value == timeString &&
           now.second == 0) {
-        _startAdzan(entry.key);
+        _startAdzan(prayerKey);
         break;
       }
     }
@@ -262,7 +259,7 @@ class AppProvider extends ChangeNotifier {
 
   void _startIsyraq() {
     status = AppStatus.isyraq;
-    isyraqCounter = (_fakeTime == null) ? 600 : 5;
+    isyraqCounter = (_fakeTime == null) ? config.isyraqDuration : 5;
     AudioService.playAdzanBeep();
     notifyListeners();
   }
@@ -279,7 +276,13 @@ class AppProvider extends ChangeNotifier {
         if (iqomahCounter <= 10 && iqomahCounter > 0) {
           AudioService.playIqomahBeep();
         }
-        if (iqomahCounter <= 0) _finishPrayerCycle();
+        if (iqomahCounter <= 0) {
+          if (currentPrayerName == "Syuruq") {
+            _startIsyraq();
+          } else {
+            _finishPrayerCycle();
+          }
+        }
         break;
 
       case AppStatus.jumatMode:
@@ -382,17 +385,21 @@ class AppProvider extends ChangeNotifier {
       now.month,
       now.day,
       int.parse(p[0]),
-      int.parse(p[1]) + 14,
-      55,
-    );
+      int.parse(p[1]),
+      0,
+    ).subtract(const Duration(seconds: 5));
+
     status = AppStatus.home;
     notifyListeners();
   }
 
   void checkInitialStatus(Map<String, String> data) {
     final now = DateTime.now();
+    bool isFriday = now.weekday == DateTime.friday;
+
     data.forEach((name, time) {
-      if (name == "Syuruq") return;
+      String displayName = name;
+      if (isFriday && name == "Dzuhur") displayName = "Jumat";
 
       final parts = time.split(':');
       final pTime = DateTime(
@@ -402,11 +409,29 @@ class AppProvider extends ChangeNotifier {
         int.parse(parts[0]),
         int.parse(parts[1]),
       );
+
+      if (name == "Syuruq") {
+        final endWaiting = pTime.add(const Duration(seconds: 900));
+        final endIsyraq = endWaiting.add(const Duration(seconds: 600));
+
+        if (now.isAfter(pTime) && now.isBefore(endWaiting)) {
+          status = AppStatus.iqomah;
+          currentPrayerName = "Syuruq";
+          iqomahCounter = endWaiting.difference(now).inSeconds;
+          return;
+        } else if (now.isAfter(endWaiting) && now.isBefore(endIsyraq)) {
+          status = AppStatus.isyraq;
+          isyraqCounter = endIsyraq.difference(now).inSeconds;
+          return;
+        }
+        return;
+      }
+
       final endAdzan = pTime.add(Duration(seconds: config.adzanDuration));
 
       if (now.isAfter(pTime) && now.isBefore(endAdzan)) {
         status = AppStatus.adzan;
-        currentPrayerName = name;
+        currentPrayerName = displayName;
         adzanCounter = endAdzan.difference(now).inSeconds;
         return;
       }

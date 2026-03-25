@@ -104,6 +104,8 @@ class ConfigService {
       'jumatDuration': source['jumatDuration'] ?? AppConstants.jumatDuration,
       'shalatDuration': source['shalatDuration'] ?? AppConstants.shalatDuration,
       'isyraqDuration': source['isyraqDuration'] ?? AppConstants.isyraqDuration,
+      'hijriCorrection':
+          source['hijriCorrection'] ?? AppConstants.hijriCorrection,
 
       'waitingIsyraqDuration':
           source['waitingIsyraqDuration'] ?? AppConstants.waitingIsyraqDuration,

@@ -11,6 +11,7 @@ class AppConstants {
   static const int jumatDuration = isDebug ? 10 : 2700;
   static const int shalatDuration = isDebug ? 10 : 600;
   static const int isyraqDuration = isDebug ? 10 : 600;
+  static const int hijriCorrection = -1;
   static const int waitingIsyraqDuration = isDebug ? 15 : 900; // 15 minutes
   static const int iqomahSubuhDuration = 900; // 15 minutes
   static const int iqomahMaghribRamadhanDuration = 900; // 15 minutes

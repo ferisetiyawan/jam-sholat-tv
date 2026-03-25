@@ -25,6 +25,13 @@ class ConfigProvider extends ChangeNotifier {
   int get isyraqDuration =>
       _settings['isyraqDuration'] ?? AppConstants.isyraqDuration;
 
+  int get hijriCorrection {
+    int rawCorrection =
+        _settings['hijriCorrection'] ?? AppConstants.hijriCorrection;
+
+    return rawCorrection.clamp(-2, 2);
+  }
+
   int get waitingIsyraqDuration =>
       _settings['waitingIsyraqDuration'] ?? AppConstants.waitingIsyraqDuration;
   int get iqomahSubuhDuration =>

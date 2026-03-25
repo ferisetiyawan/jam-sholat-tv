@@ -181,7 +181,9 @@ class AppProvider extends ChangeNotifier {
 
   void _updateDateTimeStrings(DateTime now) {
     timeString = DateFormat('HH:mm').format(now);
-    final dates = DateFormatter.getFullDate();
+
+    final correction = config.hijriCorrection;
+    final dates = DateFormatter.getFullDate(correction);
     dateMasehi = dates['masehi']!;
     dateHijriah = dates['hijriah']!;
 

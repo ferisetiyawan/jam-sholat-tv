@@ -1,3 +1,6 @@
+## [1.3.0] - 2026-03-25
+- Dynamic Hijri Correction
+
 ## [1.2.2] - 2026-03-20
 - Bug Fixed: Hijriyah minus 1
 

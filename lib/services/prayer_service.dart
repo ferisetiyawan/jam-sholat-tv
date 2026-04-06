@@ -29,9 +29,6 @@ class PrayerService {
       "Maghrib",
       "Isya",
     ];
-    if (jadwal.containsKey("Jumat")) {
-      order = ["Subuh", "Syuruq", "Jumat", "Ashar", "Maghrib", "Isya"];
-    }
 
     for (String name in order) {
       String? t = jadwal[name] ?? (name == "Jumat" ? jadwal["Dzuhur"] : null);
@@ -204,12 +201,10 @@ class PrayerService {
       if (foundData != null) {
         PrayerSchedule schedule = PrayerSchedule.fromJson(foundData);
 
-        bool isFriday = DateTime.now().weekday == DateTime.friday;
-
         return {
           "Subuh": schedule.subuh,
           "Syuruq": schedule.syuruq,
-          isFriday ? "Jumat" : "Dzuhur": schedule.dzuhur,
+          "Dzuhur": schedule.dzuhur,
           "Ashar": schedule.ashar,
           "Maghrib": schedule.maghrib,
           "Isya": schedule.isya,

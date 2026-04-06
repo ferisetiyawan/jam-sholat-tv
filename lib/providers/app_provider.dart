@@ -59,6 +59,8 @@ class AppProvider extends ChangeNotifier {
   ConfigProvider? _config;
   ConfigProvider get config => _config ?? ConfigProvider();
 
+  DateTime get currentDateTime => _fakeTime ?? DateTime.now();
+
   void init() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
     _initConnectivity();
@@ -195,6 +197,7 @@ class AppProvider extends ChangeNotifier {
   void _handleCycleLogic(DateTime now) {
     if (status != AppStatus.home) return;
 
+    bool isFriday = now.weekday == DateTime.friday;
     bool canShowReport = hasInternet && financialData.isNotEmpty;
     bool canShowEvent = config.eventImages.isNotEmpty;
 
@@ -205,12 +208,13 @@ class AppProvider extends ChangeNotifier {
 
     int currentSec = _timer!.tick % totalCycle;
 
-    bool oldEventMode = isEventMode;
-
     if (currentSec < config.homeDuration) {
       isEventMode = false;
       isReportMode = false;
     } else if (currentSec < (config.homeDuration + effectiveEventDuration)) {
+      if (!isEventMode && canShowEvent) {
+        currentEventIndex = (currentEventIndex + 1) % config.eventImages.length;
+      }
       isEventMode = true;
       isReportMode = false;
     } else {
@@ -218,34 +222,24 @@ class AppProvider extends ChangeNotifier {
       isReportMode = true;
     }
 
-    if (isEventMode && !oldEventMode && canShowEvent) {
-      if (config.eventImages.isNotEmpty) {
-        currentEventIndex = (currentEventIndex + 1) % config.eventImages.length;
-      }
-    }
-
     for (var entry in jadwal.entries) {
       String prayerKey = entry.key;
+      String prayerDisplayName = entry.key;
 
-      if (entry.key == "Syuruq" &&
-          entry.value == timeString &&
-          now.second == 0) {
-        status = AppStatus.iqomah;
-        currentPrayerName = "Syuruq";
-        iqomahCounter = config.waitingIsyraqDuration;
-        AudioService.playAdzanBeep();
+      if (isFriday && prayerKey == "Dzuhur") {
+        prayerDisplayName = "Jumat";
+      }
+
+      if (entry.value == timeString && now.second == 0) {
+        if (prayerKey == "Syuruq") {
+          status = AppStatus.iqomah;
+          currentPrayerName = "Syuruq";
+          iqomahCounter = config.waitingIsyraqDuration;
+          AudioService.playAdzanBeep();
+        } else {
+          _startAdzan(prayerDisplayName);
+        }
         notifyListeners();
-        break;
-      }
-
-      if (now.weekday == DateTime.friday && prayerKey == "Dzuhur") {
-        prayerKey = "Jumat";
-      }
-
-      if (entry.key != "Syuruq" &&
-          entry.value == timeString &&
-          now.second == 0) {
-        _startAdzan(prayerKey);
         break;
       }
     }
@@ -317,6 +311,7 @@ class AppProvider extends ChangeNotifier {
           ? PrayerService.getIqomahDuration(currentPrayerName)
           : config.iqomahTestingDuration;
     }
+    notifyListeners();
   }
 
   void _finishPrayerCycle() {
@@ -342,8 +337,7 @@ class AppProvider extends ChangeNotifier {
 
   bool _isMinutesBeforePrayer(String prayerName, int minutes, DateTime now) {
     String key = prayerName;
-    if (prayerName == "Jumat" && !jadwal.containsKey("Jumat")) key = "Dzuhur";
-    if (prayerName == "Dzuhur" && jadwal.containsKey("Jumat")) key = "Jumat";
+    if (prayerName == "Jumat") key = "Dzuhur";
 
     final String? tStr = jadwal[key];
     if (tStr == null || tStr == "--:--") return false;
@@ -395,6 +389,33 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void enableFakeJumatTime() {
+    final now = DateTime.now();
+
+    int daysUntilFriday = (DateTime.friday - now.weekday + 7) % 7;
+    DateTime targetFriday = now.add(Duration(days: daysUntilFriday));
+
+    final dzuhur = jadwal["Dzuhur"] ?? "12:00";
+    final p = dzuhur.split(':');
+
+    _fakeTime = DateTime(
+      targetFriday.year,
+      targetFriday.month,
+      targetFriday.day,
+      int.parse(p[0]),
+      int.parse(p[1]),
+      0,
+    ).subtract(const Duration(seconds: 5));
+
+    status = AppStatus.home;
+    _logger.i(
+      "Fake Time set to Friday at ${DateFormat('HH:mm:ss').format(_fakeTime!)}",
+    );
+
+    _updateDateTimeStrings(_fakeTime!);
+    notifyListeners();
+  }
+
   void checkInitialStatus(Map<String, String> data) {
     final now = DateTime.now();
     bool isFriday = now.weekday == DateTime.friday;
@@ -420,11 +441,9 @@ class AppProvider extends ChangeNotifier {
           status = AppStatus.iqomah;
           currentPrayerName = "Syuruq";
           iqomahCounter = endWaiting.difference(now).inSeconds;
-          return;
         } else if (now.isAfter(endWaiting) && now.isBefore(endIsyraq)) {
           status = AppStatus.isyraq;
           isyraqCounter = endIsyraq.difference(now).inSeconds;
-          return;
         }
         return;
       }
@@ -438,17 +457,17 @@ class AppProvider extends ChangeNotifier {
         return;
       }
 
-      int currentIqomahDuration = (name == "Jumat")
+      int currentIqomahDuration = (displayName == "Jumat")
           ? 0
           : PrayerService.getIqomahDuration(name);
-      final currentContentDuration = (name == "Jumat")
+      final currentContentDuration = (displayName == "Jumat")
           ? config.jumatDuration
           : currentIqomahDuration;
       final endCycle = endAdzan.add(Duration(seconds: currentContentDuration));
 
       if (now.isAfter(endAdzan) && now.isBefore(endCycle)) {
-        currentPrayerName = name;
-        if (name == "Jumat") {
+        currentPrayerName = displayName;
+        if (displayName == "Jumat") {
           status = AppStatus.jumatMode;
           jumatCounter = endCycle.difference(now).inSeconds;
         } else {

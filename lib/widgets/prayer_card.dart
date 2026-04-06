@@ -16,6 +16,13 @@ class PrayerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFriday = DateTime.now().weekday == DateTime.friday;
+
+    String displayLabel = label;
+    if (isFriday && label == "Dzuhur") {
+      displayLabel = "Jumat";
+    }
+
     return Expanded(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
@@ -29,7 +36,7 @@ class PrayerCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              label,
+              displayLabel,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

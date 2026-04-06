@@ -20,6 +20,8 @@ class SidePrayerPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isFriday = DateTime.now().weekday == DateTime.friday;
+
     return Container(
       width: MediaQuery.of(context).size.width * 0.33,
       padding: const EdgeInsets.all(15),
@@ -86,16 +88,18 @@ class SidePrayerPanel extends StatelessWidget {
                 Expanded(
                   flex: 10,
                   child: Column(
-                    children: jadwal.entries
-                        .map(
-                          (e) => Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2),
-                              child: _buildPrayerItem(e.key, e.value),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                    children: jadwal.entries.map((e) {
+                      String label = e.key;
+                      if (isFriday && label == "Dzuhur") {
+                        label = "Jumat";
+                      }
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: _buildPrayerItem(label, e.value),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ),
               ],

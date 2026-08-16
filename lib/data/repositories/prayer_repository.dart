@@ -1,3 +1,4 @@
+import '../../domain/models/app_config.dart';
 import '../../domain/use_cases/calculate_prayer_times.dart';
 
 /// Single source of truth for the prayer schedule.
@@ -11,6 +12,8 @@ class PrayerRepository {
   final CalculatePrayerTimes _calculator;
 
   /// Returns today's jadwal (prayer times) map, computed locally for [now]
-  /// (defaults to `DateTime.now()`).
-  Map<String, String> getTodayJadwal({DateTime? now}) => _calculator(now: now);
+  /// (defaults to `DateTime.now()`). Pass [config] to use runtime-editable
+  /// calc parameters (location/madhab/ihtiyat); omitted uses [AppConstants].
+  Map<String, String> getTodayJadwal({DateTime? now, AppConfig? config}) =>
+      _calculator(now: now, config: config);
 }

@@ -89,6 +89,80 @@
     margin-bottom: 16px;
   }
   .hint { color: var(--muted); font-size: 12px; margin-top: 16px; text-align: center; }
+  .field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 15px;
+  }
+  .field select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+  .grid2 .field { margin-bottom: 12px; }
+  button.ghost {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .img-preview {
+    width: 100%;
+    max-height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+    background: var(--bg);
+  }
+  .thumbs {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 8px;
+    margin: 0 0 12px;
+  }
+  .thumb {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .thumb img { display: block; width: 100%; height: 72px; object-fit: cover; }
+  .thumb .x {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+    line-height: 18px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+    background: rgba(15, 23, 42, .85);
+    color: #fff;
+    font-size: 12px;
+  }
+  .counter { color: var(--muted); font-size: 12px; margin: 0 0 8px; }
+  input[type="file"] {
+    width: 100%;
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  input[type="file"]::file-selector-button {
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -108,6 +182,41 @@
 <script>
   const token = new URLSearchParams(location.search).get('token');
 
+  const MAX_EVENT_IMAGES = 10;
+
+  const CITY_PRESETS = [
+    { name: 'Depok', lat: -6.40, lng: 106.82 },
+    { name: 'Jakarta', lat: -6.2088, lng: 106.8456 },
+    { name: 'Bogor', lat: -6.5944, lng: 106.7892 },
+    { name: 'Bekasi', lat: -6.2349, lng: 106.9896 },
+    { name: 'Tangerang', lat: -6.1781, lng: 106.6319 },
+    { name: 'Bandung', lat: -6.9175, lng: 107.6191 },
+    { name: 'Cirebon', lat: -6.7320, lng: 108.5523 },
+    { name: 'Semarang', lat: -6.9667, lng: 110.4167 },
+    { name: 'Yogyakarta', lat: -7.7956, lng: 110.3695 },
+    { name: 'Surabaya', lat: -7.2504, lng: 112.7688 },
+    { name: 'Medan', lat: 3.5952, lng: 98.6722 },
+    { name: 'Padang', lat: -0.9471, lng: 100.4172 },
+    { name: 'Palembang', lat: -2.9761, lng: 104.7754 },
+    { name: 'Pekanbaru', lat: 0.5071, lng: 101.4478 },
+    { name: 'Banda Aceh', lat: 5.5483, lng: 95.3238 },
+    { name: 'Makassar', lat: -5.1477, lng: 119.4327 },
+    { name: 'Manado', lat: 1.4748, lng: 124.8421 },
+    { name: 'Balikpapan', lat: -1.2379, lng: 116.8529 },
+    { name: 'Pontianak', lat: -0.0281, lng: 109.3402 },
+    { name: 'Banjarmasin', lat: -3.3186, lng: 114.5944 },
+  ];
+
+  const IHTIYAT_FIELDS = [
+    { key: 'imsak', label: 'Imsak' },
+    { key: 'subuh', label: 'Subuh' },
+    { key: 'terbit', label: 'Terbit (Syuruq)', allowNegative: true },
+    { key: 'dhuhur', label: 'Dhuhur' },
+    { key: 'ashar', label: 'Ashar' },
+    { key: 'maghrib', label: 'Maghrib' },
+    { key: 'isya', label: 'Isya' },
+  ];
+
   const FIELDS = [
     { section: 'Durasi (detik)', items: [
       { key: 'homeDuration', label: 'Home' },
@@ -122,65 +231,197 @@
       { key: 'iqomahMaghribRamadhanDuration', label: 'Iqomah Maghrib Ramadhan' },
       { key: 'iqomahDefaultDuration', label: 'Iqomah Default' },
       { key: 'iqomahTestingDuration', label: 'Iqomah (mode testing)' },
-      { key: 'minutesBeforeMaghrib', label: 'Live Makkah &mdash; menit sebelum Maghrib' },
-      { key: 'minutesBeforeJumat', label: 'Live Makkah &mdash; menit sebelum Jumat' },
+      { key: 'minutesBeforeMaghrib', label: 'Live Makkah — menit sebelum Maghrib' },
+      { key: 'minutesBeforeJumat', label: 'Live Makkah — menit sebelum Jumat' },
     ]},
     { section: 'Kalender', items: [
       { key: 'hijriCorrection', label: 'Koreksi Tanggal Hijriah (-2 s.d. 2)' },
     ]},
     { section: 'Tampilan', items: [
       { key: 'marqueeText', label: 'Teks Berjalan (Marquee)', type: 'text' },
-      { key: 'backgroundImage', label: 'Gambar Latar (path asset)', type: 'text' },
-      { key: 'eventImage', label: 'Gambar Pengumuman (path)', type: 'text' },
     ]},
   ];
 
   let cfg = {};
 
+  function el(tag, className, text, id) {
+    const n = document.createElement(tag);
+    if (className) n.className = className;
+    if (text !== undefined && text !== null) n.textContent = text;
+    if (id) n.id = id;
+    return n;
+  }
+
+  function numberField(key, labelText, step) {
+    const wrap = el('div', 'field');
+    const label = el('label', null, labelText);
+    label.htmlFor = 'in-' + key;
+    const input = el('input', null, null, 'in-' + key);
+    input.type = 'number';
+    input.step = step || '1';
+    wrap.append(label, input);
+    return wrap;
+  }
+
+  // Rewrites a baked `http://127.0.0.1:8080/images/<name>` URL to the origin
+  // the browser is actually using, so previews render from the same host.
+  function localImageUrl(url) {
+    try {
+      return location.origin + new URL(url, location.origin).pathname;
+    } catch (e) {
+      return url;
+    }
+  }
+
   function buildForm() {
     const root = document.getElementById('form');
     root.innerHTML = '';
+
     for (const section of FIELDS) {
-      const card = document.createElement('div');
-      card.className = 'card';
-      const h = document.createElement('h2');
-      h.textContent = section.section;
-      card.appendChild(h);
+      const card = el('div', 'card');
+      card.appendChild(el('h2', null, section.section));
       for (const f of section.items) {
-        const wrap = document.createElement('div');
-        wrap.className = 'field';
-        const label = document.createElement('label');
-        label.textContent = f.label.replace(/&mdash;/g, '—');
+        const wrap = el('div', 'field');
+        const label = el('label', null, f.label);
         label.htmlFor = 'in-' + f.key;
-        wrap.appendChild(label);
-        const input = document.createElement('input');
-        input.id = 'in-' + f.key;
+        const input = el('input', null, null, 'in-' + f.key);
         input.type = f.type === 'text' ? 'text' : 'number';
-        input.step = '1';
-        wrap.appendChild(input);
+        input.step = f.step || '1';
+        wrap.append(label, input);
         card.appendChild(wrap);
       }
       root.appendChild(card);
     }
 
-    // Checkbox for enableFinancialReport rendered separately.
-    const card = document.createElement('div');
-    card.className = 'card';
-    const h = document.createElement('h2');
-    h.textContent = 'Laporan Keuangan';
-    card.appendChild(h);
-    const wrap = document.createElement('div');
-    wrap.className = 'field check';
-    const cb = document.createElement('input');
+    // Checkbox for enableFinancialReport.
+    const card = el('div', 'card');
+    card.appendChild(el('h2', null, 'Laporan Keuangan'));
+    const wrap = el('div', 'field check');
+    const cb = el('input', null, null, 'in-enableFinancialReport');
     cb.type = 'checkbox';
-    cb.id = 'in-enableFinancialReport';
-    const cl = document.createElement('label');
+    const cl = el('label', null, 'Tampilkan Laporan Keuangan di layar home');
     cl.htmlFor = 'in-enableFinancialReport';
-    cl.textContent = 'Tampilkan Laporan Keuangan di layar home';
-    wrap.appendChild(cb);
-    wrap.appendChild(cl);
+    wrap.append(cb, cl);
     card.appendChild(wrap);
     root.appendChild(card);
+
+    root.appendChild(buildLocationCard());
+    root.appendChild(buildBackgroundCard());
+    root.appendChild(buildEventCard());
+  }
+
+  function buildLocationCard() {
+    const card = el('div', 'card');
+    card.appendChild(el('h2', null, 'Lokasi & Perhitungan Waktu'));
+
+    // City preset — fills the lat/long inputs; not persisted itself.
+    const cityWrap = el('div', 'field');
+    const cityLabel = el('label', null, 'Pilih Kota (mengisi lintang/bujur)');
+    cityLabel.htmlFor = 'in-city';
+    const city = el('select', null, null, 'in-city');
+    for (const c of CITY_PRESETS) {
+      const opt = document.createElement('option');
+      opt.value = c.name;
+      opt.textContent = c.name;
+      city.appendChild(opt);
+    }
+    city.addEventListener('change', () => {
+      const preset = CITY_PRESETS.find((c) => c.name === city.value);
+      if (preset) {
+        document.getElementById('in-latitude').value = preset.lat;
+        document.getElementById('in-longitude').value = preset.lng;
+      }
+    });
+    cityWrap.append(cityLabel, city);
+    card.appendChild(cityWrap);
+
+    const grid = el('div', 'grid2');
+    grid.appendChild(numberField('latitude', 'Lintang (latitude)', 'any'));
+    grid.appendChild(numberField('longitude', 'Bujur (longitude)', 'any'));
+    card.appendChild(grid);
+
+    const madhabWrap = el('div', 'field');
+    const madhabLabel = el('label', null, 'Madzhab');
+    madhabLabel.htmlFor = 'in-madhab';
+    const madhab = el('select', null, null, 'in-madhab');
+    const madhabOptions = [
+      ['shafi', 'Syafi’i'],
+      ['hanafi', 'Hanafi'],
+    ];
+    for (const [value, label] of madhabOptions) {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = label;
+      madhab.appendChild(opt);
+    }
+    madhabWrap.append(madhabLabel, madhab);
+    card.appendChild(madhabWrap);
+
+    const grid2 = el('div', 'grid2');
+    grid2.appendChild(numberField('fajrAngle', 'Sudut Subuh (derajat)', 'any'));
+    grid2.appendChild(numberField('ishaAngle', 'Sudut Isya (derajat)', 'any'));
+    card.appendChild(grid2);
+
+    const ihLabel = el('label', null, 'Ihtiyat (menit tambahan, per waktu)');
+    ihLabel.style.margin = '2px 0 8px';
+    ihLabel.style.display = 'block';
+    ihLabel.style.color = 'var(--muted)';
+    ihLabel.style.fontSize = '13px';
+    card.appendChild(ihLabel);
+    const ihGrid = el('div', 'grid2');
+    for (const f of IHTIYAT_FIELDS) {
+      ihGrid.appendChild(numberField('ihtiyat.' + f.key, f.label));
+    }
+    card.appendChild(ihGrid);
+
+    return card;
+  }
+
+  function buildBackgroundCard() {
+    const card = el('div', 'card');
+    card.id = 'bg-card';
+    card.appendChild(el('h2', null, 'Gambar Latar'));
+    const preview = el('img', 'img-preview', null, 'bg-preview');
+    preview.hidden = true;
+    preview.alt = 'Pratinjau gambar latar';
+    card.appendChild(preview);
+    const status = el('p', 'counter', null, 'bg-status');
+    card.appendChild(status);
+    const file = document.createElement('input');
+    file.type = 'file';
+    file.id = 'bg-file';
+    file.accept = 'image/jpeg,image/png,image/webp,image/gif';
+    card.appendChild(file);
+    const uploadBtn = el('button', null, 'Ganti Gambar Latar', 'bg-upload');
+    uploadBtn.type = 'button';
+    uploadBtn.addEventListener('click', () =>
+      uploadImage('/api/upload/background', file));
+    card.appendChild(uploadBtn);
+    const resetBtn = el('button', 'ghost', 'Gunakan Gambar Bawaan', 'bg-reset');
+    resetBtn.type = 'button';
+    resetBtn.style.marginTop = '8px';
+    resetBtn.addEventListener('click', deleteBackground);
+    card.appendChild(resetBtn);
+    return card;
+  }
+
+  function buildEventCard() {
+    const card = el('div', 'card');
+    card.id = 'event-card';
+    card.appendChild(el('h2', null, 'Gambar Event (Pengumuman)'));
+    card.appendChild(el('p', 'counter', null, 'event-counter'));
+    card.appendChild(el('div', 'thumbs', null, 'event-thumbs'));
+    const file = document.createElement('input');
+    file.type = 'file';
+    file.id = 'event-file';
+    file.accept = 'image/jpeg,image/png,image/webp,image/gif';
+    card.appendChild(file);
+    const addBtn = el('button', null, 'Tambah Gambar Event', 'event-add');
+    addBtn.type = 'button';
+    addBtn.addEventListener('click', () =>
+      uploadImage('/api/upload/event', file));
+    card.appendChild(addBtn);
+    return card;
   }
 
   function fillForm() {
@@ -195,6 +436,27 @@
     }
     document.getElementById('in-enableFinancialReport').checked =
       !!cfg.enableFinancialReport;
+
+    document.getElementById('in-latitude').value = cfg.latitude;
+    document.getElementById('in-longitude').value = cfg.longitude;
+    document.getElementById('in-madhab').value = cfg.madhab;
+    document.getElementById('in-fajrAngle').value = cfg.fajrAngle;
+    document.getElementById('in-ishaAngle').value = cfg.ishaAngle;
+    const ihtiyat = cfg.ihtiyat || {};
+    for (const f of IHTIYAT_FIELDS) {
+      const input = document.getElementById('in-ihtiyat.' + f.key);
+      if (ihtiyat[f.key] !== undefined && ihtiyat[f.key] !== null) {
+        input.value = ihtiyat[f.key];
+      }
+    }
+
+    const city = document.getElementById('in-city');
+    const preset = CITY_PRESETS.find(
+      (c) =>
+        Math.abs(c.lat - cfg.latitude) < 0.01 &&
+        Math.abs(c.lng - cfg.longitude) < 0.01,
+    );
+    city.value = preset ? preset.name : CITY_PRESETS[0].name;
   }
 
   function collectPayload() {
@@ -212,13 +474,78 @@
     }
     payload.enableFinancialReport =
       document.getElementById('in-enableFinancialReport').checked;
+
+    payload.latitude = parseFloat(document.getElementById('in-latitude').value);
+    payload.longitude = parseFloat(
+      document.getElementById('in-longitude').value,
+    );
+    payload.madhab = document.getElementById('in-madhab').value;
+    payload.fajrAngle = parseFloat(
+      document.getElementById('in-fajrAngle').value,
+    );
+    payload.ishaAngle = parseFloat(
+      document.getElementById('in-ishaAngle').value,
+    );
+    payload.ihtiyat = {};
+    for (const f of IHTIYAT_FIELDS) {
+      const v = parseInt(
+        document.getElementById('in-ihtiyat.' + f.key).value,
+        10,
+      );
+      payload.ihtiyat[f.key] = Number.isFinite(v) ? v : 0;
+    }
     return payload;
   }
 
+  function renderBackground() {
+    const url = cfg.backgroundImage || '';
+    const preview = document.getElementById('bg-preview');
+    const isUploaded = url.indexOf('/images/') !== -1;
+    if (isUploaded) {
+      preview.src = localImageUrl(url);
+      preview.hidden = false;
+    } else {
+      preview.removeAttribute('src');
+      preview.hidden = true;
+    }
+    document.getElementById('bg-status').textContent = isUploaded
+      ? 'Gambar kustom aktif di TV.'
+      : 'Menggunakan gambar bawaan (bundled).';
+  }
+
+  function renderEventImages() {
+    const images = cfg.eventImages || [];
+    document.getElementById('event-counter').textContent =
+      images.length + ' / ' + MAX_EVENT_IMAGES + ' gambar';
+    const thumbs = document.getElementById('event-thumbs');
+    thumbs.innerHTML = '';
+    images.forEach((img, i) => {
+      const t = el('div', 'thumb');
+      const imgEl = el('img');
+      imgEl.src = localImageUrl(img.url);
+      imgEl.alt = 'Event ' + (i + 1);
+      const x = el('button', 'x', '×');
+      x.type = 'button';
+      x.title = 'Hapus gambar ini';
+      x.addEventListener('click', () => deleteEvent(i));
+      t.append(imgEl, x);
+      thumbs.appendChild(t);
+    });
+    document.getElementById('event-add').disabled =
+      images.length >= MAX_EVENT_IMAGES;
+  }
+
+  function renderAll() {
+    buildForm();
+    fillForm();
+    renderBackground();
+    renderEventImages();
+  }
+
   function setStatus(msg, kind) {
-    const el = document.getElementById('status');
-    el.textContent = msg;
-    el.className = kind || '';
+    const elStatus = document.getElementById('status');
+    elStatus.textContent = msg;
+    elStatus.className = kind || '';
   }
 
   async function fetchConfig() {
@@ -227,6 +554,63 @@
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     return res.json();
+  }
+
+  async function uploadImage(endpoint, fileInput) {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) {
+      setStatus('Pilih file gambar dulu.', 'err');
+      return;
+    }
+    setStatus('Mengunggah…');
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token },
+        body: file,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      cfg = data;
+      renderAll();
+      setStatus('Gambar diunggah ✓ — diterapkan di TV.', 'ok');
+    } catch (e) {
+      setStatus('Gagal mengunggah (' + e.message + ').', 'err');
+    }
+  }
+
+  async function deleteEvent(i) {
+    setStatus('Menghapus…');
+    try {
+      const res = await fetch('/api/event/' + i, {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      cfg = data;
+      renderAll();
+      setStatus('Gambar dihapus ✓.', 'ok');
+    } catch (e) {
+      setStatus('Gagal menghapus (' + e.message + ').', 'err');
+    }
+  }
+
+  async function deleteBackground() {
+    setStatus('Mengembalikan gambar bawaan…');
+    try {
+      const res = await fetch('/api/background', {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + token },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      cfg = data;
+      renderAll();
+      setStatus('Gambar bawaan dipulihkan ✓.', 'ok');
+    } catch (e) {
+      setStatus('Gagal (' + e.message + ').', 'err');
+    }
   }
 
   async function main() {
@@ -238,7 +622,7 @@
     buildForm();
     try {
       cfg = await fetchConfig();
-      fillForm();
+      renderAll();
       document.getElementById('save').disabled = false;
       setStatus('Terhubung ke TV.', 'ok');
     } catch (e) {
@@ -263,6 +647,7 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
       cfg = data;
+      renderAll();
       setStatus('Tersimpan ✓ — diterapkan di TV.', 'ok');
     } catch (e) {
       setStatus('Gagal menyimpan (' + e.message + ').', 'err');

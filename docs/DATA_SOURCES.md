@@ -6,7 +6,7 @@ The app is **fully offline**: the prayer schedule is computed entirely on-device
 
 Prayer times are **calculated on-device** with the `adhan_dart` package using the **Kemenag (Indonesian) method**, so this feature needs no internet connection and no bundled schedule data.
 
-The method parameters are constants in `AppConstants` (`lib/core/constants/app_constants.dart`):
+The method parameters **default to constants in `AppConstants`** (`lib/core/constants/app_constants.dart`) but are **runtime-editable**: each is an `AppConfig` field (`latitude`, `longitude`, `fajrAngle`, `ishaAngle`, `madhab`, `ihtiyat`) that can be overridden through the local config server (§6), including a city-preset dropdown in the web editor. Defaults:
 
 | Constant | Value |
 | --- | --- |
@@ -23,21 +23,22 @@ The method parameters are constants in `AppConstants` (`lib/core/constants/app_c
 3. Apply the Kemenag **ihtiyat** rule to each raw time: shift by the per-prayer minutes, then round leftover seconds **up** to the next minute (ceil) for the five salat times and **down** (floor, drop seconds) for terbit/Syuruq. (Imsak = fajr − 10 min, but the app's contract has no imsak slot, so it is not emitted.)
 4. Return the canonical map — `{ "Subuh", "Syuruq", "Dzuhur", "Ashar", "Maghrib", "Isya" }` with `HH:mm` values, where the package's `sunrise` becomes the app's **`Syuruq`** key.
 
-Times are computed in UTC and read with `.toLocal()`, so they land on the device wall clock (WIB/WITA/WIT). The jadwal is recomputed at launch (`AppProvider.loadInitialData`) and again at every midnight (`_handleMidnightSync`).
+Times are computed in UTC and read with `.toLocal()`, so they land on the device wall clock (WIB/WITA/WIT). The jadwal is recomputed at launch (`AppProvider.loadInitialData`), at every midnight (`_handleMidnightSync`), and whenever the calc params change at runtime: `AppProvider` compares a fingerprint (`_lastCalcKey`) of `latitude / longitude / fajrAngle / ishaAngle / madhab / ihtiyat` on each 1-second tick and recomputes the schedule only when it changes.
 
-## 2. Config — fixed local constants (no fetch)
+## 2. Config — fixed local constants (no remote fetch)
 
-The remote Google Apps Script config endpoint was **removed**. All durations, `hijriCorrection`, marquee text, and the background image now come from `AppConstants` (`lib/core/constants/app_constants.dart`) via `AppConfig.defaults()` and are served by `ConfigProvider`:
+The remote Google Apps Script config endpoint was **removed**. All durations, `hijriCorrection`, marquee text, the background image, and the prayer-calc params now come from `AppConstants` (`lib/core/constants/app_constants.dart`) via `AppConfig.defaults()` and are served by `ConfigProvider` — and can be **overridden at runtime** through the embedded local config server (§6), which persists and hot-applies them:
 
 ```
 homeDuration, eventDuration, reportDuration, adzanDuration, jumatDuration,
 shalatDuration, isyraqDuration, hijriCorrection (clamped to [-2, 2]),
 waitingIsyraqDuration, iqomahSubuhDuration, iqomahMaghribRamadhanDuration,
 iqomahDefaultDuration, minutesBeforeMaghrib, minutesBeforeJumat,
-marqueeText, backgroundImage, enableFinancialReport
+latitude, longitude, fajrAngle, ishaAngle, madhab, ihtiyat,
+marqueeText, backgroundImage, eventImages, enableFinancialReport
 ```
 
-`eventImages` is always empty, so the event screen / announcement feature never activates; the marquee and background render the bundled defaults.
+`eventImages` starts empty; it is populated through the config server's image uploads (§6), which **activates the event screen** on the home idle cycle. `marqueeText` and `backgroundImage` default to the bundled values and can be overridden too — `backgroundImage` is replaced by an image upload, `marqueeText` is a free-text field.
 
 ## 3. Financial report — offline sample data (no fetch)
 
@@ -77,16 +78,21 @@ An embedded `shelf` HTTP server (`lib/services/local_server_service.dart`) binds
 
 **Reaching it:** on the TV, long-press the remote's **OK** (or press **Menu**) → the `ConfigMenuScreen` shows a QR code of `http://<tv-ip>:8080?token=<token>`. Scanning it (or opening the URL) loads the editor at `/`.
 
-**Auth:** every `/api/*` call must include the per-device token — `?token=…` or `Authorization: Bearer …`. The token is generated once with `Random.secure()`, persisted under `config_auth_token`, and validated with constant-time comparison. The static editor page is public, but its JS reads the token from the URL and sends it on every request, so a token-less browser sees an unusable page and `401`s on the API.
+**Auth:** every `/api/*` call must include the per-device token — `?token=…` or `Authorization: Bearer …`. The token is generated once with `Random.secure()`, persisted under `config_auth_token`, and validated with constant-time comparison. The static editor page is public, but its JS reads the token from the URL and sends it on every request, so a token-less browser sees an unusable page and `401`s on the API. Uploaded **images are served publicly** (`GET /images/<name>`) — only uploads/config edits need the token, so the TV can load them and the editor can preview them.
 
 **Endpoints:**
 
 | Method | Path | Behavior |
 | --- | --- | --- |
-| `GET` | `/api/config` | Current effective config (`AppConfig.toJson()`) plus an `eventImage` string passthrough (persisted separately; event mode is dormant). |
-| `POST` | `/api/config` | Parse JSON → validate (durations ≥ 0, `hijriCorrection` clamped) → persist to `SharedPreferences` → hot-apply via `ConfigProvider.applyConfig`. Malformed body or negative duration → `400`. |
+| `GET` | `/api/config` | Current effective config (`AppConfig.toJson()`). |
+| `POST` | `/api/config` | Parse JSON → validate (durations ≥ 0; `latitude` `[-90,90]`; `longitude` `[-180,180]`; `fajrAngle`/`ishaAngle` `(0,40]`) → persist to `SharedPreferences` → hot-apply via `ConfigProvider.applyConfig`. Malformed body or invalid value → `400`. |
+| `POST` | `/api/upload/background` | Replace the background image. Raw image bytes in the body (≤ 10 MB, raster only: jpeg/png/webp/gif — extension from `Content-Type`, with magic-byte sniffing fallback). The old `bg_*` file is deleted and `backgroundImage` becomes `http://127.0.0.1:8080/images/bg_<ts>.<ext>`. Too large → `413`, empty → `400`, non-raster → `415`. |
+| `POST` | `/api/upload/event` | Add an event image (same body rules, `ev_<ts>.<ext>`). `400` when already at the 10-image cap. |
+| `DELETE` | `/api/event/<index>` | Remove the event image at `index` (`400` non-numeric, `404` out of range). The local file is deleted only when the URL is one the server uploaded. |
+| `DELETE` | `/api/background` | Restore the bundled `AppConstants.backgroundImage` and delete all uploaded `bg_*` files. |
+| `GET` | `/images/<name>` | **Public** — serves an uploaded image (no token), path-traversal guarded (`404` on `..`/nested names). |
 | any | `/` (fallback) | The editor UI from `assets/web/` — `shelf_static` when the folder is on disk (dev/tests), else a `rootBundle` fallback (Android release). |
 
-**Persistence:** saved config is stored as one JSON object under `ConfigProvider.configPrefsKey` (`app_config_json`) in `SharedPreferences`; `ConfigProvider.load()` merges it over `AppConstants` defaults at startup, so saved settings survive relaunch. `hijriCorrection` is clamped to `[-2, 2]`.
+**Persistence:** saved config is stored as one JSON object under `ConfigProvider.configPrefsKey` (`app_config_json`) in `SharedPreferences`; `ConfigProvider.load()` merges it over `AppConstants` defaults at startup, so saved settings survive relaunch. `hijriCorrection` is clamped to `[-2, 2]`. Uploaded images live in the app-support dir (`<app-support>/config_images`), so they survive relaunch but are cleared on uninstall.
 
 The `network_info_plus` helper (`lib/services/network_info_helper.dart`) resolves the LAN IPv4 for the URL/QR; it needs `ACCESS_WIFI_STATE` (already in the manifest).

@@ -41,6 +41,17 @@ void main() {
       expect(ConfigProvider().eventImages, isEmpty);
     });
 
+    test('serves prayer-calc defaults from AppConstants', () {
+      final config = ConfigProvider();
+
+      expect(config.latitude, AppConstants.latitude);
+      expect(config.longitude, AppConstants.longitude);
+      expect(config.fajrAngle, AppConstants.fajrAngle);
+      expect(config.ishaAngle, AppConstants.ishaAngle);
+      expect(config.madhab, AppConstants.madhab.name);
+      expect(config.ihtiyat, AppConstants.ihtiyat);
+    });
+
     test('load() merges persisted overrides over AppConstants', () async {
       SharedPreferences.setMockInitialValues({
         ConfigProvider.configPrefsKey:
@@ -66,6 +77,27 @@ void main() {
 
       expect(config.homeDuration, AppConstants.homeDuration);
       expect(config.marqueeText, AppConstants.marqueeText);
+    });
+
+    test('load() applies persisted prayer-calc overrides', () async {
+      SharedPreferences.setMockInitialValues({
+        ConfigProvider.configPrefsKey: jsonEncode({
+          'latitude': 3.60,
+          'longitude': 98.67,
+          'madhab': 'hanafi',
+          'ihtiyat': {'subuh': 5},
+        }),
+      });
+
+      final config = ConfigProvider();
+      await config.load();
+
+      expect(config.latitude, 3.60);
+      expect(config.longitude, 98.67);
+      expect(config.madhab, 'hanafi');
+      expect(config.ihtiyat['subuh'], 5);
+      expect(config.ihtiyat['maghrib'], AppConstants.ihtiyat['maghrib']);
+      expect(config.ihtiyat, hasLength(7));
     });
 
     test('applyConfig() hot-applies and notifies listeners', () {

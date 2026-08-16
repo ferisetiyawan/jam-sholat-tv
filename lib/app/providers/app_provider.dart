@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 
 import '../../core/constants/app_enum.dart';
 import '../../core/utils/date_formatter.dart';
+import '../../domain/models/app_config.dart';
 import '../../domain/models/financial_summary.dart';
 import '../../data/repositories/financial_repository.dart';
 import '../../data/repositories/prayer_repository.dart';
@@ -66,6 +67,11 @@ class AppProvider extends ChangeNotifier {
   DateTime? _fakeTime;
   Timer? _timer;
 
+  /// Fingerprint of the calc params (location/madhab/ihtiyat) used to build
+  /// the current [jadwal]. Compared each tick so a runtime config change
+  /// (via the local config server) recomputes the schedule promptly.
+  String? _lastCalcKey;
+
   ConfigProvider? _config;
   ConfigProvider get config => _config ?? ConfigProvider();
 
@@ -102,7 +108,10 @@ class AppProvider extends ChangeNotifier {
   }
 
   void loadInitialData() {
-    jadwal = _prayerRepository.getTodayJadwal();
+    // `_config` may still be null here (runs inside `create:`), in which case
+    // the calculator falls back to the AppConstants defaults; the first tick
+    // after wiring reconciles any persisted calc overrides.
+    jadwal = _prayerRepository.getTodayJadwal(config: _config?.config);
     checkInitialStatus(jadwal);
     notifyListeners();
   }
@@ -131,6 +140,8 @@ class AppProvider extends ChangeNotifier {
   void _onTick() {
     if (_config == null) return;
 
+    _refreshJadwalIfNeeded();
+
     if (_fakeTime != null) {
       _fakeTime = _fakeTime!.add(const Duration(seconds: 1));
     }
@@ -148,11 +159,45 @@ class AppProvider extends ChangeNotifier {
   void _handleMidnightSync(DateTime now) {
     if (now.hour == 0 && now.minute == 0 && now.second == 0) {
       // The date rolled over, so the locally-computed jadwal changes too.
-      final fresh = _prayerRepository.getTodayJadwal(now: now);
+      final fresh = _prayerRepository.getTodayJadwal(
+        now: now,
+        config: _config?.config,
+      );
       jadwal = fresh;
       if (status == AppStatus.home) checkInitialStatus(fresh);
       notifyListeners();
     }
+  }
+
+  /// Recomputes today's jadwal when the prayer-calc inputs changed at runtime
+  /// (latitude/longitude, fajr/isha angles, madhab, or ihtiyat were edited via
+  /// the local config server). Runs on the 1-second tick so it is safe to call
+  /// outside the widget build phase; duration/marquee-only changes are no-ops.
+  void _refreshJadwalIfNeeded() {
+    final AppConfig? cfg = _config?.config;
+    final String? key = _calcKey(cfg);
+    if (key == _lastCalcKey) return;
+    _lastCalcKey = key;
+
+    jadwal = _prayerRepository.getTodayJadwal(config: cfg);
+    if (status == AppStatus.home) checkInitialStatus(jadwal);
+    notifyListeners();
+  }
+
+  /// Stable fingerprint of the prayer-calc inputs, used by
+  /// [_refreshJadwalIfNeeded] to detect a change worth recomputing.
+  String? _calcKey(AppConfig? cfg) {
+    if (cfg == null) return null;
+    final List<MapEntry<String, int>> entries = cfg.ihtiyat.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+    final StringBuffer buffer = StringBuffer(
+      '${cfg.latitude},${cfg.longitude},'
+      '${cfg.fajrAngle},${cfg.ishaAngle},${cfg.madhab}',
+    );
+    for (final MapEntry<String, int> entry in entries) {
+      buffer.write(',${entry.key}=${entry.value}');
+    }
+    return buffer.toString();
   }
 
   void _updateDateTimeStrings(DateTime now) {

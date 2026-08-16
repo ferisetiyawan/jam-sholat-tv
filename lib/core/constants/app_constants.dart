@@ -34,6 +34,12 @@ class AppConstants {
   static const double fajrAngle = 20.0; // Kemenag
   static const double ishaAngle = 18.0; // Kemenag
   static const Madhab madhab = Madhab.shafi;
+
+  /// Serialized names accepted for [madhab] in `AppConfig` (kept in sync with
+  /// the adhan_dart enum so `domain/` never imports adhan_dart directly).
+  static final List<String> madhabNames = [
+    for (final Madhab m in Madhab.values) m.name,
+  ];
   // Per-prayer ihtiyat (minutes) applied to the raw calculation, Kemenag keys.
   static const Map<String, int> ihtiyat = {
     'imsak': 2,

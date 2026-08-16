@@ -84,5 +84,75 @@ void main() {
       expect(restored.eventImages.first.type, 'IMAGE');
       expect(restored.eventImages.first.url, 'assets/a.png');
     });
+
+    test('prayer-calc fields default to AppConstants', () {
+      final config = AppConfig.defaults();
+
+      expect(config.latitude, AppConstants.latitude);
+      expect(config.longitude, AppConstants.longitude);
+      expect(config.fajrAngle, AppConstants.fajrAngle);
+      expect(config.ishaAngle, AppConstants.ishaAngle);
+      expect(config.madhab, AppConstants.madhab.name);
+      expect(config.ihtiyat, AppConstants.ihtiyat);
+    });
+
+    test('fromJson overrides location, angles, madhab and ihtiyat', () {
+      final config = AppConfig.fromJson({
+        'latitude': 3.60,
+        'longitude': 98.67,
+        'fajrAngle': 19.5,
+        'ishaAngle': 17.0,
+        'madhab': 'hanafi',
+        'ihtiyat': {'subuh': 5, 'isya': 7},
+      });
+
+      expect(config.latitude, 3.60);
+      expect(config.longitude, 98.67);
+      expect(config.fajrAngle, 19.5);
+      expect(config.ishaAngle, 17.0);
+      expect(config.madhab, 'hanafi');
+      expect(config.ihtiyat['subuh'], 5);
+      expect(config.ihtiyat['isya'], 7);
+    });
+
+    test('ihtiyat merges partially over the full default map', () {
+      final config = AppConfig.fromJson({'ihtiyat': {'subuh': 5}});
+
+      expect(config.ihtiyat, hasLength(7));
+      expect(config.ihtiyat['subuh'], 5);
+      expect(config.ihtiyat['maghrib'], AppConstants.ihtiyat['maghrib']);
+      expect(config.ihtiyat['terbit'], AppConstants.ihtiyat['terbit']);
+    });
+
+    test('madhab is normalized and falls back on unknown values', () {
+      expect(AppConfig.fromJson({'madhab': 'HANAFI'}).madhab, 'hanafi');
+      expect(AppConfig.fromJson({'madhab': 'bogus'}).madhab,
+          AppConstants.madhab.name);
+      expect(AppConfig.fromJson({'madhab': ''}).madhab,
+          AppConstants.madhab.name);
+    });
+
+    test('clamps latitude and longitude on parse', () {
+      expect(AppConfig.fromJson({'latitude': 91}).latitude, 90.0);
+      expect(AppConfig.fromJson({'latitude': -91}).latitude, -90.0);
+      expect(AppConfig.fromJson({'longitude': 181}).longitude, 180.0);
+      expect(AppConfig.fromJson({'longitude': -181}).longitude, -180.0);
+    });
+
+    test('round-trips prayer-calc fields through toJson/fromJson', () {
+      final original = AppConfig.fromJson({
+        'latitude': 3.60,
+        'madhab': 'hanafi',
+        'ihtiyat': {'subuh': 5},
+      });
+
+      final restored = AppConfig.fromJson(original.toJson());
+
+      expect(restored.latitude, 3.60);
+      expect(restored.longitude, AppConstants.longitude);
+      expect(restored.madhab, 'hanafi');
+      expect(restored.ihtiyat['subuh'], 5);
+      expect(restored.ihtiyat['maghrib'], AppConstants.ihtiyat['maghrib']);
+    });
   });
 }

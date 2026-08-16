@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:jam_sholat_tv/domain/models/app_config.dart';
 import 'package:jam_sholat_tv/domain/use_cases/calculate_prayer_times.dart';
 
 void main() {
@@ -80,5 +81,43 @@ void main() {
       toMinutes(result['Ashar']!),
     );
     expect(asharDzuhur, inInclusiveRange(90, 240));
+  });
+
+  test('config ihtiyat overrides shift only the affected prayer', () {
+    final defaults = calculator(now: now);
+    final custom = calculator(
+      now: now,
+      config: AppConfig.fromJson({'ihtiyat': {'subuh': 12}}),
+    );
+
+    // Default subuh ihtiyat is 2 minutes; 12 is +10 minutes.
+    expect(
+      toMinutes(custom['Subuh']!) - toMinutes(defaults['Subuh']!),
+      10,
+    );
+    // Other prayers are untouched by an ihtiyat change.
+    expect(custom['Dzuhur'], defaults['Dzuhur']);
+    expect(custom['Maghrib'], defaults['Maghrib']);
+    expect(custom['Isya'], defaults['Isya']);
+  });
+
+  test('hanafi madhab pushes Ashar later than shafi', () {
+    final shafi = calculator(now: now);
+    final hanafi = calculator(
+      now: now,
+      config: AppConfig.fromJson({'madhab': 'hanafi'}),
+    );
+
+    expect(toMinutes(hanafi['Ashar']!), greaterThan(toMinutes(shafi['Ashar']!)));
+  });
+
+  test('a distant location shifts the schedule', () {
+    final depok = calculator(now: now);
+    final medan = calculator(
+      now: now,
+      config: AppConfig.fromJson({'latitude': 3.60, 'longitude': 98.67}),
+    );
+
+    expect(medan, isNot(equals(depok)));
   });
 }

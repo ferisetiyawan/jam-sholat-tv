@@ -20,7 +20,7 @@ lib/
 │   ├── theme/app_theme.dart          # dark theme
 │   ├── utils/date_formatter.dart     # Masehi + Hijriah date strings (applies hijri correction)
 │   └── widgets/                      # shared UI building blocks
-│       ├── background_image.dart     # fixed background (bundled asset)
+│       ├── background_image.dart     # fixed background (bundled asset or uploaded http URL)
 │       ├── prayer_card.dart          # one prayer cell in the home schedule row
 │       ├── side_prayer_panel.dart    # clock + schedule sidebar (report / live modes)
 │       └── bottom_marquee_bar.dart   # scrolling marquee text
@@ -29,26 +29,26 @@ lib/
 │   │   ├── financial_service.dart        # monthly kas summary fetch (retained, never called)
 │   │   └── audio_service.dart            # adzan/iqomah beep playback (static AudioPlayer)
 │   └── repositories/
-│       ├── prayer_repository.dart    # single source of truth: today's (locally computed) jadwal
+│       ├── prayer_repository.dart    # single source of truth: today's (locally computed) jadwal; passes an optional AppConfig for runtime-editable calc params
 │       └── financial_repository.dart # single source of truth: FinancialSummary (retained, never called — offline sample)
 ├── services/                         # standalone infrastructure (not data-layer)
-│   ├── local_server_service.dart     # embedded shelf server: token auth, /api/config, static UI
+│   ├── local_server_service.dart     # embedded shelf server: token auth, /api/config, image uploads + public /images/ serving, static UI
 │   └── network_info_helper.dart      # resolves the LAN IPv4 for the config URL/QR
 ├── domain/
 │   ├── models/
-│   │   ├── app_config.dart           # typed runtime config with AppConstants fallbacks
+│   │   ├── app_config.dart           # typed runtime config with AppConstants fallbacks (incl. location/madhab/ihtiyat calc fields)
 │   │   ├── countdown_result.dart     # next prayer name + HH:mm:ss countdown
 │   │   ├── event_image.dart          # announcement image (type + url)
 │   │   └── financial_summary.dart    # total kas + weekly income (doubles, zero-fallback)
 │   └── use_cases/
 │       ├── calculate_countdown.dart      # next prayer + countdown from a jadwal map
-│       ├── calculate_prayer_times.dart   # on-device Kemenag prayer-time calc (adhan_dart)
+│       ├── calculate_prayer_times.dart   # on-device Kemenag prayer-time calc (adhan_dart), reads AppConfig for location/madhab/ihtiyat
 │       └── get_iqomah_duration.dart      # iqomah length per prayer (Subuh / Ramadhan rules)
 └── ui/
     ├── home/                         # home status + its mode screens
     │   ├── home_screen.dart          # big clock + schedule row (used inside HomeWrapper)
     │   ├── home_wrapper.dart         # BackgroundImage + HomeScreen
-    │   ├── event_screen.dart         # rotating announcement images (dormant)
+    │   ├── event_screen.dart         # rotating announcement images (active when eventImages is non-empty)
     │   ├── financial_report_screen.dart  # monthly kas report (offline sample, rotates in on home)
     │   └── live_makkah_screen.dart   # YouTube live stream (LIVE_MECCA video id)
     ├── settings/
@@ -83,7 +83,7 @@ lib/
 `MainController` (`lib/app/main_controller.dart`) watches both providers and maps `app.status` (+ mode flags) to exactly one screen through a `switch`. On the `home` status it further branches:
 - `isSpecialLiveMode` → `LiveMakkahScreen` (30 min before Maghrib or, on Friday, Jumat — and internet is up)
 - `isReportMode && financialSummary != null` → `FinancialReportScreen` (fed by the offline sample; shows during the `reportDuration` slice of the home idle cycle)
-- `isEventMode && eventImages.isNotEmpty` → `EventScreen` (dormant: `eventImages` is always empty)
+- `isEventMode && eventImages.isNotEmpty` → `EventScreen` (active once at least one image is uploaded via the config server)
 - otherwise → `HomeWrapper`
 
 An `AnimatedSwitcher` cross-fades between screen changes. A tiny red `wifi_off` badge overlays when offline. In debug mode a FAB column (fake-time simulators) floats on top.
@@ -92,6 +92,7 @@ An `AnimatedSwitcher` cross-fades between screen changes. A tiny red `wifi_off` 
 
 `AppProvider` owns a `Timer.periodic(Duration(seconds: 1))`. Each tick (`_onTick`) runs in order:
 
+0. `_refreshJadwalIfNeeded()` — compares a fingerprint of the calc params (`latitude`/`longitude`/`fajrAngle`/`ishaAngle`/`madhab`/sorted `ihtiyat`, `_lastCalcKey`) and recomputes the jadwal only when it changed (e.g. via the config server). Runs in timer context so it is safe outside the build phase, and self-heals the startup gap (persisted overrides are picked up on the first tick).
 1. `_updateDateTimeStrings(now)` — `timeString`, Masehi/Hijriah dates, next-prayer name + `countdownString` (via the `CalculateCountdown` use case).
 2. `_handleCycleLogic(now)` — only when `status == home`: rotates between home / event / report segments, and detects an exact HH:mm match against the `jadwal` map to trigger **Adzan** (or the Syuruq → Iqomah path).
 3. `_handlePrayerStatusLogic()` — decrements the active state's counter and fires its transition (adzan→iqomah, iqomah→shalat/isyraq, etc.).
@@ -116,10 +117,11 @@ Additionally `_isMinutesBeforePrayer("Jumat", ...)` maps the lookup key back to 
 
 ## Config layering
 
-`ConfigProvider` starts from `AppConfig.defaults()` (every field resolved from `AppConstants`). There is no remote config fetch and no event-image sync. The only persistence is the embedded local config server (`lib/services/local_server_service.dart`):
+`ConfigProvider` starts from `AppConfig.defaults()` (every field resolved from `AppConstants`). There is no remote config fetch. The only persistence is the embedded local config server (`lib/services/local_server_service.dart`):
 
 - `ConfigProvider.load()` (called in `main.dart` before `runApp`) reads the persisted JSON from `SharedPreferences` (`configPrefsKey`) and merges it over the defaults via `AppConfig.fromJson`.
-- `POST /api/config` persists the new values **and** hot-applies them with `ConfigProvider.applyConfig(config)` (reassigns `_config` + `notifyListeners`). `AppProvider` reads through the same `ConfigProvider` instance, so the next 1-second tick picks up the change — no state-machine edits needed.
-- Durations, `hijriCorrection`, marquee text, the background asset, and the `enableFinancialReport` toggle all default from `AppConstants` (`lib/core/constants/app_constants.dart`); `eventImages` is always empty, so event mode never activates (announcement feature disabled).
+- `POST /api/config` persists the new values **and** hot-applies them with `ConfigProvider.applyConfig(config)` (reassigns `_config` + `notifyListeners`). `AppProvider` reads through the same `ConfigProvider` instance, so the next 1-second tick picks up the change — no state-machine edits needed. For the prayer-calc params the tick's `_refreshJadwalIfNeeded()` (see above) also recomputes the schedule.
+- Durations, `hijriCorrection`, marquee text, the background asset, the `enableFinancialReport` toggle, and the prayer-calc params (`latitude`/`longitude`/`fajrAngle`/`ishaAngle`/`madhab`/`ihtiyat`) all default from `AppConstants` (`lib/core/constants/app_constants.dart`).
+- **Image uploads** (`POST /api/upload/background` / `POST /api/upload/event`, `DELETE /api/event/<index>` / `DELETE /api/background`) write raster files to the app-support `config_images` dir, store baked `http://127.0.0.1:8080/images/<unique-name>` URLs in config, then persist + hot-apply. The TV loads them via the existing `NetworkImage`/`CachedNetworkImage` branches in `BackgroundImage` / `EventScreen` — **no widget changes**. Uploads are token-protected; the `GET /images/<name>` read route is public (path-traversal guarded). `eventImages` is empty until images are uploaded, so event mode is dormant by default.
 
 `hijriCorrection` is clamped to `[-2, 2]` when parsing (still via `AppConfig.fromJson`, used by `defaults()`) and applied in `DateFormatter.getFullDate` by shifting `DateTime.now()` by that many days before converting to Hijriah (`hijriyah_indonesia` package). Default is `-1`.

@@ -41,13 +41,18 @@ The app runs an embedded HTTP server on `0.0.0.0:8080` in all builds (`lib/servi
 2. On another device on the same Wi-Fi, scan the QR or open the URL — it loads `assets/web/index.html`, the config editor.
 3. Change values and hit **Simpan Pengaturan** → the TV applies them immediately (hot-apply) and the change survives relaunch (persisted).
 
-API: `GET/POST /api/config` (token required). To smoke-test from a laptop:
+API: `GET/POST /api/config` (token required), image routes `POST /api/upload/background`, `POST /api/upload/event`, `DELETE /api/event/<index>`, `DELETE /api/background`, and public `GET /images/<name>`. To smoke-test from a laptop:
 
 ```bash
 curl "http://<tv-ip>:8080/api/config?token=<token>"
 curl -X POST "http://<tv-ip>:8080/api/config?token=<token>" \
   -H 'Content-Type: application/json' \
   -d '{"marqueeText":"Selamat Datang di Masjid Al Hijrah"}'
+curl -X POST "http://<tv-ip>:8080/api/upload/background?token=<token>" \
+  --data-binary @background.jpg
+# GET /api/config returns backgroundImage like ".../images/bg_123.jpg" —
+# fetch it back with no token:
+curl "http://<tv-ip>:8080/images/bg_123.jpg"
 ```
 
 If the server fails to bind (port 8080 taken), it logs and the app continues — settings then stay at their defaults.
@@ -57,7 +62,7 @@ If the server fails to bind (port 8080 taken), it logs and the app continues —
 - Screens are stateless and receive all data through constructors — keep it that way; no logic inside `ui/`. State lives in `app/providers/`, data access behind `data/repositories/`, and pure rules in `domain/use_cases/`.
 - All durations/text/images flow through `ConfigProvider`, which starts from the `AppConstants` defaults (no remote config) and merges persisted overrides saved through the local config server. Add new tunables in `AppConstants`, not as ad-hoc local constants — and if it should be editable from the web UI, add the field to `AppConfig` + `assets/web/index.html` too.
 - The Jumat rename ("Dzuhur" → "Jumat" on Friday) exists in **five** sites — see `docs/ARCHITECTURE.md` → "Where the Jumat translation lives". Touch all five or you reintroduce the recurring bug.
-- Prayer times are computed locally for **Depok** coordinates (`AppConstants.latitude` / `AppConstants.longitude`); changing location means editing those two constants.
+- Prayer times are computed locally for **Depok** coordinates (`AppConstants.latitude` / `AppConstants.longitude`). The location (plus `fajrAngle`/`ishaAngle`/`madhab`/`ihtiyat`) is **editable at runtime** through the web editor's "Lokasi & Perhitungan Waktu" card (city preset dropdown fills lat/long), and the schedule recomputes within ~1s via `AppProvider._refreshJadwalIfNeeded`.
 
 ## Release process
 

@@ -61,6 +61,12 @@ class ConfigProvider extends ChangeNotifier {
   int get iqomahTestingDuration => _config.iqomahTestingDuration;
   int get minutesBeforeMaghrib => _config.minutesBeforeMaghrib;
   int get minutesBeforeJumat => _config.minutesBeforeJumat;
+  double get latitude => _config.latitude;
+  double get longitude => _config.longitude;
+  double get fajrAngle => _config.fajrAngle;
+  double get ishaAngle => _config.ishaAngle;
+  String get madhab => _config.madhab;
+  Map<String, int> get ihtiyat => _config.ihtiyat;
   String get marqueeText => _config.marqueeText;
   String get backgroundImage => _config.backgroundImage;
   List<EventImage> get eventImages => _config.eventImages;

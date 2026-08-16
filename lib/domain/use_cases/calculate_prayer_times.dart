@@ -1,6 +1,7 @@
 import 'package:adhan_dart/adhan_dart.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../models/app_config.dart';
 
 /// Computes today's prayer schedule fully on-device (Kemenag method, Depok)
 /// using [adhan_dart].
@@ -18,16 +19,27 @@ class CalculatePrayerTimes {
   const CalculatePrayerTimes();
 
   /// [now] is injectable for deterministic testing; defaults to `DateTime.now()`.
-  Map<String, String> call({DateTime? now}) {
+  ///
+  /// Pass an [AppConfig] to use runtime-editable calc parameters (location,
+  /// angles, madhab, ihtiyat); when omitted the [AppConstants] defaults are
+  /// used unchanged.
+  Map<String, String> call({DateTime? now, AppConfig? config}) {
     final date = now ?? DateTime.now();
 
+    final double latitude = config?.latitude ?? AppConstants.latitude;
+    final double longitude = config?.longitude ?? AppConstants.longitude;
+    final double fajrAngle = config?.fajrAngle ?? AppConstants.fajrAngle;
+    final double ishaAngle = config?.ishaAngle ?? AppConstants.ishaAngle;
+    final Madhab madhab = _madhabFrom(config?.madhab);
+    final Map<String, int> ihtiyat = config?.ihtiyat ?? AppConstants.ihtiyat;
+
     final params = CalculationMethodParameters.other()
-      ..fajrAngle = AppConstants.fajrAngle
-      ..ishaAngle = AppConstants.ishaAngle
-      ..madhab = AppConstants.madhab;
+      ..fajrAngle = fajrAngle
+      ..ishaAngle = ishaAngle
+      ..madhab = madhab;
 
     final times = PrayerTimes(
-      coordinates: Coordinates(AppConstants.latitude, AppConstants.longitude),
+      coordinates: Coordinates(latitude, longitude),
       date: DateTime.utc(date.year, date.month, date.day),
       calculationParameters: params,
       precision: true,
@@ -51,16 +63,26 @@ class CalculatePrayerTimes {
     }
 
     return {
-      "Subuh": fmt(times.fajr, AppConstants.ihtiyat['subuh']!),
+      "Subuh": fmt(times.fajr, ihtiyat['subuh']!),
       "Syuruq": fmt(
         times.sunrise,
-        AppConstants.ihtiyat['terbit']!,
+        ihtiyat['terbit']!,
         ceil: false,
       ),
-      "Dzuhur": fmt(times.dhuhr, AppConstants.ihtiyat['dhuhur']!),
-      "Ashar": fmt(times.asr, AppConstants.ihtiyat['ashar']!),
-      "Maghrib": fmt(times.maghrib, AppConstants.ihtiyat['maghrib']!),
-      "Isya": fmt(times.isha, AppConstants.ihtiyat['isya']!),
+      "Dzuhur": fmt(times.dhuhr, ihtiyat['dhuhur']!),
+      "Ashar": fmt(times.asr, ihtiyat['ashar']!),
+      "Maghrib": fmt(times.maghrib, ihtiyat['maghrib']!),
+      "Isya": fmt(times.isha, ihtiyat['isya']!),
     };
+  }
+
+  /// Maps a serialized madhab name (e.g. `'hanafi'`) back to the adhan_dart
+  /// enum, falling back to the [AppConstants] default for unknown values.
+  Madhab _madhabFrom(String? name) {
+    if (name == null) return AppConstants.madhab;
+    return Madhab.values.firstWhere(
+      (m) => m.name == name,
+      orElse: () => AppConstants.madhab,
+    );
   }
 }

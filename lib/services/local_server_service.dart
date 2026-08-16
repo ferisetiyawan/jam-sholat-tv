@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:logger/logger.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart';
@@ -11,7 +13,9 @@ import 'package:shelf_static/shelf_static.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app/providers/config_provider.dart';
+import '../core/constants/app_constants.dart';
 import '../domain/models/app_config.dart';
+import '../domain/models/event_image.dart';
 import 'network_info_helper.dart';
 
 /// Embedded HTTP server that lets the masjid configure the TV from a browser
@@ -22,6 +26,13 @@ import 'network_info_helper.dart';
 /// - `GET  /api/config` — current effective config as JSON
 /// - `POST /api/config` — save new values (persists to SharedPreferences and
 ///   hot-applies them to [ConfigProvider])
+/// - `POST /api/upload/background` — replace the background image (multipart
+///   not required; raw image bytes in the body)
+/// - `POST /api/upload/event` — add an event image (max [maxEventImages])
+/// - `DELETE /api/event/<index>` — remove an event image
+/// - `DELETE /api/background` — restore the bundled background image
+/// - `GET  /images/<name>` — public: serves uploaded images (no token) so the
+///   TV and the editor UI can render them
 /// - everything else — the static editor UI from `assets/web/` (`/` →
 ///   `index.html`)
 ///
@@ -32,20 +43,32 @@ class LocalServerService {
   LocalServerService({
     required ConfigProvider configProvider,
     int port = defaultPort,
+    Directory? imagesDirectory,
   })  : _configProvider = configProvider,
-        _port = port;
+        _port = port,
+        _imagesDirectory = imagesDirectory;
 
   static const int defaultPort = 8080;
+
+  /// Hard cap on uploaded images, and on the number of event images the TV can
+  /// cycle on the home screen.
+  static const int maxImageBytes = 10 * 1024 * 1024; // 10 MB
+  static const int maxEventImages = 10;
 
   /// The most recently started instance, used by the TV UI to build the QR
   /// URL. Null while the server is stopped.
   static LocalServerService? instance;
 
   static const String _tokenPrefsKey = 'config_auth_token';
-  static const String _eventImagePrefsKey = 'config_event_image';
 
   final ConfigProvider _configProvider;
   final int _port;
+
+  /// Injectable for tests; when null the real app-support dir is resolved
+  /// lazily on the first file operation (`getApplicationSupportDirectory`).
+  final Directory? _imagesDirectory;
+  Directory? _resolvedImagesDir;
+
   final NetworkInfoHelper _networkInfo = const NetworkInfoHelper();
   final Logger _logger = Logger();
 
@@ -126,15 +149,25 @@ class LocalServerService {
 
     final apiRouter = Router()
       ..get('/config', _getConfig)
-      ..post('/config', _postConfig);
+      ..post('/config', _postConfig)
+      ..post('/upload/background', _uploadBackground)
+      ..post('/upload/event', _uploadEvent)
+      ..delete('/event/<index>', _deleteEvent)
+      ..delete('/background', _deleteBackground);
 
     final Handler apiHandler = const Pipeline()
         .addMiddleware(_corsMiddleware())
         .addMiddleware(_authMiddleware())
         .addHandler(apiRouter.call);
 
+    // Uploaded images are served *publicly* (no token) so the TV can load
+    // them via NetworkImage/CachedNetworkImage and the browser can <img> them
+    // same-origin; only uploads/config edits are token-protected.
+    final Router imagesRouter = Router()..get('/<name>', _getImage);
+
     final router = Router(notFoundHandler: _staticHandler)
-      ..mount('/api/', apiHandler);
+      ..mount('/api/', apiHandler)
+      ..mount('/images/', imagesRouter.call);
 
     return const Pipeline()
         .addMiddleware(logRequests())
@@ -222,7 +255,7 @@ class LocalServerService {
 
   static const Map<String, String> _corsHeaders = {
     'access-control-allow-origin': '*',
-    'access-control-allow-methods': 'GET, POST, OPTIONS',
+    'access-control-allow-methods': 'GET, POST, OPTIONS, DELETE',
     'access-control-allow-headers': 'authorization, content-type',
   };
 
@@ -241,13 +274,7 @@ class LocalServerService {
   // --- API routes ----------------------------------------------------------
 
   Future<Response> _getConfig(Request request) async {
-    final prefs = await SharedPreferences.getInstance();
-    final Map<String, dynamic> json = _configProvider.config.toJson();
-    final String? eventImage = prefs.getString(_eventImagePrefsKey);
-    if (eventImage != null) {
-      json['eventImage'] = eventImage;
-    }
-    return _jsonResponse(json);
+    return _jsonResponse(_configProvider.config.toJson());
   }
 
   Future<Response> _postConfig(Request request) async {
@@ -261,25 +288,350 @@ class LocalServerService {
         status: 400,
       );
     }
+    final String? calcError = _validateCalcParams(decoded);
+    if (calcError != null) {
+      return _jsonResponse({'error': calcError}, status: 400);
+    }
 
     final AppConfig config = AppConfig.fromJson(decoded);
+    await _persistAndApply(config);
+
+    return _jsonResponse(config.toJson());
+  }
+
+  /// Returns an error message if any provided prayer-calc value is out of
+  /// range, else null. Only validates keys that are actually present, so
+  /// partial payloads stay allowed.
+  String? _validateCalcParams(Map<String, dynamic> json) {
+    final double? latitude = _parseDouble(json['latitude']);
+    if (latitude != null && (latitude < -90.0 || latitude > 90.0)) {
+      return 'latitude must be between -90 and 90';
+    }
+    final double? longitude = _parseDouble(json['longitude']);
+    if (longitude != null && (longitude < -180.0 || longitude > 180.0)) {
+      return 'longitude must be between -180 and 180';
+    }
+    final double? fajrAngle = _parseDouble(json['fajrAngle']);
+    if (fajrAngle != null && (fajrAngle <= 0.0 || fajrAngle > 40.0)) {
+      return 'fajrAngle must be in (0, 40]';
+    }
+    final double? ishaAngle = _parseDouble(json['ishaAngle']);
+    if (ishaAngle != null && (ishaAngle <= 0.0 || ishaAngle > 40.0)) {
+      return 'ishaAngle must be in (0, 40]';
+    }
+    return null;
+  }
+
+  double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
+  }
+
+  /// Persists [config] to SharedPreferences and hot-applies it. Every
+  /// mutating endpoint funnels through here so the TV reflects changes without
+  /// a restart and they survive relaunches.
+  Future<void> _persistAndApply(AppConfig config) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       ConfigProvider.configPrefsKey,
       jsonEncode(config.toJson()),
     );
+    _configProvider.applyConfig(config);
+  }
 
-    final dynamic eventImage = decoded['eventImage'];
-    if (eventImage is String) {
-      await prefs.setString(_eventImagePrefsKey, eventImage);
-    } else {
-      await prefs.remove(_eventImagePrefsKey);
+  // --- image uploads / serving ----------------------------------------------
+
+  Future<Response> _uploadBackground(Request request) =>
+      _uploadImage(request, isBackground: true);
+
+  Future<Response> _uploadEvent(Request request) =>
+      _uploadImage(request, isBackground: false);
+
+  Future<Response> _uploadImage(
+    Request request, {
+    required bool isBackground,
+  }) async {
+    final int? contentLength = request.contentLength;
+    if (contentLength != null && contentLength > maxImageBytes) {
+      return _jsonResponse({'error': 'Image too large'}, status: 413);
     }
 
-    // Apply immediately so the TV picks it up without a restart.
-    _configProvider.applyConfig(config);
+    final Uint8List bytes = await _readBodyBytes(request);
+    if (bytes.length > maxImageBytes) {
+      return _jsonResponse({'error': 'Image too large'}, status: 413);
+    }
+    if (bytes.isEmpty) {
+      return _jsonResponse({'error': 'Empty body'}, status: 400);
+    }
 
-    return _jsonResponse(config.toJson());
+    final String? ext = _imageExtension(request, bytes);
+    if (ext == null) {
+      return _jsonResponse(
+        {'error': 'Unsupported image type (jpeg/png/webp/gif only)'},
+        status: 415,
+      );
+    }
+
+    if (!isBackground &&
+        _configProvider.config.eventImages.length >= maxEventImages) {
+      return _jsonResponse(
+        {'error': 'Maximum $maxEventImages event images reached'},
+        status: 400,
+      );
+    }
+
+    final Directory dir = await _ensureImagesDir();
+    final String prefix = isBackground ? 'bg_' : 'ev_';
+    // Two uploads in the same millisecond would collide on the filename and
+    // silently overwrite; suffix a counter until the name is free so every
+    // upload stays unique (which also busts the TV's image caches).
+    String fileName = '$prefix${DateTime.now().millisecondsSinceEpoch}$ext';
+    File out = File('${dir.path}${Platform.pathSeparator}$fileName');
+    var attempt = 1;
+    while (out.existsSync()) {
+      fileName =
+          '$prefix${DateTime.now().millisecondsSinceEpoch}_$attempt$ext';
+      out = File('${dir.path}${Platform.pathSeparator}$fileName');
+      attempt++;
+    }
+    await out.writeAsBytes(bytes, flush: true);
+
+    if (isBackground) {
+      // Only one background survives; drop any previous upload so the TV never
+      // serves a stale cached image.
+      await _deleteFiles(dir, prefix: 'bg_', except: fileName);
+      await _persistAndApply(
+        AppConfig.fromJson({
+          ..._configProvider.config.toJson(),
+          'backgroundImage': _imageUrlFor(fileName),
+        }),
+      );
+    } else {
+      await _persistAndApply(
+        AppConfig.fromJson({
+          ..._configProvider.config.toJson(),
+          'eventImages': [
+            ..._configProvider.config.eventImages.map((e) => e.toJson()),
+            EventImage(type: 'IMAGE', url: _imageUrlFor(fileName)).toJson(),
+          ],
+        }),
+      );
+    }
+
+    return _jsonResponse(_configProvider.config.toJson());
+  }
+
+  Future<Uint8List> _readBodyBytes(Request request) async {
+    final BytesBuilder builder = BytesBuilder(copy: false);
+    await for (final List<int> chunk in request.read()) {
+      builder.add(chunk);
+    }
+    return builder.takeBytes();
+  }
+
+  /// Resolves the file extension for an upload from the `Content-Type` header,
+  /// falling back to magic-byte sniffing when the header is generic (a browser
+  /// `fetch(body: File)` commonly sends `application/octet-stream`). Returns
+  /// null for non-raster types (e.g. SVG/text), which are rejected.
+  String? _imageExtension(Request request, List<int> bytes) {
+    final String? contentType = request.headers['content-type']?.toLowerCase();
+    if (contentType != null) {
+      final String mime = contentType.split(';').first.trim();
+      final String? fromMime = _imageExtByMime[mime];
+      if (fromMime != null) return fromMime;
+    }
+    return _extFromMagic(bytes);
+  }
+
+  static const Map<String, String> _imageExtByMime = {
+    'image/png': '.png',
+    'image/jpeg': '.jpg',
+    'image/jpg': '.jpg',
+    'image/gif': '.gif',
+    'image/webp': '.webp',
+  };
+
+  String? _extFromMagic(List<int> bytes) {
+    if (bytes.length < 4) return null;
+    // PNG: 89 50 4E 47
+    if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
+      return '.png';
+    }
+    // GIF: "GIF8"
+    if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) {
+      return '.gif';
+    }
+    // JPEG: FF D8 FF
+    if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) {
+      return '.jpg';
+    }
+    // WEBP: "RIFF" .... "WEBP"
+    if (bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46 &&
+        bytes[8] == 0x57 &&
+        bytes[9] == 0x45 &&
+        bytes[10] == 0x42 &&
+        bytes[11] == 0x50) {
+      return '.webp';
+    }
+    return null;
+  }
+
+  Future<Response> _deleteEvent(Request request, String index) async {
+    final int? i = int.tryParse(index);
+    if (i == null) {
+      return _jsonResponse({'error': 'Invalid index'}, status: 400);
+    }
+    final List<EventImage> images = _configProvider.config.eventImages;
+    if (i < 0 || i >= images.length) {
+      return _jsonResponse({'error': 'Index out of range'}, status: 404);
+    }
+
+    final EventImage removed = images[i];
+    // Only delete the file when it is one of ours (uploaded via the server);
+    // external/legacy URLs are left untouched.
+    if (_isOwnedImageUrl(removed.url)) {
+      final String name = removed.url.split('/').last;
+      final File file = File(
+        '${(await _ensureImagesDir()).path}${Platform.pathSeparator}$name',
+      );
+      if (file.existsSync()) {
+        try {
+          await file.delete();
+        } catch (e) {
+          _logger.e('Failed to delete event image $name: $e');
+        }
+      }
+    }
+
+    await _persistAndApply(
+      AppConfig.fromJson({
+        ..._configProvider.config.toJson(),
+        'eventImages': [
+          for (int j = 0; j < images.length; j++)
+            if (j != i) images[j].toJson(),
+        ],
+      }),
+    );
+    return _jsonResponse(_configProvider.config.toJson());
+  }
+
+  Future<Response> _deleteBackground(Request request) async {
+    final Directory dir = await _ensureImagesDir();
+    await _deleteFiles(dir, prefix: 'bg_');
+    await _persistAndApply(
+      AppConfig.fromJson({
+        ..._configProvider.config.toJson(),
+        'backgroundImage': AppConstants.backgroundImage,
+      }),
+    );
+    return _jsonResponse(_configProvider.config.toJson());
+  }
+
+  /// Whether [url] points at a file we uploaded — the absolute baked form
+  /// (`http://127.0.0.1:<port>/images/<name>`) or a relative `/images/<name>`.
+  /// The path must be exactly `images/<single-name>` so we can compute the
+  /// on-disk filename safely.
+  bool _isOwnedImageUrl(String url) {
+    Uri uri;
+    try {
+      uri = Uri.parse(url);
+    } catch (_) {
+      return false;
+    }
+    final List<String> segments = uri.pathSegments;
+    final bool safeSegment = segments.length == 2 &&
+        segments[0] == 'images' &&
+        segments[1].isNotEmpty &&
+        !segments[1].contains('/') &&
+        !segments[1].contains('\\') &&
+        !segments[1].contains('..');
+    return safeSegment;
+  }
+
+  /// Deletes every file in [dir] whose name starts with [prefix], skipping
+  /// [except] if given. Failures are logged, never thrown.
+  Future<void> _deleteFiles(
+    Directory dir, {
+    required String prefix,
+    String? except,
+  }) async {
+    final List<File> matches = dir
+        .listSync()
+        .whereType<File>()
+        .where((File f) => f.path.split(Platform.pathSeparator).last
+            .startsWith(prefix))
+        .where((File f) =>
+            f.path.split(Platform.pathSeparator).last != except)
+        .toList();
+    for (final File file in matches) {
+      try {
+        await file.delete();
+      } catch (e) {
+        _logger.e('Failed to delete ${file.path}: $e');
+      }
+    }
+  }
+
+  /// The directory that holds uploaded images, created on first use. Uses the
+  /// injected [imagesDirectory] (tests), else the app-support dir.
+  Future<Directory> _ensureImagesDir() async {
+    final Directory? resolved = _resolvedImagesDir;
+    if (resolved != null) return resolved;
+
+    final Directory dir = _imagesDirectory ??
+        Directory(
+          '${(await getApplicationSupportDirectory()).path}'
+          '${Platform.pathSeparator}config_images',
+        );
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+    _resolvedImagesDir = dir;
+    return dir;
+  }
+
+  /// The absolute URL the TV will use to load an uploaded image. `127.0.0.1`
+  /// is the device itself, so the TV always reaches its own embedded server.
+  String _imageUrlFor(String fileName) =>
+      'http://127.0.0.1:$_port/images/$fileName';
+
+  static const Map<String, String> _imageMimeTypes = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+  };
+
+  /// Serves an uploaded image. Public (no token) so the TV's
+  /// NetworkImage/CachedNetworkImage and the browser's `<img>` tags can load
+  /// them; guarded against path traversal since this route is unauthenticated.
+  Future<Response> _getImage(Request request, String name) async {
+    if (name.isEmpty ||
+        name.contains('/') ||
+        name.contains('\\') ||
+        name.contains('..')) {
+      return Response.notFound('Not found');
+    }
+
+    final Directory dir = await _ensureImagesDir();
+    final File file = File('${dir.path}${Platform.pathSeparator}$name');
+    if (!file.existsSync()) return Response.notFound('Not found');
+
+    final String ext = name.contains('.')
+        ? name.substring(name.lastIndexOf('.')).toLowerCase()
+        : '';
+    final String mime = _imageMimeTypes[ext] ?? 'application/octet-stream';
+    return Response.ok(
+      file.readAsBytesSync(),
+      headers: {'content-type': mime, 'cache-control': 'no-cache'},
+    );
   }
 
   Future<String> _readBody(Request request) async {

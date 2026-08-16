@@ -27,6 +27,23 @@ class AppConfig {
 
   final int minutesBeforeMaghrib;
   final int minutesBeforeJumat;
+
+  /// Prayer-calculation parameters (Kemenag method), all editable at runtime
+  /// through the local config server and used by [CalculatePrayerTimes].
+  final double latitude;
+  final double longitude;
+  final double fajrAngle;
+  final double ishaAngle;
+
+  /// Serialized madhab name (one of [AppConstants.madhabNames], e.g.
+  /// `'shafi'`/`'hanafi'`). Kept as a String so `domain/` stays free of the
+  /// adhan_dart import; the calculator maps it back to the enum.
+  final String madhab;
+
+  /// Per-prayer ihtiyat (minutes) keyed by the Kemenag names. Always carries
+  /// all seven keys (`imsak, subuh, terbit, dhuhur, ashar, maghrib, isya`);
+  /// `terbit` may be negative.
+  final Map<String, int> ihtiyat;
   final String marqueeText;
   final String backgroundImage;
   final List<EventImage> eventImages;
@@ -50,6 +67,12 @@ class AppConfig {
     required this.iqomahTestingDuration,
     required this.minutesBeforeMaghrib,
     required this.minutesBeforeJumat,
+    required this.latitude,
+    required this.longitude,
+    required this.fajrAngle,
+    required this.ishaAngle,
+    required this.madhab,
+    required this.ihtiyat,
     required this.marqueeText,
     required this.backgroundImage,
     required this.eventImages,
@@ -66,6 +89,37 @@ class AppConfig {
       if (value is bool) return value;
       final String? raw = value?.toString().toLowerCase();
       return raw == null ? fallback : raw == 'true';
+    }
+
+    double parseDouble(dynamic value, double fallback) {
+      if (value is num) return value.toDouble();
+      return double.tryParse(value?.toString() ?? '') ?? fallback;
+    }
+
+    String parseMadhab(dynamic value) {
+      final String raw = value?.toString().toLowerCase() ?? '';
+      return AppConstants.madhabNames.contains(raw)
+          ? raw
+          : AppConstants.madhab.name;
+    }
+
+    Map<String, int> parseIhtiyat(dynamic value) {
+      // Start from the full Kemenag default map so every lookup in the
+      // calculator is always non-null, then overlay saved per-key values.
+      final Map<String, int> result = Map<String, int>.from(
+        AppConstants.ihtiyat,
+      );
+      if (value is Map) {
+        for (final MapEntry<dynamic, dynamic> entry in value.entries) {
+          final int? parsed = entry.value is num
+              ? (entry.value as num).toInt()
+              : int.tryParse(entry.value.toString());
+          if (parsed != null) {
+            result[entry.key.toString()] = parsed;
+          }
+        }
+      }
+      return result;
     }
 
     final rawImages = json['eventImages'];
@@ -115,6 +169,17 @@ class AppConfig {
         json['minutesBeforeJumat'],
         AppConstants.minutesBeforeJumat,
       ),
+      latitude: parseDouble(json['latitude'], AppConstants.latitude)
+          .clamp(-90.0, 90.0)
+          .toDouble(),
+      longitude: parseDouble(
+        json['longitude'],
+        AppConstants.longitude,
+      ).clamp(-180.0, 180.0).toDouble(),
+      fajrAngle: parseDouble(json['fajrAngle'], AppConstants.fajrAngle),
+      ishaAngle: parseDouble(json['ishaAngle'], AppConstants.ishaAngle),
+      madhab: parseMadhab(json['madhab']),
+      ihtiyat: parseIhtiyat(json['ihtiyat']),
       marqueeText: json['marqueeText']?.toString() ?? AppConstants.marqueeText,
       backgroundImage:
           json['backgroundImage']?.toString() ?? AppConstants.backgroundImage,
@@ -146,6 +211,12 @@ class AppConfig {
       'iqomahTestingDuration': iqomahTestingDuration,
       'minutesBeforeMaghrib': minutesBeforeMaghrib,
       'minutesBeforeJumat': minutesBeforeJumat,
+      'latitude': latitude,
+      'longitude': longitude,
+      'fajrAngle': fajrAngle,
+      'ishaAngle': ishaAngle,
+      'madhab': madhab,
+      'ihtiyat': ihtiyat,
       'marqueeText': marqueeText,
       'backgroundImage': backgroundImage,
       'eventImages': eventImages.map((e) => e.toJson()).toList(),

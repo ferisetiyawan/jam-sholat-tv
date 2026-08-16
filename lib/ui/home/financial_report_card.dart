@@ -8,16 +8,16 @@ import '../../domain/models/financial_summary.dart';
 /// The ledger panel of the financial report.
 ///
 /// Standalone (no surrounding home-mode chrome) so it can be laid out and
-/// tested in isolation. The report is drawn at a fixed logical size
-/// ([_designWidth] wide) and wrapped in a `FittedBox` with `BoxFit.contain`,
-/// so it scales to fit — down on a short display, up to fill a large one —
-/// without ever overflowing. Rows use `spaceBetween` instead of flex children
-/// because `FittedBox` lays its child out with unbounded constraints.
+/// tested in isolation. The report is flexible by construction:
+///
+/// - Rows stretch to fill the panel width, so on a wide TV the ledger spans
+///   the whole panel (label left, amount right).
+/// - Labels and amounts are wrapped in `FittedBox` (`scaleDown`), so on a
+///   narrow panel they shrink to fit instead of overflowing.
+/// - Vertically the content is centered when it fits, and becomes scrollable
+///   instead of overflowing when the panel is shorter than the content.
 class FinancialReportCard extends StatelessWidget {
   final FinancialSummary summary;
-
-  /// Logical design width the report is laid out at before scaling.
-  static const double _designWidth = 520;
 
   const FinancialReportCard({super.key, required this.summary});
 
@@ -33,6 +33,20 @@ class FinancialReportCard extends StatelessWidget {
     return DateFormat('d MMMM yyyy', 'id_ID').format(date.toLocal());
   }
 
+  /// Renders [text] at its natural size, shrinking down to fit its row when
+  /// there is not enough horizontal space.
+  Widget _shrinkText(
+    String text,
+    TextStyle style, {
+    Alignment alignment = Alignment.centerLeft,
+  }) {
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: alignment,
+      child: Text(text, style: style),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -46,65 +60,76 @@ class FinancialReportCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: Colors.white10),
           ),
-          child: FittedBox(
-            fit: BoxFit.contain,
-            alignment: Alignment.center,
-            child: SizedBox(
-              width: _designWidth,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Title
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Center vertically when the content fits; scroll (never
+              // overflow) when the panel is shorter than the content.
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      // Title
+                      Row(
                         children: [
-                          const Text(
-                            "LAPORAN KEUANGAN",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w900,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _shrinkText(
+                                  "LAPORAN KEUANGAN",
+                                  const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                _shrinkText(
+                                  "Saldo kas & pemasukan pekan ini",
+                                  const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          Text(
-                            "Saldo kas & pemasukan pekan ini",
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 11,
-                            ),
+                          const SizedBox(width: 12),
+                          const Icon(
+                            Icons.account_balance_wallet,
+                            color: Colors.amber,
+                            size: 30,
                           ),
                         ],
                       ),
-                      const Icon(
-                        Icons.account_balance_wallet,
-                        color: Colors.amber,
-                        size: 30,
+                      const SizedBox(height: 8),
+                      const Divider(color: Colors.white24, height: 14),
+
+                      // --- Saldo Kas Akhir ---
+                      _buildSectionHeader(
+                        "SALDO KAS AKHIR",
+                        trailing: formatDate(summary.saldoKasDate),
                       ),
+                      const SizedBox(height: 5),
+                      _buildTotalRow(),
+                      const SizedBox(height: 10),
+                      const Divider(color: Colors.white24, height: 14),
+
+                      // --- Pemasukan Pekan Ini ---
+                      _buildSectionHeader("PEMASUKAN PEKAN INI"),
+                      const SizedBox(height: 6),
+                      ...summary.weeklyIncome.map(_buildWeekRow),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Divider(color: Colors.white24, height: 14),
-
-                  // --- Saldo Kas Akhir ---
-                  _buildSectionHeader(
-                    "SALDO KAS AKHIR",
-                    trailing: formatDate(summary.saldoKasDate),
-                  ),
-                  const SizedBox(height: 5),
-                  _buildTotalRow(),
-                  const SizedBox(height: 10),
-                  const Divider(color: Colors.white24, height: 14),
-
-                  // --- Pemasukan Pekan Ini ---
-                  _buildSectionHeader("PEMASUKAN PEKAN INI"),
-                  const SizedBox(height: 6),
-                  ...summary.weeklyIncome.map(_buildWeekRow),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -113,22 +138,26 @@ class FinancialReportCard extends StatelessWidget {
 
   Widget _buildSectionHeader(String title, {String? trailing}) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.amber,
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.4,
+        Expanded(
+          child: _shrinkText(
+            title,
+            const TextStyle(
+              color: Colors.amber,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.4,
+            ),
           ),
         ),
-        if (trailing != null)
-          Text(
+        if (trailing != null) ...[
+          const SizedBox(width: 12),
+          _shrinkText(
             trailing,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            const TextStyle(color: Colors.white70, fontSize: 12),
+            alignment: Alignment.centerRight,
           ),
+        ],
       ],
     );
   }
@@ -151,52 +180,36 @@ class FinancialReportCard extends StatelessWidget {
         "${formatDate(week.periodeStart)} - ${formatDate(week.periodeEnd)}";
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            periode,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 13,
-            ),
-          ),
-          Text(
-            formatIdr(week.pemasukan),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ],
-      ),
+      child: _buildRow(periode, week.pemasukan),
     );
   }
 
   Widget _buildRow(String label, double amount, {bool emphasized = false}) {
-    final Color textColor =
+    final Color labelColor =
         emphasized ? Colors.white : Colors.white.withValues(alpha: 0.85);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: textColor,
-              fontSize: emphasized ? 15 : 14,
-              fontWeight: emphasized ? FontWeight.w800 : FontWeight.w500,
+          Expanded(
+            child: _shrinkText(
+              label,
+              TextStyle(
+                color: labelColor,
+                fontSize: emphasized ? 15 : 13,
+                fontWeight: emphasized ? FontWeight.w800 : FontWeight.w500,
+              ),
             ),
           ),
-          Text(
+          const SizedBox(width: 12),
+          _shrinkText(
             formatIdr(amount),
-            style: TextStyle(
+            TextStyle(
               color: Colors.white,
-              fontSize: emphasized ? 17 : 16,
+              fontSize: emphasized ? 17 : 15,
               fontWeight: FontWeight.w900,
             ),
+            alignment: Alignment.centerRight,
           ),
         ],
       ),

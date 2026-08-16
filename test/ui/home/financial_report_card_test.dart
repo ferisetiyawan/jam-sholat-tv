@@ -39,7 +39,62 @@ void main() {
     expect(find.text('Rp121.381.630'), findsOneWidget);
   });
 
-  testWidgets('scales up without overflow on a large panel', (tester) async {
+  testWidgets('no overflow on a very small panel', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 320,
+              height: 180,
+              child: FinancialReportCard(
+                summary: FinancialSummary.offlineSample(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('becomes scrollable when the panel is too short',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 400,
+              height: 220,
+              child: FinancialReportCard(
+                summary: FinancialSummary.offlineSample(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Scroll down; the last week row should become visible and nothing
+    // should throw (no overflow, no overlap).
+    await tester.drag(
+      find.byType(SingleChildScrollView),
+      const Offset(0, -300),
+    );
+    await tester.pump();
+
+    expect(tester.takeException(), isNull);
+    expect(
+      find.text('29 Mei 2026 - 4 Juni 2026'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('no overflow on a large panel', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(

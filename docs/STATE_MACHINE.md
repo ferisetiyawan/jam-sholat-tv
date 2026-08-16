@@ -45,7 +45,7 @@ On Friday, `_handleCycleLogic` renames the Dzuhur entry to **Jumat** before trig
 
 ## Durations
 
-All durations are config-driven (`ConfigProvider`, remote-over-defaults) and mostly shortened in `kDebugMode` (`AppConstants.isDebug`):
+All durations are fixed local constants in `AppConstants` (served via `ConfigProvider` — no remote config) and mostly shortened in `kDebugMode` (`AppConstants.isDebug`):
 
 | Duration | Default (release) | Debug |
 | --- | --- | --- |
@@ -67,16 +67,16 @@ On launch (after the local schedule loads), `AppProvider.checkInitialStatus` wal
 
 ## Home-screen idle cycle
 
-While `status == home`, `_handleCycleLogic` slices a rolling cycle of `homeDuration + eventDuration + reportDuration` (config seconds each; the event/report segments are dropped to 0 if there are no images/data or no internet):
+While `status == home`, `_handleCycleLogic` slices a rolling cycle of `homeDuration + eventDuration + reportDuration`. Offline, `eventImages` is always empty and `financialSummary` is always null, so the event/report segments are always 0 and the cycle degenerates to Home only — the slicing logic is retained in code but only the home slice ever runs:
 
 - `tick % totalCycle < homeDuration` → Home (big clock + schedule row)
-- `< homeDuration + eventDuration` → `isEventMode = true` (advances `currentEventIndex` through `config.eventImages`)
-- else → `isReportMode = true` (shows `financialSummary` if non-null)
+- `< homeDuration + eventDuration` → `isEventMode = true` (would advance `currentEventIndex` through `config.eventImages`) — never fires offline
+- else → `isReportMode = true` (would show `financialSummary`) — never fires offline
 
-`isSpecialLiveMode` is checked *separately* and, when true, the live Makkah screen wins over home/event/report.
+`isSpecialLiveMode` is checked *separately* and, when true, the live Makkah screen wins over home.
 
 ## Edge cases to preserve
 
 - **Exact-second trigger**: transitions fire only when `now.second == 0`, so a second-hand tick past the prayer time is not re-triggered until the next matching second.
-- **`_onTick` early-return**: if `_config == null` (config not yet loaded) the tick no-ops; providers are ordered so config loads first.
-- **Midnight sync**: at 00:00:00 the jadwal is recomputed locally for the new day and the financial report is refreshed, so the date rolls over to the next day's schedule.
+- **`_onTick` early-return**: the tick no-ops until `_config` is set; config is now static defaults delivered synchronously via the provider proxy, so it is available from the first tick.
+- **Midnight sync**: at 00:00:00 the jadwal is recomputed locally for the new day, so the date rolls over to the next day's schedule.

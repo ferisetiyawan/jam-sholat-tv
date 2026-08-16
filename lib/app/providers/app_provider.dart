@@ -97,14 +97,7 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _updateConnectionStatus(List<ConnectivityResult> results) {
-    bool oldInternetStatus = hasInternet;
     hasInternet = !results.contains(ConnectivityResult.none);
-
-    if (hasInternet && !oldInternetStatus) {
-      // Schedules are computed locally; only the financial report still needs
-      // the network to refresh on reconnect.
-      updateFinancialReport();
-    }
     notifyListeners();
   }
 
@@ -112,9 +105,11 @@ class AppProvider extends ChangeNotifier {
     jadwal = _prayerRepository.getTodayJadwal();
     checkInitialStatus(jadwal);
     notifyListeners();
-    updateFinancialReport();
   }
 
+  /// Dormant — the financial endpoint is no longer called (offline mode).
+  /// Kept, per the offline decision, in case a future offline data source
+  /// needs to populate [financialSummary].
   Future<void> updateFinancialReport() async {
     if (_isFetchingFinance || !hasInternet) return;
 
@@ -156,7 +151,6 @@ class AppProvider extends ChangeNotifier {
       final fresh = _prayerRepository.getTodayJadwal(now: now);
       jadwal = fresh;
       if (status == AppStatus.home) checkInitialStatus(fresh);
-      updateFinancialReport();
       notifyListeners();
     }
   }

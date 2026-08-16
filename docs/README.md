@@ -8,5 +8,5 @@ New to the codebase? Start with [`../CLAUDE.md`](../CLAUDE.md) (the AI-onboardin
 | --- | --- |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Layering, the role of every file under `lib/`, and how the pieces connect |
 | [`STATE_MACHINE.md`](STATE_MACHINE.md) | The `AppStatus` state machine: full prayer-cycle transitions, timings, and edge cases |
-| [`DATA_SOURCES.md`](DATA_SOURCES.md) | Schedule asset format, the myquran API, the Google Apps Script config & financial endpoints, persistence keys |
+| [`DATA_SOURCES.md`](DATA_SOURCES.md) | On-device prayer-time calculation, fixed local config constants, the dormant financial report, live-stream + audio |
 | [`DEVELOPMENT.md`](DEVELOPMENT.md) | Dev loop with FVM, fake-time debugging, linting, and the tag-based release/CI process |

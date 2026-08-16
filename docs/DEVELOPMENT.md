@@ -36,7 +36,7 @@ Fake time advances in real seconds (`currentDateTime = _fakeTime ?? DateTime.now
 ## Project layout & conventions
 
 - Screens are stateless and receive all data through constructors — keep it that way; no logic inside `ui/`. State lives in `app/providers/`, data access behind `data/repositories/`, and pure rules in `domain/use_cases/`.
-- All durations/text/images flow through `ConfigProvider` (remote over `AppConstants`). Add new tunables there, not as local constants.
+- All durations/text/images flow through `ConfigProvider`, which serves the fixed `AppConstants` defaults (no remote config). Add new tunables in `AppConstants`, not as ad-hoc local constants.
 - The Jumat rename ("Dzuhur" → "Jumat" on Friday) exists in **five** sites — see `docs/ARCHITECTURE.md` → "Where the Jumat translation lives". Touch all five or you reintroduce the recurring bug.
 - Prayer times are computed locally for **Depok** coordinates (`AppConstants.latitude` / `AppConstants.longitude`); changing location means editing those two constants.
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-**Jam Sholat TV** — a Flutter Android app for a masjid TV/display screen (Masjid Al Hijrah CGE, Depok). It shows the current time, today's prayer schedule, and a live countdown to the next prayer, then cycles through full-screen states as each prayer time arrives: **Adzan** → **Iqomah** → **Shalat**, with a dedicated **Jumat** state on Friday and an **Isyraq** countdown after Syuruq. It also rotates through announcement images (event mode) and a monthly financial report (report mode) while on the home screen, and plays a live Makkah YouTube stream during the 30 minutes before Maghrib / Jumat.
+**Jam Sholat TV** — a Flutter Android app for a masjid TV/display screen (Masjid Al Hijrah CGE, Depok). It shows the current time, today's prayer schedule, and a live countdown to the next prayer, then cycles through full-screen states as each prayer time arrives: **Adzan** → **Iqomah** → **Shalat**, with a dedicated **Jumat** state on Friday and an **Isyraq** countdown after Syuruq. The code retains announcement-image (event mode) and monthly-financial-report (report mode) home screens, but both are **dormant** — nothing feeds them offline (see "Data sources"). It plays a live Makkah YouTube stream during the 30 minutes before Maghrib / Jumat.
 
 All UI text is Indonesian. The app runs on Android TV/tablet in landscape, fullscreen, with the screen kept awake.
 
@@ -33,11 +33,11 @@ AppStatus { home, adzan, iqomah, jumatMode, shalat, isyraq }
 
 Screens are pure presentational widgets — they take data via constructor params and never own logic. The only real logic lives in:
 - `lib/app/providers/app_provider.dart` — the state machine (tick, transitions, countdowns, fake-time debug tools)
-- `lib/app/providers/config_provider.dart` — merged runtime config (remote over defaults)
-- `lib/data/repositories/` + `lib/data/services/` — data fetching, caching + audio
+- `lib/app/providers/config_provider.dart` — fixed runtime config (AppConstants defaults only, no remote fetch)
+- `lib/data/repositories/` + `lib/data/services/` — data access + audio (the financial pipeline is retained but dormant)
 - `lib/domain/` — typed models and pure use cases (countdown, iqomah durations)
 
-Provider wiring: `ConfigProvider` (wraps `ConfigRepository`) and `AppProvider` (wraps `PrayerRepository`, `FinancialRepository`, `AudioService`) are created in `main.dart` via a `MultiProvider` with `ChangeNotifierProxyProvider`. `AppProvider` reads `config` for all durations. **The config getters must be non-null by the time `AppProvider._onTick` runs** — `_onTick` early-returns if `_config == null`.
+Provider wiring: `ConfigProvider` (serves the fixed `AppConstants` defaults — no remote fetch) and `AppProvider` (wraps `PrayerRepository`, `FinancialRepository`, `AudioService`) are created in `main.dart` via a `MultiProvider` with `ChangeNotifierProxyProvider`. `AppProvider` reads `config` for all durations. Config is static after construction, so the getters are always non-null by the time `AppProvider._onTick` runs.
 
 ### The prayer cycle (the heart of the app)
 
@@ -52,19 +52,19 @@ Read `docs/STATE_MACHINE.md` for the full diagram. Summary:
 
 The `jadwal` map always keys the Friday prayer as `"Dzuhur"`, but multiple widgets/paths translate it to `"Jumat"` for display, and `"Jumat"` is translated back to `"Dzuhur"` for schedule lookups. This shows up independently in: `AppProvider._handleCycleLogic`, `AppProvider.checkInitialStatus`, `CalculateCountdown` (`lib/domain/use_cases/calculate_countdown.dart`), `PrayerCard`, and `SidePrayerPanel`. Recent changelog entries show recurring bugs here — if you touch anything Jumat-related, check all five sites.
 
-### Durations are all runtime config
+### Durations are fixed local constants
 
-Every duration (`homeDuration`, `adzanDuration`, `iqomah*Duration`, `shalatDuration`, `isyraqDuration`, `jumatDuration`, `minutesBeforeMaghrib`, …) comes from `ConfigProvider`, which merges a **remote Google Apps Script config** over the `AppConstants` defaults (`lib/core/constants/app_constants.dart`). Config re-fetches every minute. In `kDebugMode` most durations are shortened to a few seconds to speed up testing.
+Every duration (`homeDuration`, `adzanDuration`, `iqomah*Duration`, `shalatDuration`, `isyraqDuration`, `jumatDuration`, `minutesBeforeMaghrib`, …) comes from `ConfigProvider`, which now serves the fixed `AppConstants` defaults (`lib/core/constants/app_constants.dart`) — the remote Google Apps Script config fetch was removed, so no value can change at runtime. In `kDebugMode` most durations are shortened to a few seconds to speed up testing.
 
 Iqomah duration logic (`GetIqomahDuration` use case in `lib/domain/use_cases/get_iqomah_duration.dart`): Subuh = 15 min, Maghrib during Ramadhan (hijri month 9) = 15 min, otherwise 10 min; in debug = 5s. Hijri correction (`hijriCorrection`, default `-1`, clamped to [-2, 2]) is applied by adding days in `DateFormatter.getFullDate`.
 
-### Data sources (all "offline-first")
+### Data sources (all offline — no network, no persistence)
 
 1. **Prayer schedules** — computed **entirely on-device** with the `adhan_dart` package using the **Kemenag method** (fajr 20°, isha 18°, Shafi madhab). The per-prayer **ihtiyat** minutes, `fajrAngle`, `ishaAngle`, `madhab`, and the Depok coordinates are constants in `AppConstants` (`lib/core/constants/app_constants.dart`). `CalculatePrayerTimes` (`lib/domain/use_cases/calculate_prayer_times.dart`) produces today's canonical jadwal map (`Subuh, Syuruq, Dzuhur, Ashar, Maghrib, Isya` → `HH:mm`); it is recomputed at launch and again at midnight. No network, bundled schedules, or cache needed — see `docs/DATA_SOURCES.md`.
-2. **Remote config + event images** — a Google Apps Script endpoint (`?action=config`) returns durations, marquee text, background image URL, and an `eventImages` list. Remote image URLs are downloaded to the app documents dir as `event_<hash>.<ext>` and stale files are cleaned up. Cached in SharedPreferences `local_config_cache`.
-3. **Financial report** — a separate Google Apps Script endpoint (`?action=summary`) returns monthly kas data (`saldoAwal`, `kasmasuk`, `kasKeluar`, `saldoAkhir`, `saldoPrasarana`, `saldoNonPrasarana`), rendered on the FinancialReport screen in report mode (internet + data required).
+2. **Config (durations, marquee, background)** — **no longer fetched**. All values come from the fixed `AppConstants` defaults via `ConfigProvider`; `eventImages` is always empty, so event mode / announcement images never activate; marquee and background render the bundled `AppConstants.marqueeText` / `AppConstants.backgroundImage`.
+3. **Financial report** — **no longer fetched**. `FinancialService` / `FinancialRepository` / `FinancialReportScreen` are retained but dormant: `financialSummary` stays null, so report mode never activates.
 
-Only SharedPreferences is used for persistence — no local database. The whole app is one Android target (`com.jamsholattv`); `ios` is not configured.
+There is no local database or persistence layer — the app runs fully offline. The whole app is one Android target (`com.jamsholattv`); `ios` is not configured.
 
 ## Debug tools you should know about
 

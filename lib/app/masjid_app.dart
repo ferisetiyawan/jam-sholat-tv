@@ -14,7 +14,7 @@ class MasjidApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ConfigProvider()..init()),
+        ChangeNotifierProvider(create: (_) => ConfigProvider()),
 
         ChangeNotifierProxyProvider<ConfigProvider, AppProvider>(
           create: (_) => AppProvider()..init(),

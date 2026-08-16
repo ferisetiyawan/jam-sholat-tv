@@ -11,27 +11,25 @@ lib/
 │   ├── masjid_app.dart               # root widget: MultiProvider wiring + MaterialApp
 │   ├── main_controller.dart          # watches providers, maps AppStatus → screen (+ debug FAB)
 │   └── providers/
-│       ├── config_provider.dart      # runtime config state (remote over defaults), reloads every 1 min
-│       └── app_provider.dart         # THE state machine (1-sec tick) + financial/event state
+│       ├── config_provider.dart      # fixed runtime config (AppConstants defaults, no fetch)
+│       └── app_provider.dart         # THE state machine (1-sec tick) + dormant financial/event state
 ├── core/
-│   ├── constants/app_constants.dart  # all fallback defaults + asset paths + prayer-calc constants
+│   ├── constants/app_constants.dart  # all duration/text/asset defaults + prayer-calc constants
 │   ├── constants/app_enum.dart       # AppStatus enum
 │   ├── theme/app_theme.dart          # dark theme
 │   ├── utils/date_formatter.dart     # Masehi + Hijriah date strings (applies hijri correction)
 │   └── widgets/                      # shared UI building blocks
-│       ├── background_image.dart     # configurable background (asset or network)
+│       ├── background_image.dart     # fixed background (bundled asset)
 │       ├── prayer_card.dart          # one prayer cell in the home schedule row
 │       ├── side_prayer_panel.dart    # clock + schedule sidebar (report / live modes)
 │       └── bottom_marquee_bar.dart   # scrolling marquee text
 ├── data/
 │   ├── services/
-│   │   ├── config_remote_service.dart    # remote config fetch, event-image download + cleanup
-│   │   ├── financial_service.dart        # monthly kas summary fetch (raw API client)
+│   │   ├── financial_service.dart        # monthly kas summary fetch (retained, dormant)
 │   │   └── audio_service.dart            # adzan/iqomah beep playback (static AudioPlayer)
 │   └── repositories/
 │       ├── prayer_repository.dart    # single source of truth: today's (locally computed) jadwal
-│       ├── config_repository.dart    # single source of truth: merged AppConfig
-│       └── financial_repository.dart # single source of truth: FinancialSummary
+│       └── financial_repository.dart # single source of truth: FinancialSummary (retained, dormant)
 ├── domain/
 │   ├── models/
 │   │   ├── app_config.dart           # typed runtime config with AppConstants fallbacks
@@ -46,8 +44,8 @@ lib/
     ├── home/                         # home status + its mode screens
     │   ├── home_screen.dart          # big clock + schedule row (used inside HomeWrapper)
     │   ├── home_wrapper.dart         # BackgroundImage + HomeScreen
-    │   ├── event_screen.dart         # rotating announcement images
-    │   ├── financial_report_screen.dart  # monthly kas report
+    │   ├── event_screen.dart         # rotating announcement images (dormant)
+    │   ├── financial_report_screen.dart  # monthly kas report (dormant)
     │   └── live_makkah_screen.dart   # YouTube live stream (LIVE_MECCA video id)
     └── prayer/                       # prayer-cycle screens
         ├── adzan_screen.dart         # "WAKTU ADZAN BERKUMANDANG"
@@ -62,7 +60,7 @@ lib/
 - **`ui/`** — presentational only. Widgets never fetch data or own business logic; they read from providers or receive constructor parameters.
 - **`app/providers/`** — app-wide state (the ViewModels). `AppProvider` is the state machine; `ConfigProvider` exposes the merged config.
 - **`domain/`** — pure business logic and models, no Flutter/dependency imports.
-- **`data/`** — services talk to the outside world (HTTP, SharedPreferences, assets, platform plugins); repositories are the single entry point the rest of the app uses and the only place that knows about services.
+- **`data/`** — services talk to the outside world (HTTP, platform plugins, assets); repositories are the single entry point the rest of the app uses and the only place that knows about services.
 
 ## Startup flow
 
@@ -72,14 +70,14 @@ lib/
 2. `runApp(const MasjidApp())`.
 
 `MasjidApp` (`lib/app/masjid_app.dart`) builds `MultiProvider`:
-- `ConfigProvider()..init()` — immediately loads config (from remote, falling back to cache/defaults), then reloads every minute.
-- `ChangeNotifierProxyProvider<ConfigProvider, AppProvider>` — `AppProvider()..init()`, updated with `app.updateConfig(config)` whenever config changes.
+- `ConfigProvider()` — exposes the fixed offline config (AppConstants defaults; no fetch).
+- `ChangeNotifierProxyProvider<ConfigProvider, AppProvider>` — `AppProvider()..init()`, updated once with `app.updateConfig(config)` at startup (config never changes afterwards).
 - `MaterialApp(darkTheme)` → `MainController`.
 
 `MainController` (`lib/app/main_controller.dart`) watches both providers and maps `app.status` (+ mode flags) to exactly one screen through a `switch`. On the `home` status it further branches:
 - `isSpecialLiveMode` → `LiveMakkahScreen` (30 min before Maghrib or, on Friday, Jumat — and internet is up)
-- `financialSummary != null` → `FinancialReportScreen`
-- `isEventMode && eventImages.isNotEmpty` → `EventScreen`
+- `financialSummary != null` → `FinancialReportScreen` (dormant: `financialSummary` is always null offline)
+- `isEventMode && eventImages.isNotEmpty` → `EventScreen` (dormant: `eventImages` is always empty)
 - otherwise → `HomeWrapper`
 
 An `AnimatedSwitcher` cross-fades between screen changes. A tiny red `wifi_off` badge overlays when offline. In debug mode a FAB column (fake-time simulators) floats on top.
@@ -92,7 +90,7 @@ An `AnimatedSwitcher` cross-fades between screen changes. A tiny red `wifi_off` 
 2. `_handleCycleLogic(now)` — only when `status == home`: rotates between home / event / report segments, and detects an exact HH:mm match against the `jadwal` map to trigger **Adzan** (or the Syuruq → Iqomah path).
 3. `_handlePrayerStatusLogic()` — decrements the active state's counter and fires its transition (adzan→iqomah, iqomah→shalat/isyraq, etc.).
 4. `_checkSpecialLiveConditions(now)` — sets `isSpecialLiveMode`.
-5. `_handleMidnightSync(now)` — at 00:00:00, recomputes the local jadwal for the new day and refreshes the financial report.
+5. `_handleMidnightSync(now)` — at 00:00:00, recomputes the local jadwal for the new day.
 
 `currentDateTime` returns `_fakeTime ?? DateTime.now()` so the whole machine can be simulated.
 
@@ -112,11 +110,9 @@ Additionally `_isMinutesBeforePrayer("Jumat", ...)` maps the lookup key back to 
 
 ## Config layering
 
-`ConfigProvider` exposes an `AppConfig` model built by `ConfigRepository` → `ConfigRemoteService.fetchRemoteConfig()`:
+`ConfigProvider` exposes a fixed `AppConfig` built from `AppConfig.defaults()` (every field resolved from `AppConstants`). There is no remote config fetch, no event-image sync, and no persistence:
 
-1. GET the Google Apps Script endpoint (`?action=config`).
-2. If `eventImages` present, download new remote image URLs to the app documents dir as `event_<url.hashCode>.<ext>` and delete `event_*` files no longer referenced.
-3. `AppConfig.fromJson` merges remote values over `AppConstants` defaults (`AppConfig.toJson` persists the merged result).
-4. Cache to SharedPreferences `local_config_cache`; on any failure return the cached config (or bare defaults).
+- Durations, `hijriCorrection`, marquee text, and the background asset all come from `AppConstants` (`lib/core/constants/app_constants.dart`); `eventImages` is always empty, so event mode never activates (announcement feature disabled).
+- The provider stays a `ChangeNotifier` only to keep the existing `MultiProvider`/proxy wiring intact; it never notifies.
 
-`hijriCorrection` is clamped to `[-2, 2]` when parsing and applied in `DateFormatter.getFullDate` by shifting `DateTime.now()` by that many days before converting to Hijriah (`hijriyah_indonesia` package). Default is `-1`.
+`hijriCorrection` is clamped to `[-2, 2]` when parsing (still via `AppConfig.fromJson`, used by `defaults()`) and applied in `DateFormatter.getFullDate` by shifting `DateTime.now()` by that many days before converting to Hijriah (`hijriyah_indonesia` package). Default is `-1`.

@@ -1,61 +1,39 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
-import '../../data/repositories/config_repository.dart';
 import '../../domain/models/app_config.dart';
 import '../../domain/models/event_image.dart';
 
-/// Exposes the merged runtime [AppConfig] to the widget tree.
+/// Exposes the fixed, fully-offline [AppConfig] to the widget tree.
 ///
-/// Holds no fetching/caching logic of its own — that lives in
-/// [ConfigRepository]. The provider re-fetches the config once a minute and
-/// notifies listeners. Before the first successful fetch, every getter falls
-/// back to [AppConfig] defaults.
+/// All tunables (durations, hijri correction, marquee/background fallbacks)
+/// come from [AppConfig] defaults — i.e. the local [AppConstants] values. The
+/// remote config fetch was removed, so this provider never changes after
+/// construction; it stays a [ChangeNotifier] only to keep the existing
+/// provider wiring intact.
 class ConfigProvider extends ChangeNotifier {
-  ConfigProvider({ConfigRepository? repository})
-      : _repository = repository ?? ConfigRepository();
+  ConfigProvider();
 
-  final ConfigRepository _repository;
+  final AppConfig _config = AppConfig.defaults();
 
-  AppConfig? _config;
+  AppConfig get config => _config;
 
-  AppConfig get config => _config ?? AppConfig.defaults();
-
-  int get homeDuration => config.homeDuration;
-  int get eventDuration => config.eventDuration;
-  int get reportDuration => config.reportDuration;
-  int get adzanDuration => config.adzanDuration;
-  int get jumatDuration => config.jumatDuration;
-  int get shalatDuration => config.shalatDuration;
-  int get isyraqDuration => config.isyraqDuration;
-  int get hijriCorrection => config.hijriCorrection;
-  int get waitingIsyraqDuration => config.waitingIsyraqDuration;
-  int get iqomahSubuhDuration => config.iqomahSubuhDuration;
+  int get homeDuration => _config.homeDuration;
+  int get eventDuration => _config.eventDuration;
+  int get reportDuration => _config.reportDuration;
+  int get adzanDuration => _config.adzanDuration;
+  int get jumatDuration => _config.jumatDuration;
+  int get shalatDuration => _config.shalatDuration;
+  int get isyraqDuration => _config.isyraqDuration;
+  int get hijriCorrection => _config.hijriCorrection;
+  int get waitingIsyraqDuration => _config.waitingIsyraqDuration;
+  int get iqomahSubuhDuration => _config.iqomahSubuhDuration;
   int get iqomahMaghribRamadhanDuration =>
-      config.iqomahMaghribRamadhanDuration;
-  int get iqomahDefaultDuration => config.iqomahDefaultDuration;
-  int get iqomahTestingDuration => config.iqomahTestingDuration;
-  int get minutesBeforeMaghrib => config.minutesBeforeMaghrib;
-  int get minutesBeforeJumat => config.minutesBeforeJumat;
-  String get marqueeText => config.marqueeText;
-  String get backgroundImage => config.backgroundImage;
-  List<EventImage> get eventImages => config.eventImages;
-
-  Future<void> init() async {
-    await loadConfig();
-
-    Timer.periodic(const Duration(minutes: 1), (timer) async {
-      await loadConfig();
-    });
-  }
-
-  Future<void> loadConfig() async {
-    try {
-      _config = await _repository.fetchConfig();
-      notifyListeners();
-    } catch (e) {
-      debugPrint("ConfigProvider Error: $e");
-    }
-  }
+      _config.iqomahMaghribRamadhanDuration;
+  int get iqomahDefaultDuration => _config.iqomahDefaultDuration;
+  int get iqomahTestingDuration => _config.iqomahTestingDuration;
+  int get minutesBeforeMaghrib => _config.minutesBeforeMaghrib;
+  int get minutesBeforeJumat => _config.minutesBeforeJumat;
+  String get marqueeText => _config.marqueeText;
+  String get backgroundImage => _config.backgroundImage;
+  List<EventImage> get eventImages => _config.eventImages;
 }

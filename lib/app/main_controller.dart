@@ -44,7 +44,7 @@ class MainController extends StatelessWidget {
         jadwal: app.jadwal,
         nextPrayerName: app.nextPrayerName,
       ),
-      AppStatus.home when app.financialSummary != null =>
+      AppStatus.home when app.isReportMode && app.financialSummary != null =>
         FinancialReportScreen(
           time: app.timeString,
           dateMasehi: app.dateMasehi,

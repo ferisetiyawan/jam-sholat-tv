@@ -67,11 +67,11 @@ On launch (after the local schedule loads), `AppProvider.checkInitialStatus` wal
 
 ## Home-screen idle cycle
 
-While `status == home`, `_handleCycleLogic` slices a rolling cycle of `homeDuration + eventDuration + reportDuration`. Offline, `eventImages` is always empty and `financialSummary` is always null, so the event/report segments are always 0 and the cycle degenerates to Home only — the slicing logic is retained in code but only the home slice ever runs:
+While `status == home`, `_handleCycleLogic` slices a rolling cycle of `homeDuration + eventDuration + reportDuration`. The report is fed by the offline sample (`financialSummary` is non-null), but `eventImages` is always empty, so the event segment is always 0 and the cycle is effectively `home → report → repeat`:
 
 - `tick % totalCycle < homeDuration` → Home (big clock + schedule row)
-- `< homeDuration + eventDuration` → `isEventMode = true` (would advance `currentEventIndex` through `config.eventImages`) — never fires offline
-- else → `isReportMode = true` (would show `financialSummary`) — never fires offline
+- `< homeDuration + eventDuration` → `isEventMode = true` (would advance `currentEventIndex` through `config.eventImages`) — never fires (empty list)
+- else → `isReportMode = true` → `FinancialReportScreen` (shows `financialSummary.offlineSample()`)
 
 `isSpecialLiveMode` is checked *separately* and, when true, the live Makkah screen wins over home.
 

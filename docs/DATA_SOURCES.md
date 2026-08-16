@@ -39,9 +39,29 @@ marqueeText, backgroundImage
 
 `eventImages` is always empty, so the event screen / announcement feature never activates; the marquee and background render the bundled defaults.
 
-## 3. Financial report — dormant (no fetch)
+## 3. Financial report — offline sample data (no fetch)
 
-The financial summary endpoint is **no longer called**. `FinancialService` / `FinancialRepository` / `FinancialSummary` / `FinancialReportScreen` are retained in the codebase but dormant: `AppProvider.updateFinancialReport()` has no call sites, so `financialSummary` stays null and report mode never activates. The keys it would consume: `saldoAwal`, `kasmasuk`, `kasKeluar`, `saldoAkhir`, `saldoPrasarana`, `saldoNonPrasarana` (amounts formatted as IDR).
+The financial summary endpoint is **never called**. `FinancialService` / `FinancialRepository` / `AppProvider.updateFinancialReport()` are retained in the codebase but have no call sites. Instead, `AppProvider.financialSummary` is initialized with `FinancialSummary.offlineSample()` (`lib/domain/models/financial_summary.dart`), which parses hard-coded JSON — edit those values to change what the TV displays.
+
+On the home screen the report is shown during the `reportDuration` slice of the idle cycle (`isReportMode`), so it **alternates with the clock+schedule** (`homeDuration` → event (always 0) → report → repeat).
+
+Current offline sample shape (all amounts parsed as `double`; dates are ISO 8601 UTC and rendered `.toLocal()` — `17:00Z` is `00:00` the next day WIB):
+
+| Key | Value | Meaning |
+| --- | --- | --- |
+| `saldoKasDate` | `2026-06-03T17:00:00.000Z` | balance recorded date (4 Juni 2026 WIB) |
+| `totalKasMasjid` | `121381630` | total kas balance |
+| `weeklyIncome` | array of 5 | weekly income entries |
+
+Each `weeklyIncome` entry:
+
+| Key | Example | Meaning |
+| --- | --- | --- |
+| `periodeStart` | `2026-04-30T17:00:00.000Z` | week start (1 Mei 2026 WIB) |
+| `periodeEnd` | `2026-05-06T17:00:00.000Z` | week end (7 Mei 2026 WIB) |
+| `pemasukan` | `2050000` | week's income (Rp2.050.000) |
+
+The sample's five weeks run 1–7, 8–14, 15–21, 22–28 Mei and 29 Mei–4 Juni 2026.
 
 ## 4. Live Makkah stream
 

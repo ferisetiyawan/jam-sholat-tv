@@ -56,7 +56,7 @@ class AppProvider extends ChangeNotifier {
     "Isya": "--:--",
   };
 
-  FinancialSummary? financialSummary;
+  FinancialSummary? financialSummary = FinancialSummary.offlineSample();
 
   final FinancialRepository _financialRepository = FinancialRepository();
   final PrayerRepository _prayerRepository = PrayerRepository();
@@ -107,9 +107,9 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Dormant — the financial endpoint is no longer called (offline mode).
-  /// Kept, per the offline decision, in case a future offline data source
-  /// needs to populate [financialSummary].
+  /// Superseded — [financialSummary] is now fed by the offline sample
+  /// (`FinancialSummary.offlineSample`), so this network fetcher is never
+  /// called. Retained for possible future online data wiring.
   Future<void> updateFinancialReport() async {
     if (_isFetchingFinance || !hasInternet) return;
 
@@ -172,7 +172,8 @@ class AppProvider extends ChangeNotifier {
     if (status != AppStatus.home) return;
 
     bool isFriday = now.weekday == DateTime.friday;
-    bool canShowReport = hasInternet && financialSummary != null;
+    // The report is fed by the offline sample, so it does not need internet.
+    bool canShowReport = financialSummary != null;
     bool canShowEvent = config.eventImages.isNotEmpty;
 
     int effectiveReportDuration = canShowReport ? config.reportDuration : 0;

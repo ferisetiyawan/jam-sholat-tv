@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this project is
 
-**Jam Sholat TV** — a Flutter Android app for a masjid TV/display screen (Masjid Al Hijrah CGE, Depok). It shows the current time, today's prayer schedule, and a live countdown to the next prayer, then cycles through full-screen states as each prayer time arrives: **Adzan** → **Iqomah** → **Shalat**, with a dedicated **Jumat** state on Friday and an **Isyraq** countdown after Syuruq. The code retains announcement-image (event mode) and monthly-financial-report (report mode) home screens, but both are **dormant** — nothing feeds them offline (see "Data sources"). It plays a live Makkah YouTube stream during the 30 minutes before Maghrib / Jumat.
+**Jam Sholat TV** — a Flutter Android app for a masjid TV/display screen (Masjid Al Hijrah CGE, Depok). It shows the current time, today's prayer schedule, and a live countdown to the next prayer, then cycles through full-screen states as each prayer time arrives: **Adzan** → **Iqomah** → **Shalat**, with a dedicated **Jumat** state on Friday and an **Isyraq** countdown after Syuruq. On the home screen it alternates the clock+schedule with a **monthly financial report** fed by offline sample data (see "Data sources"). Announcement-image (event mode) screens are retained but **dormant** — nothing feeds them. It plays a live Makkah YouTube stream during the 30 minutes before Maghrib / Jumat.
 
 All UI text is Indonesian. The app runs on Android TV/tablet in landscape, fullscreen, with the screen kept awake.
 
@@ -34,7 +34,7 @@ AppStatus { home, adzan, iqomah, jumatMode, shalat, isyraq }
 Screens are pure presentational widgets — they take data via constructor params and never own logic. The only real logic lives in:
 - `lib/app/providers/app_provider.dart` — the state machine (tick, transitions, countdowns, fake-time debug tools)
 - `lib/app/providers/config_provider.dart` — fixed runtime config (AppConstants defaults only, no remote fetch)
-- `lib/data/repositories/` + `lib/data/services/` — data access + audio (the financial pipeline is retained but dormant)
+- `lib/data/repositories/` + `lib/data/services/` — data access + audio (the financial fetch pipeline is retained but never called; the report is fed by an offline sample)
 - `lib/domain/` — typed models and pure use cases (countdown, iqomah durations)
 
 Provider wiring: `ConfigProvider` (serves the fixed `AppConstants` defaults — no remote fetch) and `AppProvider` (wraps `PrayerRepository`, `FinancialRepository`, `AudioService`) are created in `main.dart` via a `MultiProvider` with `ChangeNotifierProxyProvider`. `AppProvider` reads `config` for all durations. Config is static after construction, so the getters are always non-null by the time `AppProvider._onTick` runs.
@@ -62,7 +62,7 @@ Iqomah duration logic (`GetIqomahDuration` use case in `lib/domain/use_cases/get
 
 1. **Prayer schedules** — computed **entirely on-device** with the `adhan_dart` package using the **Kemenag method** (fajr 20°, isha 18°, Shafi madhab). The per-prayer **ihtiyat** minutes, `fajrAngle`, `ishaAngle`, `madhab`, and the Depok coordinates are constants in `AppConstants` (`lib/core/constants/app_constants.dart`). `CalculatePrayerTimes` (`lib/domain/use_cases/calculate_prayer_times.dart`) produces today's canonical jadwal map (`Subuh, Syuruq, Dzuhur, Ashar, Maghrib, Isya` → `HH:mm`); it is recomputed at launch and again at midnight. No network, bundled schedules, or cache needed — see `docs/DATA_SOURCES.md`.
 2. **Config (durations, marquee, background)** — **no longer fetched**. All values come from the fixed `AppConstants` defaults via `ConfigProvider`; `eventImages` is always empty, so event mode / announcement images never activate; marquee and background render the bundled `AppConstants.marqueeText` / `AppConstants.backgroundImage`.
-3. **Financial report** — **no longer fetched**. `FinancialService` / `FinancialRepository` / `FinancialReportScreen` are retained but dormant: `financialSummary` stays null, so report mode never activates.
+3. **Financial report** — **fed by offline sample data**. `AppProvider.financialSummary` is initialized with `FinancialSummary.offlineSample()` (hard-coded values in `lib/domain/models/financial_summary.dart`) — edit those to change what the TV shows. On the home screen the report rotates in during the `reportDuration` slice (`isReportMode`), so it alternates with the clock+schedule. `FinancialService` / `FinancialRepository` / `AppProvider.updateFinancialReport()` are retained but never called (no network).
 
 There is no local database or persistence layer — the app runs fully offline. The whole app is one Android target (`com.jamsholattv`); `ios` is not configured.
 

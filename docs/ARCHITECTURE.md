@@ -12,7 +12,7 @@ lib/
 │   ├── main_controller.dart          # watches providers, maps AppStatus → screen (+ debug FAB)
 │   └── providers/
 │       ├── config_provider.dart      # fixed runtime config (AppConstants defaults, no fetch)
-│       └── app_provider.dart         # THE state machine (1-sec tick) + dormant financial/event state
+│       └── app_provider.dart         # THE state machine (1-sec tick) + offline financial sample + event state
 ├── core/
 │   ├── constants/app_constants.dart  # all duration/text/asset defaults + prayer-calc constants
 │   ├── constants/app_enum.dart       # AppStatus enum
@@ -25,17 +25,17 @@ lib/
 │       └── bottom_marquee_bar.dart   # scrolling marquee text
 ├── data/
 │   ├── services/
-│   │   ├── financial_service.dart        # monthly kas summary fetch (retained, dormant)
+│   │   ├── financial_service.dart        # monthly kas summary fetch (retained, never called)
 │   │   └── audio_service.dart            # adzan/iqomah beep playback (static AudioPlayer)
 │   └── repositories/
 │       ├── prayer_repository.dart    # single source of truth: today's (locally computed) jadwal
-│       └── financial_repository.dart # single source of truth: FinancialSummary (retained, dormant)
+│       └── financial_repository.dart # single source of truth: FinancialSummary (retained, never called — offline sample)
 ├── domain/
 │   ├── models/
 │   │   ├── app_config.dart           # typed runtime config with AppConstants fallbacks
 │   │   ├── countdown_result.dart     # next prayer name + HH:mm:ss countdown
 │   │   ├── event_image.dart          # announcement image (type + url)
-│   │   └── financial_summary.dart    # monthly kas amounts (doubles, zero-fallback)
+│   │   └── financial_summary.dart    # total kas + weekly income (doubles, zero-fallback)
 │   └── use_cases/
 │       ├── calculate_countdown.dart      # next prayer + countdown from a jadwal map
 │       ├── calculate_prayer_times.dart   # on-device Kemenag prayer-time calc (adhan_dart)
@@ -45,7 +45,7 @@ lib/
     │   ├── home_screen.dart          # big clock + schedule row (used inside HomeWrapper)
     │   ├── home_wrapper.dart         # BackgroundImage + HomeScreen
     │   ├── event_screen.dart         # rotating announcement images (dormant)
-    │   ├── financial_report_screen.dart  # monthly kas report (dormant)
+    │   ├── financial_report_screen.dart  # monthly kas report (offline sample, rotates in on home)
     │   └── live_makkah_screen.dart   # YouTube live stream (LIVE_MECCA video id)
     └── prayer/                       # prayer-cycle screens
         ├── adzan_screen.dart         # "WAKTU ADZAN BERKUMANDANG"
@@ -76,7 +76,7 @@ lib/
 
 `MainController` (`lib/app/main_controller.dart`) watches both providers and maps `app.status` (+ mode flags) to exactly one screen through a `switch`. On the `home` status it further branches:
 - `isSpecialLiveMode` → `LiveMakkahScreen` (30 min before Maghrib or, on Friday, Jumat — and internet is up)
-- `financialSummary != null` → `FinancialReportScreen` (dormant: `financialSummary` is always null offline)
+- `isReportMode && financialSummary != null` → `FinancialReportScreen` (fed by the offline sample; shows during the `reportDuration` slice of the home idle cycle)
 - `isEventMode && eventImages.isNotEmpty` → `EventScreen` (dormant: `eventImages` is always empty)
 - otherwise → `HomeWrapper`
 

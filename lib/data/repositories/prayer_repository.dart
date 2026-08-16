@@ -1,19 +1,16 @@
-import '../services/prayer_schedule_service.dart';
+import '../../domain/use_cases/calculate_prayer_times.dart';
 
-/// Single source of truth for prayer schedules.
+/// Single source of truth for the prayer schedule.
 ///
-/// Wraps [PrayerScheduleService] (asset/API/SharedPreferences access) and
-/// exposes the "today's jadwal" domain concept to the rest of the app.
+/// Prayer times are computed fully on-device (Kemenag method) by
+/// [CalculatePrayerTimes] — no network, bundled assets, or cache involved.
 class PrayerRepository {
-  PrayerRepository({PrayerScheduleService? service})
-      : _service = service ?? PrayerScheduleService();
+  PrayerRepository({CalculatePrayerTimes? calculator})
+      : _calculator = calculator ?? const CalculatePrayerTimes();
 
-  final PrayerScheduleService _service;
+  final CalculatePrayerTimes _calculator;
 
-  /// Fetches and persists ~6 months of prayer schedules (offline-first).
-  Future<void> fetchAndSaveSixMonths() => _service.fetchAndSaveSixMonths();
-
-  /// Returns today's jadwal (prayer times) map, or `null` when unavailable.
-  Future<Map<String, String>?> getTodayJadwal() =>
-      _service.getTodayJadwalMap();
+  /// Returns today's jadwal (prayer times) map, computed locally for [now]
+  /// (defaults to `DateTime.now()`).
+  Map<String, String> getTodayJadwal({DateTime? now}) => _calculator(now: now);
 }

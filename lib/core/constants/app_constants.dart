@@ -1,9 +1,10 @@
+import 'package:adhan_dart/adhan_dart.dart';
 import 'package:flutter/foundation.dart';
 
 class AppConstants {
   static const bool isDebug = kDebugMode;
 
-  // --- prayer_schedule_service.dart ---
+  // --- duration defaults (ConfigProvider) ---
   static const int homeDuration = isDebug ? 2 : 10;
   static const int eventDuration = isDebug ? 3 : 20;
   static const int reportDuration = isDebug ? 3 : 20;
@@ -18,8 +19,26 @@ class AppConstants {
   static const int iqomahDefaultDuration = 600; // 10 minutes
   static const int iqomahTestingDuration = 5;
   static const int monthOfRamadhan = 9; // 9 = Ramadhan in Hijri Calendar
-  static const String cityId =
-      "1225"; // City ID form Adzan API, can be used to fetch prayer times for specific location
+
+  // --- prayer calculation (Kemenag / adhan_dart) ---
+  // All prayer times are computed fully on-device; no network or bundled
+  // schedule is needed. Fine-tune the coordinates to the masjid's exact
+  // position.
+  static const double latitude = -6.40; // Depok
+  static const double longitude = 106.82; // Depok
+  static const double fajrAngle = 20.0; // Kemenag
+  static const double ishaAngle = 18.0; // Kemenag
+  static const Madhab madhab = Madhab.shafi;
+  // Per-prayer ihtiyat (minutes) applied to the raw calculation, Kemenag keys.
+  static const Map<String, int> ihtiyat = {
+    'imsak': 2,
+    'subuh': 2,
+    'terbit': -3,
+    'dhuhur': 3,
+    'ashar': 2,
+    'maghrib': 3,
+    'isya': 2,
+  };
 
   // --- audio_service.dart ---
   static const String adzanBeepAssetPath = 'sounds/beep_adzan.wav';
@@ -32,14 +51,6 @@ class AppConstants {
       30; // live makkah before jumat, in minutes
 
   // --- ASSETS ---
-  static const List<String> prayerScheduleFiles = [
-    '202603.json',
-    '202604.json',
-    '202605.json',
-    '202606.json',
-    '202607.json',
-    '202608.json',
-  ];
   static const String backgroundImage = 'assets/images/background_masjid.jpeg';
 
   // marquee text

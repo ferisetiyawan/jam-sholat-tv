@@ -18,7 +18,7 @@ VS Code is configured (`.vscode/settings.json`) to use `.fvm/versions/3.41.1` as
 ```bash
 fvm flutter run                 # debug run on device/emulator
 fvm flutter analyze             # lint (flutter_lints ^6.0.0)
-fvm flutter test                # run tests (test/ is empty — no tests yet)
+fvm flutter test                # run tests (use cases + models)
 ```
 
 Lint rules come from `analysis_options.yaml` (package:flutter_lints). Keep lines ≤ 80 chars and let format-on-save fix style.
@@ -38,7 +38,7 @@ Fake time advances in real seconds (`currentDateTime = _fakeTime ?? DateTime.now
 - Screens are stateless and receive all data through constructors — keep it that way; no logic inside `ui/`. State lives in `app/providers/`, data access behind `data/repositories/`, and pure rules in `domain/use_cases/`.
 - All durations/text/images flow through `ConfigProvider` (remote over `AppConstants`). Add new tunables there, not as local constants.
 - The Jumat rename ("Dzuhur" → "Jumat" on Friday) exists in **five** sites — see `docs/ARCHITECTURE.md` → "Where the Jumat translation lives". Touch all five or you reintroduce the recurring bug.
-- Schedule JSON and the API city id are hardcoded to Depok (city **1225**); changing location means regenerating `assets/schedules/`.
+- Prayer times are computed locally for **Depok** coordinates (`AppConstants.latitude` / `AppConstants.longitude`); changing location means editing those two constants.
 
 ## Release process
 

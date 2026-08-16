@@ -79,4 +79,4 @@ While `status == home`, `_handleCycleLogic` slices a rolling cycle of `homeDurat
 
 - **Exact-second trigger**: transitions fire only when `now.second == 0`, so a second-hand tick past the prayer time is not re-triggered until the next matching second.
 - **`_onTick` early-return**: if `_config == null` (config not yet loaded) the tick no-ops; providers are ordered so config loads first.
-- **Midnight sync**: at 00:00:00 the server-data flag resets and schedules + financial data re-fetch, so the date rolls over to the next day's jadwal.
+- **Midnight sync**: at 00:00:00 the jadwal is recomputed locally for the new day and the financial report is refreshed, so the date rolls over to the next day's schedule.

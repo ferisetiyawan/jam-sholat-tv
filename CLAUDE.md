@@ -16,7 +16,7 @@ Everything is FVM-based — always prefix Flutter commands with `fvm` (Flutter 3
 fvm flutter pub get          # install dependencies
 fvm flutter run              # run on connected device/emulator
 fvm flutter analyze          # static analysis (flutter_lints ^6.0.0)
-fvm flutter test             # run tests (test/ is currently empty)
+fvm flutter test             # run tests (unit tests for use cases and models)
 fvm flutter build apk --release      # production APK
 fvm flutter build appbundle          # Play Store bundle
 ```
@@ -37,7 +37,7 @@ Screens are pure presentational widgets — they take data via constructor param
 - `lib/data/repositories/` + `lib/data/services/` — data fetching, caching + audio
 - `lib/domain/` — typed models and pure use cases (countdown, iqomah durations)
 
-Provider wiring: `ConfigProvider` (wraps `ConfigService`) and `AppProvider` (wraps `PrayerService`, `FinancialService`, `AudioService`) are created in `main.dart` via a `MultiProvider` with `ChangeNotifierProxyProvider`. `AppProvider` reads `config` for all durations. **The config getters must be non-null by the time `AppProvider._onTick` runs** — `_onTick` early-returns if `_config == null`.
+Provider wiring: `ConfigProvider` (wraps `ConfigRepository`) and `AppProvider` (wraps `PrayerRepository`, `FinancialRepository`, `AudioService`) are created in `main.dart` via a `MultiProvider` with `ChangeNotifierProxyProvider`. `AppProvider` reads `config` for all durations. **The config getters must be non-null by the time `AppProvider._onTick` runs** — `_onTick` early-returns if `_config == null`.
 
 ### The prayer cycle (the heart of the app)
 
@@ -60,7 +60,7 @@ Iqomah duration logic (`GetIqomahDuration` use case in `lib/domain/use_cases/get
 
 ### Data sources (all "offline-first")
 
-1. **Prayer schedules** — bundled as JSON assets in `assets/schedules/YYYYMM.json` (myquran.com API format, see `docs/DATA_SOURCES.md` for the shape). On first launch / after midnight, `PrayerScheduleService.fetchAndSaveSixMonths` loads assets into SharedPreferences under the key `offline_prayer_data` (a map `"YYYY-MM"` → jadwal list). If the current month isn't found in assets, it fetches the next 6 months from `https://api.myquran.com/v2/sholat/jadwal/1225/{year}/{month}` (city **1225 = KOTA DEPOK**, hardcoded in `AppConstants.cityId`).
+1. **Prayer schedules** — computed **entirely on-device** with the `adhan_dart` package using the **Kemenag method** (fajr 20°, isha 18°, Shafi madhab). The per-prayer **ihtiyat** minutes, `fajrAngle`, `ishaAngle`, `madhab`, and the Depok coordinates are constants in `AppConstants` (`lib/core/constants/app_constants.dart`). `CalculatePrayerTimes` (`lib/domain/use_cases/calculate_prayer_times.dart`) produces today's canonical jadwal map (`Subuh, Syuruq, Dzuhur, Ashar, Maghrib, Isya` → `HH:mm`); it is recomputed at launch and again at midnight. No network, bundled schedules, or cache needed — see `docs/DATA_SOURCES.md`.
 2. **Remote config + event images** — a Google Apps Script endpoint (`?action=config`) returns durations, marquee text, background image URL, and an `eventImages` list. Remote image URLs are downloaded to the app documents dir as `event_<hash>.<ext>` and stale files are cleaned up. Cached in SharedPreferences `local_config_cache`.
 3. **Financial report** — a separate Google Apps Script endpoint (`?action=summary`) returns monthly kas data (`saldoAwal`, `kasmasuk`, `kasKeluar`, `saldoAkhir`, `saldoPrasarana`, `saldoNonPrasarana`), rendered on the FinancialReport screen in report mode (internet + data required).
 
@@ -80,7 +80,7 @@ In `kDebugMode`, a FAB column is overlaid on every screen (`MainController._buil
 - `dart.lineLength = 80` is enforced by VS Code format-on-save and `analysis_options.yaml`.
 - The `home` screen intentionally shows a full-screen "JAM TV BELUM DIATUR!" warning if the system year is < 2025 (masjid TVs with wrong clocks).
 - `pubspec.yaml` version stays `1.0.0+1`; the real version is injected by CI from the git tag (`--build-name`), so **bump CHANGELOG.md and tag `vX.Y.Z` for a release** — do not edit pubspec version.
-- Do not hardcode city/schedule assumptions: the schedule bundle and API city are tied to Depok (1225); changing city means regenerating `assets/schedules/`.
+- Prayer times are computed locally for **Depok** coordinates (`AppConstants.latitude` / `AppConstants.longitude`); changing location means editing those two constants (Kemenag method and ihtiyat stay as-is).
 
 ## Further reading
 

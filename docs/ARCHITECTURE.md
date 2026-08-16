@@ -14,7 +14,7 @@ lib/
 │       ├── config_provider.dart      # runtime config state (remote over defaults), reloads every 1 min
 │       └── app_provider.dart         # THE state machine (1-sec tick) + financial/event state
 ├── core/
-│   ├── constants/app_constants.dart  # all fallback defaults + asset paths + city id
+│   ├── constants/app_constants.dart  # all fallback defaults + asset paths + prayer-calc constants
 │   ├── constants/app_enum.dart       # AppStatus enum
 │   ├── theme/app_theme.dart          # dark theme
 │   ├── utils/date_formatter.dart     # Masehi + Hijriah date strings (applies hijri correction)
@@ -24,14 +24,12 @@ lib/
 │       ├── side_prayer_panel.dart    # clock + schedule sidebar (report / live modes)
 │       └── bottom_marquee_bar.dart   # scrolling marquee text
 ├── data/
-│   ├── models/prayer_schedule.dart   # PrayerSchedule API model (fromJson for one day's jadwal row)
 │   ├── services/
-│   │   ├── prayer_schedule_service.dart  # schedule asset/API fetch + SharedPreferences cache
 │   │   ├── config_remote_service.dart    # remote config fetch, event-image download + cleanup
 │   │   ├── financial_service.dart        # monthly kas summary fetch (raw API client)
 │   │   └── audio_service.dart            # adzan/iqomah beep playback (static AudioPlayer)
 │   └── repositories/
-│       ├── prayer_repository.dart    # single source of truth: today's jadwal
+│       ├── prayer_repository.dart    # single source of truth: today's (locally computed) jadwal
 │       ├── config_repository.dart    # single source of truth: merged AppConfig
 │       └── financial_repository.dart # single source of truth: FinancialSummary
 ├── domain/
@@ -41,8 +39,9 @@ lib/
 │   │   ├── event_image.dart          # announcement image (type + url)
 │   │   └── financial_summary.dart    # monthly kas amounts (doubles, zero-fallback)
 │   └── use_cases/
-│       ├── calculate_countdown.dart  # next prayer + countdown from a jadwal map
-│       └── get_iqomah_duration.dart  # iqomah length per prayer (Subuh / Ramadhan rules)
+│       ├── calculate_countdown.dart      # next prayer + countdown from a jadwal map
+│       ├── calculate_prayer_times.dart   # on-device Kemenag prayer-time calc (adhan_dart)
+│       └── get_iqomah_duration.dart      # iqomah length per prayer (Subuh / Ramadhan rules)
 └── ui/
     ├── home/                         # home status + its mode screens
     │   ├── home_screen.dart          # big clock + schedule row (used inside HomeWrapper)
@@ -93,7 +92,7 @@ An `AnimatedSwitcher` cross-fades between screen changes. A tiny red `wifi_off` 
 2. `_handleCycleLogic(now)` — only when `status == home`: rotates between home / event / report segments, and detects an exact HH:mm match against the `jadwal` map to trigger **Adzan** (or the Syuruq → Iqomah path).
 3. `_handlePrayerStatusLogic()` — decrements the active state's counter and fires its transition (adzan→iqomah, iqomah→shalat/isyraq, etc.).
 4. `_checkSpecialLiveConditions(now)` — sets `isSpecialLiveMode`.
-5. `_handleMidnightSync(now)` — at 00:00:00, forces a fresh schedule/config sync.
+5. `_handleMidnightSync(now)` — at 00:00:00, recomputes the local jadwal for the new day and refreshes the financial report.
 
 `currentDateTime` returns `_fakeTime ?? DateTime.now()` so the whole machine can be simulated.
 

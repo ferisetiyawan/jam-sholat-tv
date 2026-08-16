@@ -27,6 +27,7 @@ dependencies:
   logger: ^2.5.0
   connectivity_plus: ^7.0.0
   path_provider: ^2.1.5
+  adhan_dart: ^2.0.1
 
 dev_dependencies:
   flutter_test:
@@ -38,7 +39,6 @@ flutter:
   assets:
     - assets/images/
     - assets/sounds/
-    - assets/schedules/
 
 flutter_launcher_icons:
   android: true

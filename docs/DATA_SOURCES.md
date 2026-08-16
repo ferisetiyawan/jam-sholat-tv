@@ -1,50 +1,29 @@
 # Data Sources
 
-The app is **offline-first**: everything runs from bundled assets + SharedPreferences, with network calls only as fallback/refresh. There is no local database — SharedPreferences holds the schedule blob and the config cache.
+The app is **offline-first**: the prayer schedule is computed entirely on-device, and everything else runs from a SharedPreferences cache with network calls only as fallback/refresh. There is no local database — SharedPreferences holds only the config cache.
 
-## 1. Prayer schedules
+## 1. Prayer schedules (computed locally — no network)
 
-**Asset bundle** — `assets/schedules/YYYYMM.json`, one file per month (currently 202603–202608). Format is exactly the myquran.com API response body:
+Prayer times are **calculated on-device** with the `adhan_dart` package using the **Kemenag (Indonesian) method**, so this feature needs no internet connection and no bundled schedule data.
 
-```json
-{
-  "status": true,
-  "request": { "path": "/sholat/jadwal/1225/2026/08" },
-  "data": {
-    "id": 1225,
-    "lokasi": "KOTA DEPOK",
-    "daerah": "JAWA BARAT",
-    "jadwal": [
-      {
-        "tanggal": "Sabtu, 01/08/2026",
-        "imsak": "04:36", "subuh": "04:46", "terbit": "06:01",
-        "dhuha": "06:29", "dzuhur": "12:03", "ashar": "15:24",
-        "maghrib": "17:58", "isya": "19:09", "date": "2026-08-01"
-      }
-    ]
-  }
-}
-```
+The method parameters are constants in `AppConstants` (`lib/core/constants/app_constants.dart`):
 
-`PrayerScheduleService.fetchAndSaveSixMonths` reads every file in `AppConstants.prayerScheduleFiles`, extracts the `"YYYY-MM"` key from `request.path` (segments 5 and 6), and stores `data.jadwal` (the whole list) into SharedPreferences `offline_prayer_data` — a JSON object `{ "2026-08": [ ...jadwal rows... ], ... }`.
+| Constant | Value |
+| --- | --- |
+| `latitude` / `longitude` | Depok: `-6.40` / `106.82` (fine-tune to the masjid's exact position) |
+| `fajrAngle` | `20.0` |
+| `ishaAngle` | `18.0` |
+| `madhab` | `Madhab.shafi` |
+| `ihtiyat` | `{'imsak': 2, 'subuh': 2, 'terbit': -3, 'dhuhur': 3, 'ashar': 2, 'maghrib': 3, 'isya': 2}` |
 
-**Network fallback** — if the current month isn't in the assets, it fetches six months from:
+`CalculatePrayerTimes` (`lib/domain/use_cases/calculate_prayer_times.dart`) is the pure use case behind `PrayerRepository`:
 
-```
-GET https://api.myquran.com/v2/sholat/jadwal/1225/{year}/{month}
-```
+1. Build `CalculationMethodParameters.other()` and set `fajrAngle` / `ishaAngle` / `madhab` from the constants.
+2. Call `PrayerTimes(coordinates:, date: DateTime.utc(y, m, d), calculationParameters:, precision: true)`.
+3. Apply the Kemenag **ihtiyat** rule to each raw time: shift by the per-prayer minutes, then round leftover seconds **up** to the next minute (ceil) for the five salat times and **down** (floor, drop seconds) for terbit/Syuruq. (Imsak = fajr − 10 min, but the app's contract has no imsak slot, so it is not emitted.)
+4. Return the canonical map — `{ "Subuh", "Syuruq", "Dzuhur", "Ashar", "Maghrib", "Isya" }` with `HH:mm` values, where the package's `sunrise` becomes the app's **`Syuruq`** key.
 
-`1225` is the hardcoded **KOTA DEPOK** city id (`AppConstants.cityId`). The response `data.jadwal` is stored under the same key. If you change city, you must regenerate the asset bundle and update `cityId`.
-
-**Reading today** — `getTodayJadwalMap` looks up `"YYYY-MM"` → finds the row whose `tanggal` contains `dd/MM/yyyy` → maps it through `PrayerSchedule.fromJson` into the canonical app map:
-
-```
-{ "Subuh": "...", "Syuruq": "...", "Dzuhur": "...", "Ashar": "...", "Maghrib": "...", "Isya": "..." }
-```
-
-Note `fromJson` maps the API's `terbit` field into the app's **`Syuruq`** key.
-
-**Refresh cadence** — first launch and again at every midnight (`_handleMidnightSync`), which clears `_isDataUpdatedFromServer` so the server path re-runs.
+Times are computed in UTC and read with `.toLocal()`, so they land on the device wall clock (WIB/WITA/WIT). The jadwal is recomputed at launch (`AppProvider.loadInitialData`) and again at every midnight (`_handleMidnightSync`).
 
 ## 2. Remote config + event images (Google Apps Script)
 
@@ -89,5 +68,4 @@ Only fetched when internet is up; report mode on the home screen only activates 
 
 | Key | Contents |
 | --- | --- |
-| `offline_prayer_data` | JSON object of `"YYYY-MM"` → jadwal list |
 | `local_config_cache` | JSON of the merged remote config |

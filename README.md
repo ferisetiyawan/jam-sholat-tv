@@ -46,7 +46,7 @@ fvm flutter build appbundle
 The output file will be located at: build/app/outputs/flutter-apk/app-release.apk
 
 ## ✨ Core Features
-- Offline First: Automatically fetches and caches prayer data for the first 6 months to ensure reliability without constant internet.
+- Offline First: Prayer times are computed entirely on-device (adhan_dart, Kemenag method) — no internet needed.
 - Live Makkah: Built-in integration for Makkah live streaming.
 - Announcements: Digital signage board to display upcoming events with image support.
 - More to come: Stay tuned for updates on themes and localized settings.

@@ -27,8 +27,6 @@ class AppProvider extends ChangeNotifier {
   bool hasInternet = true;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
-  bool _isDataUpdatedFromServer = false;
-  bool _isFetchingPrayer = false;
   bool _isFetchingFinance = false;
 
   String timeString = "";
@@ -103,51 +101,18 @@ class AppProvider extends ChangeNotifier {
     hasInternet = !results.contains(ConnectivityResult.none);
 
     if (hasInternet && !oldInternetStatus) {
-      if (!_isDataUpdatedFromServer) _fetchServerDataWithRetry();
-
+      // Schedules are computed locally; only the financial report still needs
+      // the network to refresh on reconnect.
       updateFinancialReport();
     }
     notifyListeners();
   }
 
-  Future<void> loadInitialData() async {
-    var local = await _prayerRepository.getTodayJadwal();
-    if (local != null) {
-      jadwal = local;
-      checkInitialStatus(local);
-      notifyListeners();
-    }
-
-    _fetchServerDataWithRetry();
+  void loadInitialData() {
+    jadwal = _prayerRepository.getTodayJadwal();
+    checkInitialStatus(jadwal);
+    notifyListeners();
     updateFinancialReport();
-  }
-
-  Future<void> _fetchServerDataWithRetry() async {
-    if (_isFetchingPrayer || _isDataUpdatedFromServer || !hasInternet) return;
-
-    _isFetchingPrayer = true;
-    try {
-      _logger.d("Try fetching prayer data from server...");
-      await _prayerRepository.fetchAndSaveSixMonths();
-
-      var fresh = await _prayerRepository.getTodayJadwal();
-      if (fresh != null) {
-        jadwal = fresh;
-        if (status == AppStatus.home) checkInitialStatus(fresh);
-        _isDataUpdatedFromServer = true;
-        _logger.d("Synchronization successful!");
-        notifyListeners();
-      }
-    } catch (e) {
-      _logger.e("Synchronization failed: $e. Retrying in 30 seconds...");
-
-      Future.delayed(const Duration(seconds: 30), () {
-        _isFetchingPrayer = false;
-        _fetchServerDataWithRetry();
-      });
-    } finally {
-      _isFetchingPrayer = false;
-    }
   }
 
   Future<void> updateFinancialReport() async {
@@ -187,9 +152,12 @@ class AppProvider extends ChangeNotifier {
 
   void _handleMidnightSync(DateTime now) {
     if (now.hour == 0 && now.minute == 0 && now.second == 0) {
-      _isDataUpdatedFromServer = false;
-      _fetchServerDataWithRetry();
+      // The date rolled over, so the locally-computed jadwal changes too.
+      final fresh = _prayerRepository.getTodayJadwal(now: now);
+      jadwal = fresh;
+      if (status == AppStatus.home) checkInitialStatus(fresh);
       updateFinancialReport();
+      notifyListeners();
     }
   }
 

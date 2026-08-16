@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 class AppConstants {
   static const bool isDebug = kDebugMode;
 
-  // --- prayer_service.dart ---
+  // --- prayer_schedule_service.dart ---
   static const int homeDuration = isDebug ? 2 : 10;
   static const int eventDuration = isDebug ? 3 : 20;
   static const int reportDuration = isDebug ? 3 : 20;
@@ -32,7 +32,6 @@ class AppConstants {
       30; // live makkah before jumat, in minutes
 
   // --- ASSETS ---
-  static const List<Map<String, String>> eventImages = [];
   static const List<String> prayerScheduleFiles = [
     '202603.json',
     '202604.json',

@@ -1,0 +1,140 @@
+import '../../core/constants/app_constants.dart';
+import 'event_image.dart';
+
+/// Merged runtime configuration: remote (Google Apps Script) values over the
+/// [AppConstants] defaults.
+///
+/// This is the single typed representation of every tunable duration, text and
+/// media setting the app reads. Every field falls back to its [AppConstants]
+/// default when absent from the remote payload, so `AppConfig.fromJson({})`
+/// yields a fully usable default config.
+class AppConfig {
+  final int homeDuration;
+  final int eventDuration;
+  final int reportDuration;
+  final int adzanDuration;
+  final int jumatDuration;
+  final int shalatDuration;
+  final int isyraqDuration;
+
+  /// Hijri date correction in days, clamped to `[-2, 2]`.
+  final int hijriCorrection;
+  final int waitingIsyraqDuration;
+  final int iqomahSubuhDuration;
+  final int iqomahMaghribRamadhanDuration;
+  final int iqomahDefaultDuration;
+  final int iqomahTestingDuration;
+
+  final int minutesBeforeMaghrib;
+  final int minutesBeforeJumat;
+  final String marqueeText;
+  final String backgroundImage;
+  final List<EventImage> eventImages;
+
+  const AppConfig({
+    required this.homeDuration,
+    required this.eventDuration,
+    required this.reportDuration,
+    required this.adzanDuration,
+    required this.jumatDuration,
+    required this.shalatDuration,
+    required this.isyraqDuration,
+    required this.hijriCorrection,
+    required this.waitingIsyraqDuration,
+    required this.iqomahSubuhDuration,
+    required this.iqomahMaghribRamadhanDuration,
+    required this.iqomahDefaultDuration,
+    required this.iqomahTestingDuration,
+    required this.minutesBeforeMaghrib,
+    required this.minutesBeforeJumat,
+    required this.marqueeText,
+    required this.backgroundImage,
+    required this.eventImages,
+  });
+
+  factory AppConfig.fromJson(Map<String, dynamic> json) {
+    int parseInt(dynamic value, int fallback) {
+      if (value is num) return value.toInt();
+      return int.tryParse(value?.toString() ?? '') ?? fallback;
+    }
+
+    final rawImages = json['eventImages'];
+    final List<EventImage> images = rawImages is List && rawImages.isNotEmpty
+        ? rawImages
+            .map((item) => EventImage.fromJson(item as Map<String, dynamic>))
+            .toList()
+        : const [];
+
+    return AppConfig(
+      homeDuration: parseInt(json['homeDuration'], AppConstants.homeDuration),
+      eventDuration: parseInt(json['eventDuration'], AppConstants.eventDuration),
+      reportDuration: parseInt(json['reportDuration'], AppConstants.reportDuration),
+      adzanDuration: parseInt(json['adzanDuration'], AppConstants.adzanDuration),
+      jumatDuration: parseInt(json['jumatDuration'], AppConstants.jumatDuration),
+      shalatDuration: parseInt(json['shalatDuration'], AppConstants.shalatDuration),
+      isyraqDuration: parseInt(json['isyraqDuration'], AppConstants.isyraqDuration),
+      hijriCorrection: parseInt(
+        json['hijriCorrection'],
+        AppConstants.hijriCorrection,
+      ).clamp(-2, 2),
+      waitingIsyraqDuration: parseInt(
+        json['waitingIsyraqDuration'],
+        AppConstants.waitingIsyraqDuration,
+      ),
+      iqomahSubuhDuration: parseInt(
+        json['iqomahSubuhDuration'],
+        AppConstants.iqomahSubuhDuration,
+      ),
+      iqomahMaghribRamadhanDuration: parseInt(
+        json['iqomahMaghribRamadhanDuration'],
+        AppConstants.iqomahMaghribRamadhanDuration,
+      ),
+      iqomahDefaultDuration: parseInt(
+        json['iqomahDefaultDuration'],
+        AppConstants.iqomahDefaultDuration,
+      ),
+      iqomahTestingDuration: parseInt(
+        json['iqomahTestingDuration'],
+        AppConstants.iqomahTestingDuration,
+      ),
+      minutesBeforeMaghrib: parseInt(
+        json['minutesBeforeMaghrib'],
+        AppConstants.minutesBeforeMaghrib,
+      ),
+      minutesBeforeJumat: parseInt(
+        json['minutesBeforeJumat'],
+        AppConstants.minutesBeforeJumat,
+      ),
+      marqueeText: json['marqueeText']?.toString() ?? AppConstants.marqueeText,
+      backgroundImage:
+          json['backgroundImage']?.toString() ?? AppConstants.backgroundImage,
+      eventImages: images,
+    );
+  }
+
+  /// A config populated entirely from [AppConstants] defaults.
+  factory AppConfig.defaults() => AppConfig.fromJson(const {});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'homeDuration': homeDuration,
+      'eventDuration': eventDuration,
+      'reportDuration': reportDuration,
+      'adzanDuration': adzanDuration,
+      'jumatDuration': jumatDuration,
+      'shalatDuration': shalatDuration,
+      'isyraqDuration': isyraqDuration,
+      'hijriCorrection': hijriCorrection,
+      'waitingIsyraqDuration': waitingIsyraqDuration,
+      'iqomahSubuhDuration': iqomahSubuhDuration,
+      'iqomahMaghribRamadhanDuration': iqomahMaghribRamadhanDuration,
+      'iqomahDefaultDuration': iqomahDefaultDuration,
+      'iqomahTestingDuration': iqomahTestingDuration,
+      'minutesBeforeMaghrib': minutesBeforeMaghrib,
+      'minutesBeforeJumat': minutesBeforeJumat,
+      'marqueeText': marqueeText,
+      'backgroundImage': backgroundImage,
+      'eventImages': eventImages.map((e) => e.toJson()).toList(),
+    };
+  }
+}

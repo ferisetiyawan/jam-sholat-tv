@@ -34,7 +34,7 @@ homeDuration, eventDuration, reportDuration, adzanDuration, jumatDuration,
 shalatDuration, isyraqDuration, hijriCorrection (clamped to [-2, 2]),
 waitingIsyraqDuration, iqomahSubuhDuration, iqomahMaghribRamadhanDuration,
 iqomahDefaultDuration, minutesBeforeMaghrib, minutesBeforeJumat,
-marqueeText, backgroundImage
+marqueeText, backgroundImage, enableFinancialReport
 ```
 
 `eventImages` is always empty, so the event screen / announcement feature never activates; the marquee and background render the bundled defaults.
@@ -43,7 +43,7 @@ marqueeText, backgroundImage
 
 The financial summary endpoint is **never called**. `FinancialService` / `FinancialRepository` / `AppProvider.updateFinancialReport()` are retained in the codebase but have no call sites. Instead, `AppProvider.financialSummary` is initialized with `FinancialSummary.offlineSample()` (`lib/domain/models/financial_summary.dart`), which parses hard-coded JSON — edit those values to change what the TV displays.
 
-On the home screen the report is shown during the `reportDuration` slice of the idle cycle (`isReportMode`), so it **alternates with the clock+schedule** (`homeDuration` → event (always 0) → report → repeat).
+On the home screen the report is shown during the `reportDuration` slice of the idle cycle (`isReportMode`), so it **alternates with the clock+schedule** (`homeDuration` → event (always 0) → report → repeat). Setting `AppConstants.enableFinancialReport` to `false` removes the report slice entirely (the clock+schedule runs alone).
 
 Current offline sample shape (all amounts parsed as `double`; dates are ISO 8601 UTC and rendered `.toLocal()` — `17:00Z` is `00:00` the next day WIB):
 

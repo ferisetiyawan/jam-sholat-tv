@@ -4,6 +4,11 @@ import 'package:flutter/foundation.dart';
 class AppConstants {
   static const bool isDebug = kDebugMode;
 
+  // --- feature toggles ---
+  /// Set to `false` to remove the financial report from the home-screen idle
+  /// cycle (the clock+schedule then runs alone).
+  static const bool enableFinancialReport = true;
+
   // --- duration defaults (ConfigProvider) ---
   static const int homeDuration = isDebug ? 2 : 10;
   static const int eventDuration = isDebug ? 3 : 20;

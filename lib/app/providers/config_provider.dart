@@ -36,4 +36,5 @@ class ConfigProvider extends ChangeNotifier {
   String get marqueeText => _config.marqueeText;
   String get backgroundImage => _config.backgroundImage;
   List<EventImage> get eventImages => _config.eventImages;
+  bool get enableFinancialReport => _config.enableFinancialReport;
 }

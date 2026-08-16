@@ -112,7 +112,7 @@ Additionally `_isMinutesBeforePrayer("Jumat", ...)` maps the lookup key back to 
 
 `ConfigProvider` exposes a fixed `AppConfig` built from `AppConfig.defaults()` (every field resolved from `AppConstants`). There is no remote config fetch, no event-image sync, and no persistence:
 
-- Durations, `hijriCorrection`, marquee text, and the background asset all come from `AppConstants` (`lib/core/constants/app_constants.dart`); `eventImages` is always empty, so event mode never activates (announcement feature disabled).
+- Durations, `hijriCorrection`, marquee text, the background asset, and the `enableFinancialReport` toggle all come from `AppConstants` (`lib/core/constants/app_constants.dart`); `eventImages` is always empty, so event mode never activates (announcement feature disabled).
 - The provider stays a `ChangeNotifier` only to keep the existing `MultiProvider`/proxy wiring intact; it never notifies.
 
 `hijriCorrection` is clamped to `[-2, 2]` when parsing (still via `AppConfig.fromJson`, used by `defaults()`) and applied in `DateFormatter.getFullDate` by shifting `DateTime.now()` by that many days before converting to Hijriah (`hijriyah_indonesia` package). Default is `-1`.

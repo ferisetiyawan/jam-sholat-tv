@@ -52,6 +52,21 @@ void main() {
       expect(AppConfig.defaults().eventImages, isEmpty);
     });
 
+    test('enableFinancialReport defaults on, parses explicit values', () {
+      expect(AppConfig.defaults().enableFinancialReport, true);
+      expect(AppConfig.fromJson({}).enableFinancialReport, true);
+      expect(
+        AppConfig.fromJson({'enableFinancialReport': false})
+            .enableFinancialReport,
+        false,
+      );
+      expect(
+        AppConfig.fromJson({'enableFinancialReport': 'false'})
+            .enableFinancialReport,
+        false,
+      );
+    });
+
     test('round-trips through toJson/fromJson', () {
       final original = AppConfig.fromJson({
         'homeDuration': 7,

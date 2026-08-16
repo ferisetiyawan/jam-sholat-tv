@@ -27,6 +27,10 @@ void main() {
       expect(config.minutesBeforeJumat, AppConstants.minutesBeforeJumat);
       expect(config.marqueeText, AppConstants.marqueeText);
       expect(config.backgroundImage, AppConstants.backgroundImage);
+      expect(
+        config.enableFinancialReport,
+        AppConstants.enableFinancialReport,
+      );
     });
 
     test('event images are empty (announcements disabled)', () {

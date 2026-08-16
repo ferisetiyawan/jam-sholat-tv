@@ -173,7 +173,9 @@ class AppProvider extends ChangeNotifier {
 
     bool isFriday = now.weekday == DateTime.friday;
     // The report is fed by the offline sample, so it does not need internet.
-    bool canShowReport = financialSummary != null;
+    // The config toggle lets the masjid turn the report slice on/off entirely.
+    bool canShowReport =
+        config.enableFinancialReport && financialSummary != null;
     bool canShowEvent = config.eventImages.isNotEmpty;
 
     int effectiveReportDuration = canShowReport ? config.reportDuration : 0;

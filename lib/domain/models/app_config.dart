@@ -31,6 +31,9 @@ class AppConfig {
   final String backgroundImage;
   final List<EventImage> eventImages;
 
+  /// Whether the financial report is shown during the home idle cycle.
+  final bool enableFinancialReport;
+
   const AppConfig({
     required this.homeDuration,
     required this.eventDuration,
@@ -50,12 +53,19 @@ class AppConfig {
     required this.marqueeText,
     required this.backgroundImage,
     required this.eventImages,
+    required this.enableFinancialReport,
   });
 
   factory AppConfig.fromJson(Map<String, dynamic> json) {
     int parseInt(dynamic value, int fallback) {
       if (value is num) return value.toInt();
       return int.tryParse(value?.toString() ?? '') ?? fallback;
+    }
+
+    bool parseBool(dynamic value, bool fallback) {
+      if (value is bool) return value;
+      final String? raw = value?.toString().toLowerCase();
+      return raw == null ? fallback : raw == 'true';
     }
 
     final rawImages = json['eventImages'];
@@ -109,6 +119,10 @@ class AppConfig {
       backgroundImage:
           json['backgroundImage']?.toString() ?? AppConstants.backgroundImage,
       eventImages: images,
+      enableFinancialReport: parseBool(
+        json['enableFinancialReport'],
+        AppConstants.enableFinancialReport,
+      ),
     );
   }
 
@@ -135,6 +149,7 @@ class AppConfig {
       'marqueeText': marqueeText,
       'backgroundImage': backgroundImage,
       'eventImages': eventImages.map((e) => e.toJson()).toList(),
+      'enableFinancialReport': enableFinancialReport,
     };
   }
 }

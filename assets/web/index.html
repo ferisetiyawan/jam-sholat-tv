@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pengaturan Jam Sholat TV</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --border: #334155;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --accent: #fbbf24;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 16px 48px;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .card h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin: 0 0 12px;
+  }
+  .field { margin-bottom: 12px; }
+  .field label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 5px;
+    color: var(--muted);
+  }
+  .field input[type="number"], .field input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 15px;
+  }
+  .field input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .check { display: flex; align-items: center; gap: 10px; }
+  .check input { width: 18px; height: 18px; accent-color: var(--accent); }
+  .check label { margin: 0; color: var(--text); }
+  button {
+    width: 100%;
+    background: var(--accent);
+    color: #1e293b;
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  #status {
+    text-align: center;
+    min-height: 22px;
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  #status.ok { color: #4ade80; }
+  #status.err { color: #f87171; }
+  .banner {
+    background: rgba(248, 113, 113, .12);
+    border: 1px solid rgba(248, 113, 113, .35);
+    color: #fca5a5;
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .hint { color: var(--muted); font-size: 12px; margin-top: 16px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pengaturan Jam Sholat TV</h1>
+  <p class="subtitle">Masjid Al Hijrah CGE &middot; simpan untuk langsung diterapkan</p>
+
+  <div id="banner" class="banner" hidden>URL tidak lengkap &mdash; buka halaman ini lewat menu QR di TV (token hilang).</div>
+
+  <div id="form"></div>
+
+  <button id="save" disabled>Simpan Pengaturan</button>
+  <div id="status"></div>
+  <p class="hint">Nilai yang disimpan langsung diterapkan di TV tanpa perlu restart.</p>
+</div>
+
+<script>
+  const token = new URLSearchParams(location.search).get('token');
+
+  const FIELDS = [
+    { section: 'Durasi (detik)', items: [
+      { key: 'homeDuration', label: 'Home' },
+      { key: 'eventDuration', label: 'Event' },
+      { key: 'reportDuration', label: 'Laporan Keuangan' },
+      { key: 'adzanDuration', label: 'Adzan' },
+      { key: 'jumatDuration', label: 'Jumat' },
+      { key: 'shalatDuration', label: 'Shalat' },
+      { key: 'isyraqDuration', label: 'Isyraq' },
+      { key: 'waitingIsyraqDuration', label: 'Menunggu Isyraq (setelah Syuruq)' },
+      { key: 'iqomahSubuhDuration', label: 'Iqomah Subuh' },
+      { key: 'iqomahMaghribRamadhanDuration', label: 'Iqomah Maghrib Ramadhan' },
+      { key: 'iqomahDefaultDuration', label: 'Iqomah Default' },
+      { key: 'iqomahTestingDuration', label: 'Iqomah (mode testing)' },
+      { key: 'minutesBeforeMaghrib', label: 'Live Makkah &mdash; menit sebelum Maghrib' },
+      { key: 'minutesBeforeJumat', label: 'Live Makkah &mdash; menit sebelum Jumat' },
+    ]},
+    { section: 'Kalender', items: [
+      { key: 'hijriCorrection', label: 'Koreksi Tanggal Hijriah (-2 s.d. 2)' },
+    ]},
+    { section: 'Tampilan', items: [
+      { key: 'marqueeText', label: 'Teks Berjalan (Marquee)', type: 'text' },
+      { key: 'backgroundImage', label: 'Gambar Latar (path asset)', type: 'text' },
+      { key: 'eventImage', label: 'Gambar Pengumuman (path)', type: 'text' },
+    ]},
+  ];
+
+  let cfg = {};
+
+  function buildForm() {
+    const root = document.getElementById('form');
+    root.innerHTML = '';
+    for (const section of FIELDS) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const h = document.createElement('h2');
+      h.textContent = section.section;
+      card.appendChild(h);
+      for (const f of section.items) {
+        const wrap = document.createElement('div');
+        wrap.className = 'field';
+        const label = document.createElement('label');
+        label.textContent = f.label.replace(/&mdash;/g, '—');
+        label.htmlFor = 'in-' + f.key;
+        wrap.appendChild(label);
+        const input = document.createElement('input');
+        input.id = 'in-' + f.key;
+        input.type = f.type === 'text' ? 'text' : 'number';
+        input.step = '1';
+        wrap.appendChild(input);
+        card.appendChild(wrap);
+      }
+      root.appendChild(card);
+    }
+
+    // Checkbox for enableFinancialReport rendered separately.
+    const card = document.createElement('div');
+    card.className = 'card';
+    const h = document.createElement('h2');
+    h.textContent = 'Laporan Keuangan';
+    card.appendChild(h);
+    const wrap = document.createElement('div');
+    wrap.className = 'field check';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.id = 'in-enableFinancialReport';
+    const cl = document.createElement('label');
+    cl.htmlFor = 'in-enableFinancialReport';
+    cl.textContent = 'Tampilkan Laporan Keuangan di layar home';
+    wrap.appendChild(cb);
+    wrap.appendChild(cl);
+    card.appendChild(wrap);
+    root.appendChild(card);
+  }
+
+  function fillForm() {
+    for (const section of FIELDS) {
+      for (const f of section.items) {
+        const input = document.getElementById('in-' + f.key);
+        const v = cfg[f.key];
+        if (input && v !== undefined && v !== null) {
+          input.value = v;
+        }
+      }
+    }
+    document.getElementById('in-enableFinancialReport').checked =
+      !!cfg.enableFinancialReport;
+  }
+
+  function collectPayload() {
+    const payload = {};
+    for (const section of FIELDS) {
+      for (const f of section.items) {
+        const input = document.getElementById('in-' + f.key);
+        if (f.type === 'text') {
+          payload[f.key] = input.value.trim();
+        } else {
+          const n = parseInt(input.value, 10);
+          payload[f.key] = Number.isFinite(n) ? n : 0;
+        }
+      }
+    }
+    payload.enableFinancialReport =
+      document.getElementById('in-enableFinancialReport').checked;
+    return payload;
+  }
+
+  function setStatus(msg, kind) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = kind || '';
+  }
+
+  async function fetchConfig() {
+    const res = await fetch('/api/config', {
+      headers: { 'Authorization': 'Bearer ' + token },
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  async function main() {
+    if (!token) {
+      document.getElementById('banner').hidden = false;
+      document.getElementById('save').disabled = true;
+      return;
+    }
+    buildForm();
+    try {
+      cfg = await fetchConfig();
+      fillForm();
+      document.getElementById('save').disabled = false;
+      setStatus('Terhubung ke TV.', 'ok');
+    } catch (e) {
+      setStatus('Gagal memuat pengaturan (' + e.message + ').', 'err');
+      document.getElementById('save').disabled = true;
+    }
+  }
+
+  document.getElementById('save').addEventListener('click', async () => {
+    const btn = document.getElementById('save');
+    btn.disabled = true;
+    setStatus('Menyimpan…');
+    try {
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(collectPayload()),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+      cfg = data;
+      setStatus('Tersimpan ✓ — diterapkan di TV.', 'ok');
+    } catch (e) {
+      setStatus('Gagal menyimpan (' + e.message + ').', 'err');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  main();
+</script>
+</body>
+</html>

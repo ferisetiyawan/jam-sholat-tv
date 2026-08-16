@@ -4,8 +4,10 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'app/masjid_app.dart';
+import 'app/providers/config_provider.dart';
+import 'services/local_server_service.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Force Landscape Orientation
@@ -23,5 +25,16 @@ void main() async {
   // Keep screen on
   WakelockPlus.enable();
 
-  runApp(const MasjidApp());
+  // Load settings saved through the local config server (over AppConstants
+  // defaults), then start the server so the TV can be configured from any
+  // browser on the same Wi-Fi. Neither failure should block the prayer TV.
+  final ConfigProvider configProvider = ConfigProvider();
+  try {
+    await configProvider.load();
+  } catch (_) {
+    // Fall back to AppConstants defaults.
+  }
+  await LocalServerService(configProvider: configProvider).start();
+
+  runApp(MasjidApp(configProvider: configProvider));
 }

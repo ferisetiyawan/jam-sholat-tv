@@ -6,12 +6,13 @@ The codebase follows the layered convention from the Flutter architecture skill:
 
 ```
 lib/
-├── main.dart                         # entrypoint only: orientation, fullscreen, intl, wakelock, runApp
+├── main.dart                         # entrypoint: orientation, fullscreen, intl, wakelock, config load, server start
 ├── app/
-│   ├── masjid_app.dart               # root widget: MultiProvider wiring + MaterialApp
+│   ├── masjid_app.dart               # root widget: MultiProvider wiring + MaterialApp + navigator key
 │   ├── main_controller.dart          # watches providers, maps AppStatus → screen (+ debug FAB)
+│   ├── remote_key_handler.dart       # TV remote: long-press OK / Menu toggles the config menu
 │   └── providers/
-│       ├── config_provider.dart      # fixed runtime config (AppConstants defaults, no fetch)
+│       ├── config_provider.dart      # AppConfig defaults + persisted overrides (load/applyConfig)
 │       └── app_provider.dart         # THE state machine (1-sec tick) + offline financial sample + event state
 ├── core/
 │   ├── constants/app_constants.dart  # all duration/text/asset defaults + prayer-calc constants
@@ -30,6 +31,9 @@ lib/
 │   └── repositories/
 │       ├── prayer_repository.dart    # single source of truth: today's (locally computed) jadwal
 │       └── financial_repository.dart # single source of truth: FinancialSummary (retained, never called — offline sample)
+├── services/                         # standalone infrastructure (not data-layer)
+│   ├── local_server_service.dart     # embedded shelf server: token auth, /api/config, static UI
+│   └── network_info_helper.dart      # resolves the LAN IPv4 for the config URL/QR
 ├── domain/
 │   ├── models/
 │   │   ├── app_config.dart           # typed runtime config with AppConstants fallbacks
@@ -47,6 +51,8 @@ lib/
     │   ├── event_screen.dart         # rotating announcement images (dormant)
     │   ├── financial_report_screen.dart  # monthly kas report (offline sample, rotates in on home)
     │   └── live_makkah_screen.dart   # YouTube live stream (LIVE_MECCA video id)
+    ├── settings/
+    │   └── config_menu_screen.dart   # QR + URL of the config server (opened via remote)
     └── prayer/                       # prayer-cycle screens
         ├── adzan_screen.dart         # "WAKTU ADZAN BERKUMANDANG"
         ├── iqomah_screen.dart        # countdown MM:SS, also handles Syuruq → "MENANTI ISYRAQ"
@@ -110,9 +116,10 @@ Additionally `_isMinutesBeforePrayer("Jumat", ...)` maps the lookup key back to 
 
 ## Config layering
 
-`ConfigProvider` exposes a fixed `AppConfig` built from `AppConfig.defaults()` (every field resolved from `AppConstants`). There is no remote config fetch, no event-image sync, and no persistence:
+`ConfigProvider` starts from `AppConfig.defaults()` (every field resolved from `AppConstants`). There is no remote config fetch and no event-image sync. The only persistence is the embedded local config server (`lib/services/local_server_service.dart`):
 
-- Durations, `hijriCorrection`, marquee text, the background asset, and the `enableFinancialReport` toggle all come from `AppConstants` (`lib/core/constants/app_constants.dart`); `eventImages` is always empty, so event mode never activates (announcement feature disabled).
-- The provider stays a `ChangeNotifier` only to keep the existing `MultiProvider`/proxy wiring intact; it never notifies.
+- `ConfigProvider.load()` (called in `main.dart` before `runApp`) reads the persisted JSON from `SharedPreferences` (`configPrefsKey`) and merges it over the defaults via `AppConfig.fromJson`.
+- `POST /api/config` persists the new values **and** hot-applies them with `ConfigProvider.applyConfig(config)` (reassigns `_config` + `notifyListeners`). `AppProvider` reads through the same `ConfigProvider` instance, so the next 1-second tick picks up the change — no state-machine edits needed.
+- Durations, `hijriCorrection`, marquee text, the background asset, and the `enableFinancialReport` toggle all default from `AppConstants` (`lib/core/constants/app_constants.dart`); `eventImages` is always empty, so event mode never activates (announcement feature disabled).
 
 `hijriCorrection` is clamped to `[-2, 2]` when parsing (still via `AppConfig.fromJson`, used by `defaults()`) and applied in `DateFormatter.getFullDate` by shifting `DateTime.now()` by that many days before converting to Hijriah (`hijriyah_indonesia` package). Default is `-1`.

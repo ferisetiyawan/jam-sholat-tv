@@ -13,6 +13,7 @@ import '../ui/prayer/iqomah_screen.dart';
 import '../ui/prayer/isyraq_screen.dart';
 import '../ui/prayer/jumat_screen.dart';
 import '../ui/prayer/shalat_screen.dart';
+import '../ui/settings/config_menu_screen.dart';
 import 'providers/app_provider.dart';
 import 'providers/config_provider.dart';
 
@@ -117,6 +118,21 @@ class MainController extends StatelessWidget {
           backgroundColor: Colors.red.withValues(alpha: 0.5),
           onPressed: () => context.read<AppProvider>().enableFakeTime(),
           child: const Icon(Icons.fast_forward),
+        ),
+
+        const SizedBox(height: 10),
+
+        // Dev-only shortcut for the config server QR menu — same screen the
+        // TV remote's long-press OK / Menu opens (simulates the remote).
+        FloatingActionButton(
+          heroTag: "btnConfigQr",
+          backgroundColor: Colors.lightBlue.withValues(alpha: 0.6),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const ConfigMenuScreen(),
+            ),
+          ),
+          child: const Icon(Icons.qr_code),
         ),
       ],
     );

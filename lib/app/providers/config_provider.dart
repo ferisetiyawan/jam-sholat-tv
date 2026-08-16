@@ -1,21 +1,49 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/models/app_config.dart';
 import '../../domain/models/event_image.dart';
 
-/// Exposes the fixed, fully-offline [AppConfig] to the widget tree.
+/// Exposes the [AppConfig] to the widget tree.
 ///
-/// All tunables (durations, hijri correction, marquee/background fallbacks)
-/// come from [AppConfig] defaults — i.e. the local [AppConstants] values. The
-/// remote config fetch was removed, so this provider never changes after
-/// construction; it stays a [ChangeNotifier] only to keep the existing
-/// provider wiring intact.
+/// The base config comes from [AppConfig] defaults — i.e. the local
+/// [AppConstants] values. Overrides saved through the local config server are
+/// persisted under [configPrefsKey] and merged on top at startup via [load],
+/// and can be hot-applied at runtime via [applyConfig]. It stays a
+/// [ChangeNotifier] so screens and the state machine rebuild on change.
 class ConfigProvider extends ChangeNotifier {
   ConfigProvider();
 
-  final AppConfig _config = AppConfig.defaults();
+  /// SharedPreferences key holding the last saved config (a JSON object in
+  /// the same shape as `AppConfig.toJson()`).
+  static const String configPrefsKey = 'app_config_json';
+
+  AppConfig _config = AppConfig.defaults();
 
   AppConfig get config => _config;
+
+  /// Merges persisted overrides (if any) on top of the [AppConstants]
+  /// defaults. Call once at startup, before the widget tree builds.
+  Future<void> load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? raw = prefs.getString(configPrefsKey);
+    if (raw == null || raw.isEmpty) return;
+    try {
+      _config = AppConfig.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      notifyListeners();
+    } catch (_) {
+      // Corrupt saved config falls back to defaults; never crash the TV.
+    }
+  }
+
+  /// Replaces the running config immediately and notifies listeners. Used by
+  /// the local config server so changes apply without restarting the app.
+  void applyConfig(AppConfig config) {
+    _config = config;
+    notifyListeners();
+  }
 
   int get homeDuration => _config.homeDuration;
   int get eventDuration => _config.eventDuration;

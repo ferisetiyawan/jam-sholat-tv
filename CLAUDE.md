@@ -54,17 +54,29 @@ The `jadwal` map always keys the Friday prayer as `"Dzuhur"`, but multiple widge
 
 ### Durations are fixed local constants
 
-Every duration (`homeDuration`, `adzanDuration`, `iqomah*Duration`, `shalatDuration`, `isyraqDuration`, `jumatDuration`, `minutesBeforeMaghrib`, …) comes from `ConfigProvider`, which now serves the fixed `AppConstants` defaults (`lib/core/constants/app_constants.dart`) — the remote Google Apps Script config fetch was removed, so no value can change at runtime. In `kDebugMode` most durations are shortened to a few seconds to speed up testing.
+Every duration (`homeDuration`, `adzanDuration`, `iqomah*Duration`, `shalatDuration`, `isyraqDuration`, `jumatDuration`, `minutesBeforeMaghrib`, …) defaults to the `AppConstants` values (`lib/core/constants/app_constants.dart`). The remote Google Apps Script config fetch was removed, but values **can** change at runtime through the embedded local config server (see "Local config server" below) — saved overrides are persisted and hot-applied via `ConfigProvider.applyConfig()`. In `kDebugMode` most durations are shortened to a few seconds to speed up testing.
 
 Iqomah duration logic (`GetIqomahDuration` use case in `lib/domain/use_cases/get_iqomah_duration.dart`): Subuh = 15 min, Maghrib during Ramadhan (hijri month 9) = 15 min, otherwise 10 min; in debug = 5s. Hijri correction (`hijriCorrection`, default `-1`, clamped to [-2, 2]) is applied by adding days in `DateFormatter.getFullDate`.
 
-### Data sources (all offline — no network, no persistence)
+### Data sources (all offline — no network, one local persistence)
 
 1. **Prayer schedules** — computed **entirely on-device** with the `adhan_dart` package using the **Kemenag method** (fajr 20°, isha 18°, Shafi madhab). The per-prayer **ihtiyat** minutes, `fajrAngle`, `ishaAngle`, `madhab`, and the Depok coordinates are constants in `AppConstants` (`lib/core/constants/app_constants.dart`). `CalculatePrayerTimes` (`lib/domain/use_cases/calculate_prayer_times.dart`) produces today's canonical jadwal map (`Subuh, Syuruq, Dzuhur, Ashar, Maghrib, Isya` → `HH:mm`); it is recomputed at launch and again at midnight. No network, bundled schedules, or cache needed — see `docs/DATA_SOURCES.md`.
-2. **Config (durations, marquee, background)** — **no longer fetched**. All values come from the fixed `AppConstants` defaults via `ConfigProvider`; `eventImages` is always empty, so event mode / announcement images never activate; marquee and background render the bundled `AppConstants.marqueeText` / `AppConstants.backgroundImage`.
+2. **Config (durations, marquee, background)** — **no longer fetched remotely**, but editable via the embedded **local config server** (`lib/services/local_server_service.dart`, port `8080`). `ConfigProvider` starts from the `AppConstants` defaults; `ConfigProvider.load()` merges any persisted override (`SharedPreferences` key `ConfigProvider.configPrefsKey`) at startup, and `POST /api/config` hot-applies changes while running. `eventImages` is always empty, so event mode / announcement images never activate; marquee and background render `AppConstants.marqueeText` / `AppConstants.backgroundImage` unless overridden.
 3. **Financial report** — **fed by offline sample data**. `AppProvider.financialSummary` is initialized with `FinancialSummary.offlineSample()` (hard-coded values in `lib/domain/models/financial_summary.dart`) — edit those to change what the TV shows. On the home screen the report rotates in during the `reportDuration` slice (`isReportMode`), so it alternates with the clock+schedule. It can be disabled entirely by setting `AppConstants.enableFinancialReport` to `false` (a config toggle served through `ConfigProvider`); the report slice then drops out of the idle cycle. `FinancialService` / `FinancialRepository` / `AppProvider.updateFinancialReport()` are retained but never called (no network).
 
-There is no local database or persistence layer — the app runs fully offline. The whole app is one Android target (`com.jamsholattv`); `ios` is not configured.
+There is **no cloud/network dependency** to operate — prayer times are computed on-device and the config server is LAN-only. The only persistence is `shared_preferences` holding the settings saved through the config server (and the server's auth token). The whole app is one Android target (`com.jamsholattv`); `ios` is not configured.
+
+## Local config server (runs in all builds)
+
+`LocalServerService` (`lib/services/local_server_service.dart`) embeds a `shelf` HTTP server bound to `0.0.0.0:8080`, started in `main.dart`. It lets you edit settings from any browser on the same Wi-Fi:
+
+- **TV menu**: long-press the remote **OK** button (or press **Menu**) — `RemoteKeyDetector` (`lib/app/remote_key_handler.dart`) pushes `ConfigMenuScreen`, which shows a **QR code** of the authenticated URL.
+- **Auth**: every `/api/*` call needs the per-device token (`?token=…` or `Authorization: Bearer …`), generated once and persisted, so the QR URL is stable across restarts.
+- **Endpoints**: `GET /api/config` (current effective config as JSON) and `POST /api/config` (parse → persist to SharedPreferences → hot-apply via `ConfigProvider.applyConfig`). The web editor lives in `assets/web/index.html` and is served at `/`.
+- **Static serving**: `shelf_static` from on-disk `assets/web` when present (dev/tests), otherwise a `rootBundle` fallback (Android release — bundled assets aren't real files).
+- **Local IP**: `NetworkInfoHelper` (`lib/services/network_info_helper.dart`) resolves the LAN IPv4 via `network_info_plus` (needs `ACCESS_WIFI_STATE`).
+
+Reach the editor by scanning the QR on the TV, or open `http://<tv-ip>:8080?token=<token>` directly.
 
 ## Debug tools you should know about
 

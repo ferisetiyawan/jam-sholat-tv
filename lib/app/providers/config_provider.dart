@@ -106,6 +106,7 @@ class ConfigProvider extends ChangeNotifier {
   double get longitude => _config.longitude;
   double get fajrAngle => _config.fajrAngle;
   double get ishaAngle => _config.ishaAngle;
+  String get calculationMethod => _config.calculationMethod;
   String get madhab => _config.madhab;
   Map<String, int> get ihtiyat => _config.ihtiyat;
   String get marqueeText => _config.marqueeText;

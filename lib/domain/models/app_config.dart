@@ -73,17 +73,52 @@ class AppConfig {
   /// in the player.
   final String liveMakkahUrl;
 
-  /// Prayer-calculation parameters (Kemenag method), all editable at runtime
-  /// through the local config server and used by [CalculatePrayerTimes].
+  /// Prayer-calculation parameters, all editable at runtime through the local
+  /// config server and used by [CalculatePrayerTimes].
   final double latitude;
   final double longitude;
   final double fajrAngle;
   final double ishaAngle;
 
+  /// Prayer-calculation method, one of [AppConstants.calculationMethodNames]:
+  /// `'kemenag'` (Subuh 20°, Isya 18°), `'muhammadiyah'` (MTT PP Muhammadiyah,
+  /// 18°/18°) or `'kustom'` (uses the stored [fajrAngle]/[ishaAngle]). For the
+  /// two presets the angles in effect come from [effectiveFajrAngle] /
+  /// [effectiveIshaAngle] and cannot be changed at runtime; an unknown value
+  /// falls back to [AppConstants.calculationMethod].
+  final String calculationMethod;
+
   /// Serialized madhab name (one of [AppConstants.madhabNames], e.g.
   /// `'shafi'`/`'hanafi'`). Kept as a String so `domain/` stays free of the
-  /// adhan_dart import; the calculator maps it back to the enum.
+  /// adhan_dart import; the calculator maps it back to the enum. Only affects
+  /// the Ashar time.
   final String madhab;
+
+  /// Fajr angle in effect, derived from [calculationMethod]: the two presets
+  /// pin the official angle (so a stale saved angle can never drift the
+  /// schedule) while `'kustom'` returns the stored [fajrAngle].
+  double get effectiveFajrAngle {
+    switch (calculationMethod) {
+      case 'kemenag':
+        return AppConstants.fajrAngle;
+      case 'muhammadiyah':
+        return AppConstants.muhammadiyahFajrAngle;
+      default:
+        return fajrAngle;
+    }
+  }
+
+  /// Isya angle in effect; see [effectiveFajrAngle].
+  double get effectiveIshaAngle {
+    switch (calculationMethod) {
+      case 'kemenag':
+        return AppConstants.ishaAngle;
+      case 'muhammadiyah':
+        return AppConstants.muhammadiyahIshaAngle;
+      default:
+        return ishaAngle;
+    }
+  }
 
   /// Per-prayer ihtiyat (minutes) keyed by the Kemenag names. Always carries
   /// all seven keys (`imsak, subuh, terbit, dhuhur, ashar, maghrib, isya`);
@@ -124,6 +159,7 @@ class AppConfig {
     required this.longitude,
     required this.fajrAngle,
     required this.ishaAngle,
+    required this.calculationMethod,
     required this.madhab,
     required this.ihtiyat,
     required this.marqueeText,
@@ -162,6 +198,13 @@ class AppConfig {
       return AppConstants.hijriKalenderNames.contains(raw)
           ? raw
           : AppConstants.hijriKalender;
+    }
+
+    String parseCalculationMethod(dynamic value) {
+      final String raw = value?.toString().toLowerCase() ?? '';
+      return AppConstants.calculationMethodNames.contains(raw)
+          ? raw
+          : AppConstants.calculationMethod;
     }
 
     String parseName(dynamic value, String fallback) {
@@ -262,6 +305,7 @@ class AppConfig {
       ).clamp(-180.0, 180.0).toDouble(),
       fajrAngle: parseDouble(json['fajrAngle'], AppConstants.fajrAngle),
       ishaAngle: parseDouble(json['ishaAngle'], AppConstants.ishaAngle),
+      calculationMethod: parseCalculationMethod(json['calculationMethod']),
       madhab: parseMadhab(json['madhab']),
       ihtiyat: parseIhtiyat(json['ihtiyat']),
       marqueeText: json['marqueeText']?.toString() ?? AppConstants.marqueeText,
@@ -304,6 +348,7 @@ class AppConfig {
       'longitude': longitude,
       'fajrAngle': fajrAngle,
       'ishaAngle': ishaAngle,
+      'calculationMethod': calculationMethod,
       'madhab': madhab,
       'ihtiyat': ihtiyat,
       'marqueeText': marqueeText,

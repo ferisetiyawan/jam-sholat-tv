@@ -216,7 +216,8 @@ class AppProvider extends ChangeNotifier {
       ..sort((a, b) => a.key.compareTo(b.key));
     final StringBuffer buffer = StringBuffer(
       '${cfg.latitude},${cfg.longitude},'
-      '${cfg.fajrAngle},${cfg.ishaAngle},${cfg.madhab}',
+      '${cfg.effectiveFajrAngle},${cfg.effectiveIshaAngle},'
+      '${cfg.calculationMethod},${cfg.madhab}',
     );
     for (final MapEntry<String, int> entry in entries) {
       buffer.write(',${entry.key}=${entry.value}');

@@ -60,7 +60,26 @@ class AppConstants {
   static const double longitude = 106.82;
   static const double fajrAngle = 20.0; // Kemenag
   static const double ishaAngle = 18.0; // Kemenag
+
+  /// Fajr/Isya angles for the MTT PP Muhammadiyah preset (18°/18°).
+  static const double muhammadiyahFajrAngle = 18.0;
+  static const double muhammadiyahIshaAngle = 18.0;
+
   static const Madhab madhab = Madhab.shafi;
+
+  /// Prayer-calculation method: `'kemenag'` (Subuh 20°, Isya 18°),
+  /// `'muhammadiyah'` (MTT PP Muhammadiyah, 18°/18°) or `'kustom'` (the stored
+  /// [fajrAngle]/[ishaAngle]). Editable at runtime through the local config
+  /// server; for the two presets the angles are pinned by `AppConfig` and
+  /// cannot drift, even if a stale angle was saved earlier.
+  static const String calculationMethod = 'kemenag';
+
+  /// Serialized values accepted for [calculationMethod] in `AppConfig`.
+  static const List<String> calculationMethodNames = [
+    'kemenag',
+    'muhammadiyah',
+    'kustom',
+  ];
 
   /// Serialized names accepted for [madhab] in `AppConfig` (kept in sync with
   /// the adhan_dart enum so `domain/` never imports adhan_dart directly).

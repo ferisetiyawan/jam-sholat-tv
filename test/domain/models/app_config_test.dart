@@ -15,6 +15,7 @@ void main() {
       expect(config.jumatDuration, AppConstants.jumatDuration);
       expect(config.hijriCorrection, AppConstants.hijriCorrection);
       expect(config.hijriKalender, AppConstants.hijriKalender);
+      expect(config.calculationMethod, AppConstants.calculationMethod);
       expect(config.marqueeText, AppConstants.marqueeText);
       expect(config.backgroundImage, AppConstants.backgroundImage);
       expect(config.eventImages, isEmpty);
@@ -68,6 +69,53 @@ void main() {
       expect(AppConfig.fromJson({}).hijriKalender, AppConstants.hijriKalender);
     });
 
+    test('calculationMethod is normalized and falls back on unknown values', () {
+      expect(
+        AppConfig.fromJson({'calculationMethod': 'MUHAMMADIYAH'})
+            .calculationMethod,
+        'muhammadiyah',
+      );
+      expect(
+        AppConfig.fromJson({'calculationMethod': 'bogus'}).calculationMethod,
+        AppConstants.calculationMethod,
+      );
+      expect(
+        AppConfig.fromJson({'calculationMethod': ''}).calculationMethod,
+        AppConstants.calculationMethod,
+      );
+      expect(
+        AppConfig.fromJson({}).calculationMethod,
+        AppConstants.calculationMethod,
+      );
+    });
+
+    test('presets pin the effective angles; kustom uses the stored ones', () {
+      final kemenag = AppConfig.fromJson({
+        'calculationMethod': 'kemenag',
+        // Stale saved angles must not leak through a preset.
+        'fajrAngle': 19.5,
+        'ishaAngle': 17.0,
+      });
+      expect(kemenag.effectiveFajrAngle, 20.0);
+      expect(kemenag.effectiveIshaAngle, 18.0);
+
+      final muhammadiyah = AppConfig.fromJson({
+        'calculationMethod': 'muhammadiyah',
+        'fajrAngle': 20.0,
+        'ishaAngle': 18.0,
+      });
+      expect(muhammadiyah.effectiveFajrAngle, 18.0);
+      expect(muhammadiyah.effectiveIshaAngle, 18.0);
+
+      final kustom = AppConfig.fromJson({
+        'calculationMethod': 'kustom',
+        'fajrAngle': 19.5,
+        'ishaAngle': 17.0,
+      });
+      expect(kustom.effectiveFajrAngle, 19.5);
+      expect(kustom.effectiveIshaAngle, 17.0);
+    });
+
     test('parses event images and defaults to empty list', () {
       final config = AppConfig.fromJson({
         'eventImages': [
@@ -106,6 +154,7 @@ void main() {
         'homeDuration': 7,
         'hijriCorrection': 1,
         'hijriKalender': 'khgt',
+        'calculationMethod': 'muhammadiyah',
         'eventImages': [
           {'type': 'image', 'url': 'assets/a.png'},
         ],
@@ -118,6 +167,7 @@ void main() {
       expect(restored.homeDuration, 7);
       expect(restored.hijriCorrection, 1);
       expect(restored.hijriKalender, 'khgt');
+      expect(restored.calculationMethod, 'muhammadiyah');
       expect(restored.eventImages, hasLength(1));
       expect(restored.eventImages.first.type, 'IMAGE');
       expect(restored.eventImages.first.url, 'assets/a.png');
@@ -130,6 +180,7 @@ void main() {
       expect(config.longitude, AppConstants.longitude);
       expect(config.fajrAngle, AppConstants.fajrAngle);
       expect(config.ishaAngle, AppConstants.ishaAngle);
+      expect(config.calculationMethod, AppConstants.calculationMethod);
       expect(config.madhab, AppConstants.madhab.name);
       expect(config.ihtiyat, AppConstants.ihtiyat);
     });
@@ -181,6 +232,7 @@ void main() {
       final original = AppConfig.fromJson({
         'latitude': 3.60,
         'madhab': 'hanafi',
+        'calculationMethod': 'muhammadiyah',
         'ihtiyat': {'subuh': 5},
       });
 
@@ -189,6 +241,7 @@ void main() {
       expect(restored.latitude, 3.60);
       expect(restored.longitude, AppConstants.longitude);
       expect(restored.madhab, 'hanafi');
+      expect(restored.calculationMethod, 'muhammadiyah');
       expect(restored.ihtiyat['subuh'], 5);
       expect(restored.ihtiyat['maghrib'], AppConstants.ihtiyat['maghrib']);
     });

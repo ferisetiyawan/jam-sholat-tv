@@ -52,6 +52,7 @@ void main() {
       expect(config.longitude, AppConstants.longitude);
       expect(config.fajrAngle, AppConstants.fajrAngle);
       expect(config.ishaAngle, AppConstants.ishaAngle);
+      expect(config.calculationMethod, AppConstants.calculationMethod);
       expect(config.madhab, AppConstants.madhab.name);
       expect(config.ihtiyat, AppConstants.ihtiyat);
     });
@@ -149,6 +150,20 @@ void main() {
       await config.load();
 
       expect(config.hijriKalender, 'khgt');
+    });
+
+    test('load() applies a persisted calculationMethod override', () async {
+      SharedPreferences.setMockInitialValues({
+        ConfigProvider.configPrefsKey:
+            jsonEncode({'calculationMethod': 'muhammadiyah'}),
+      });
+
+      final config = ConfigProvider();
+      expect(config.calculationMethod, AppConstants.calculationMethod);
+
+      await config.load();
+
+      expect(config.calculationMethod, 'muhammadiyah');
     });
 
     test('load() falls back to defaults when nothing is saved', () async {

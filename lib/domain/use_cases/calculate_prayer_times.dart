@@ -28,8 +28,12 @@ class CalculatePrayerTimes {
 
     final double latitude = config?.latitude ?? AppConstants.latitude;
     final double longitude = config?.longitude ?? AppConstants.longitude;
-    final double fajrAngle = config?.fajrAngle ?? AppConstants.fajrAngle;
-    final double ishaAngle = config?.ishaAngle ?? AppConstants.ishaAngle;
+    // The presets (Kemenag / Muhammadiyah) resolve through the effective
+    // getters, so their angles are pinned regardless of stale saved values.
+    final double fajrAngle =
+        config?.effectiveFajrAngle ?? AppConstants.fajrAngle;
+    final double ishaAngle =
+        config?.effectiveIshaAngle ?? AppConstants.ishaAngle;
     final Madhab madhab = _madhabFrom(config?.madhab);
     final Map<String, int> ihtiyat = config?.ihtiyat ?? AppConstants.ihtiyat;
 

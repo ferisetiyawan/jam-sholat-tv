@@ -612,21 +612,21 @@
             </div>
             <div class="col-stack">
               <div class="field">
-                <label for="in-metode">Metode Kalkulasi</label>
-                <select class="input" id="in-metode" disabled>
-                  <option selected>Kemenag RI</option>
-                  <option>Muslim World League</option>
-                  <option>Egyptian General Authority of Survey</option>
-                  <option>University of Islamic Sciences, Karachi</option>
+                <label for="in-calculationMethod">Metode Perhitungan</label>
+                <select class="input" id="in-calculationMethod">
+                  <option value="kemenag">Kemenag (Subuh 20&deg;, Isya 18&deg;)</option>
+                  <option value="muhammadiyah">MTT PP Muhammadiyah (Subuh 18&deg;, Isya 18&deg;)</option>
+                  <option value="kustom">Kustom</option>
                 </select>
-                <p class="hint">App selalu menghitung dengan metode Kemenag RI (Fajr 20&deg;, Isya 18&deg;).</p>
+                <p class="hint" id="hint-calculationMethod">Sudut Subuh &amp; Isya terkunci mengikuti metode; hanya bisa diubah pada metode Kustom.</p>
               </div>
               <div class="field">
-                <label for="in-madhab">Pilih Madzhab</label>
+                <label for="in-madhab">Metode Ashar</label>
                 <select class="input" id="in-madhab">
                   <option value="shafi">Syafi&rsquo;i / Maliki / Hanbali</option>
                   <option value="hanafi">Hanafi</option>
                 </select>
+                <p class="hint">Madzhab hanya menentukan waktu Ashar, bukan Subuh/Isya.</p>
               </div>
             </div>
           </div>
@@ -1283,6 +1283,28 @@
   }
   document.getElementById('in-hijriKalender').addEventListener('change', setHijriKalenderState);
 
+  // pilihan metode perhitungan -> kunci sudut untuk preset, bebas untuk Kustom
+  const CALC_METHODS = {
+    kemenag: { fajr: 20, isha: 18 },
+    muhammadiyah: { fajr: 18, isha: 18 }
+  };
+  function setCalculationMethodState() {
+    const sel = document.getElementById('in-calculationMethod');
+    const fajr = document.getElementById('in-fajrAngle');
+    const isha = document.getElementById('in-ishaAngle');
+    const preset = CALC_METHODS[sel && sel.value];
+    if (preset) {
+      fajr.value = preset.fajr;
+      isha.value = preset.isha;
+      fajr.disabled = true;
+      isha.disabled = true;
+    } else {
+      fajr.disabled = false;
+      isha.disabled = false;
+    }
+  }
+  document.getElementById('in-calculationMethod').addEventListener('change', setCalculationMethodState);
+
   // tambah baris transaksi
   document.getElementById('week-add').addEventListener('click', function () {
     addWeekRow();
@@ -1340,6 +1362,11 @@
     document.getElementById('in-longitude').value = cfg.longitude;
     document.getElementById('in-fajrAngle').value = cfg.fajrAngle;
     document.getElementById('in-ishaAngle').value = cfg.ishaAngle;
+    // Metode diisi setelah sudut: untuk preset, setCalculationMethodState
+    // mengunci sudut sesuai metode (preset berkuasa); untuk Kustom sudut
+    // tersimpan dibiarkan apa adanya.
+    document.getElementById('in-calculationMethod').value = cfg.calculationMethod || 'kemenag';
+    setCalculationMethodState();
     document.getElementById('in-madhab').value = cfg.madhab;
     document.getElementById('in-marqueeText').value = cfg.marqueeText;
     document.getElementById('in-masjidName').value = cfg.masjidName || '';
@@ -1537,7 +1564,9 @@
 
     p.latitude = parseFloat(document.getElementById('in-latitude').value);
     p.longitude = parseFloat(document.getElementById('in-longitude').value);
+    p.calculationMethod = document.getElementById('in-calculationMethod').value;
     p.madhab = document.getElementById('in-madhab').value;
+    // Input sudut tetap terbaca walau dinonaktifkan pada metode preset.
     p.fajrAngle = parseFloat(document.getElementById('in-fajrAngle').value);
     p.ishaAngle = parseFloat(document.getElementById('in-ishaAngle').value);
 

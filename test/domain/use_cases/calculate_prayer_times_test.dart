@@ -101,6 +101,23 @@ void main() {
     expect(custom['Isya'], defaults['Isya']);
   });
 
+  test('Muhammadiyah (18°) Subuh is later than Kemenag (20°)', () {
+    final kemenag = calculator(now: now);
+    final muhammadiyah = calculator(
+      now: now,
+      config: AppConfig.fromJson({'calculationMethod': 'muhammadiyah'}),
+    );
+
+    // A larger fajr angle means the sun sits deeper below the horizon at
+    // Subuh, so Kemenag's 20° makes Subuh earlier than Muhammadiyah's 18°.
+    // Both methods use Isya 18°, so Isya is unchanged.
+    expect(
+      toMinutes(muhammadiyah['Subuh']!),
+      greaterThan(toMinutes(kemenag['Subuh']!)),
+    );
+    expect(muhammadiyah['Isya'], kemenag['Isya']);
+  });
+
   test('hanafi madhab pushes Ashar later than shafi', () {
     final shafi = calculator(now: now);
     final hanafi = calculator(

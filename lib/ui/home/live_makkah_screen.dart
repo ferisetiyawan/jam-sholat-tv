@@ -34,7 +34,14 @@ class LiveMakkahScreen extends StatefulWidget {
 }
 
 class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
-  late YoutubePlayerController _controller;
+  late final YoutubePlayerController _controller;
+
+  /// The player widget is created exactly once and cached. The parent screen
+  /// is rebuilt every second (the app's clock tick), but returning the same
+  /// widget instance lets Flutter short-circuit and never re-lay-out the
+  /// WebView platform view; the [RepaintBoundary] keeps it compositing on its
+  /// own layer too.
+  late final Widget _player;
 
   @override
   void initState() {
@@ -47,6 +54,9 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
         isLive: true,
         hideControls: true,
       ),
+    );
+    _player = RepaintBoundary(
+      child: YoutubePlayer(controller: _controller),
     );
   }
 
@@ -83,22 +93,15 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                       masjidName: widget.masjidName,
                     ),
 
+                    // Deliberately decoration-free: a rounded ClipRRect (or any
+                    // opacity / shadow) around a WebView kicks Flutter off the
+                    // fast native "surface" path into per-frame GPU texture
+                    // compositing, which stutters live video on the TV. A plain
+                    // rectangle keeps the WebView compositing natively at 30fps.
                     Expanded(
                       child: Container(
                         margin: const EdgeInsets.fromLTRB(5, 15, 15, 15),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(15),
-                          boxShadow: [
-                            BoxShadow(
-                              blurRadius: 30,
-                              color: Colors.black.withValues(alpha: 0.5),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
-                          child: YoutubePlayer(controller: _controller),
-                        ),
+                        child: _player,
                       ),
                     ),
                   ],

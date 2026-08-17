@@ -1,3 +1,8 @@
+## [2.0.0] - 2026-08-17
+- Release v2.0.0 with Major changes
+- Now, all feature almost offline: Calculation, Financial Report, Event Images and many more
+- using best practice flutter architecture
+
 ## [1.3.1] - 2026-04-06
 - Bug Fixing: Always show Jumat in Saturday
 

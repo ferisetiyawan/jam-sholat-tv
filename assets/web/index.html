@@ -1946,8 +1946,18 @@
       renderAll();
       setConn(true, 'Terhubung ke TV');
     } catch (e) {
-      setConn(false, 'Tidak terhubung');
-      toast('Gagal memuat pengaturan (' + e.message + ').', 'err');
+      const isAuth = e.message === 'HTTP 401' || e.message === 'HTTP 403';
+      if (isAuth) {
+        document.getElementById('no-token-overlay').hidden = false;
+        document.querySelectorAll('button, input, select, textarea, a').forEach(function (el) {
+          el.disabled = true;
+          el.setAttribute('tabindex', '-1');
+        });
+        setConn(false, 'Token tidak valid');
+      } else {
+        setConn(false, 'Tidak terhubung');
+        toast('Gagal memuat pengaturan (' + e.message + ').', 'err');
+      }
     }
   }
 

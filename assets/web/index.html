@@ -192,6 +192,24 @@
   .input-wrap .ic { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--on-surface-variant); opacity: 0.5; pointer-events: none; }
   .input-wrap input, .input-wrap select { padding-right: 40px; }
 
+  .city-combo { position: relative; }
+  .city-list {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 30;
+    max-height: 250px; overflow-y: auto;
+    background: var(--surface-low); border: 1px solid rgba(189, 202, 186, 0.55);
+    border-radius: var(--radius-field); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+    padding: 4px;
+  }
+  .city-list[hidden] { display: none; }
+  .city-opt {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px; cursor: pointer;
+    font-size: 14px; line-height: 20px; color: var(--on-surface);
+  }
+  .city-opt:hover, .city-opt.active { background: var(--surface-high); }
+  .city-opt .meta { font-size: 11px; color: var(--outline); flex: none; }
+  .city-empty { padding: 10px; font-size: 13px; color: var(--outline); }
+
   .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   .grid-ih { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
@@ -588,8 +606,16 @@
           <div class="grid2">
             <div class="col-stack">
               <div class="field">
-                <label for="in-city">Pilih Kota <span class="unit">(mengisi lintang / bujur / elevasi)</span></label>
-                <select class="input" id="in-city"></select>
+                <label for="in-city">Pilih Kota <span class="unit">(ketik untuk mencari — mengisi lintang / bujur / elevasi)</span></label>
+                <div class="city-combo">
+                  <div class="input-wrap">
+                    <input class="input" id="in-city" type="text" autocomplete="off"
+                      placeholder="Ketik nama kota…" role="combobox" aria-autocomplete="list"
+                      aria-expanded="false" aria-controls="in-city-list">
+                    <span class="ic" data-i="search"></span>
+                  </div>
+                  <div class="city-list" id="in-city-list" role="listbox" hidden></div>
+                </div>
               </div>
               <div class="grid2">
                 <div class="field">
@@ -1022,6 +1048,7 @@
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="m3 11 9-8 9 8"/><path d="M5 9.5V21h14V9.5"/></svg>',
     location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
     terrain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M3 21h18L14.5 7 10 14l-2.5-3.5L3 21Z"/><path d="M17.5 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
     restart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     fullscreen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
     link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>',
@@ -1042,18 +1069,81 @@
   let eventPreviewTimer = null;
 
   // Daftar kota dimuat dari /cities (assets/json/kota_indonesia.json) saat
-  // boot. Memilih kota mengisi lintang, bujur, dan elevasi (meter dpl).
+  // boot. `in-city` adalah kotak pencarian (combobox): ketik untuk menyaring
+  // daftar, klik/panah+Enter untuk mengisi lintang, bujur, dan elevasi (meter
+  // dpl). Kota tidak ikut disimpan — yang dikirim hanya lintang/bujur/elevasi.
   let CITY_LIST = [];
+  let CITY_MATCHES = [];
+  let cityHighlight = -1;
 
-  function fillCityOptions() {
-    const city = document.getElementById('in-city');
-    city.innerHTML = '';
-    CITY_LIST.forEach(function (c) {
-      const opt = document.createElement('option');
-      opt.value = c.lokasi;
-      opt.textContent = c.lokasi;
-      city.appendChild(opt);
+  function cityMatches(c, query) {
+    return c.lokasi.toLowerCase().indexOf(query.toLowerCase()) !== -1;
+  }
+
+  function renderCityList() {
+    const input = document.getElementById('in-city');
+    const list = document.getElementById('in-city-list');
+    const query = input.value.trim();
+
+    list.innerHTML = '';
+    cityHighlight = -1;
+    // Kosong -> tampilkan petunjuk; berisi -> saring 518 kota (substring).
+    CITY_MATCHES = query
+      ? CITY_LIST.filter(function (c) { return cityMatches(c, query); })
+      : [];
+
+    if (CITY_MATCHES.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'city-empty';
+      empty.textContent = query ? 'Kota tidak ditemukan' : 'Ketik nama kota untuk mencari';
+      list.appendChild(empty);
+    } else {
+      CITY_MATCHES.forEach(function (c, i) {
+        const item = document.createElement('div');
+        item.className = 'city-opt';
+        item.textContent = c.lokasi;
+        if (c.elevation > 0) {
+          const meta = document.createElement('span');
+          meta.className = 'meta';
+          meta.textContent = c.elevation + ' m';
+          item.appendChild(meta);
+        }
+        item.addEventListener('mousedown', function (ev) {
+          ev.preventDefault(); // jangan pindah fokus sebelum dipilih
+          selectCity(c);
+        });
+        item.addEventListener('mouseenter', function () {
+          setCityHighlight(i);
+        });
+        list.appendChild(item);
+      });
+    }
+    list.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
+  }
+
+  function setCityHighlight(i) {
+    cityHighlight = i;
+    const opts = document.getElementById('in-city-list').querySelectorAll('.city-opt');
+    opts.forEach(function (el, idx) {
+      el.classList.toggle('active', idx === i);
     });
+  }
+
+  function selectCity(c) {
+    const input = document.getElementById('in-city');
+    input.value = c.lokasi;
+    document.getElementById('in-latitude').value = c.latitude;
+    document.getElementById('in-longitude').value = c.longitude;
+    document.getElementById('in-elevationMeters').value = c.elevation;
+    closeCityList();
+    input.focus();
+  }
+
+  function closeCityList() {
+    document.getElementById('in-city-list').hidden = true;
+    document.getElementById('in-city').setAttribute('aria-expanded', 'false');
+    cityHighlight = -1;
   }
 
   async function loadCities() {
@@ -1065,7 +1155,6 @@
     } catch (e) {
       CITY_LIST = [];
     }
-    fillCityOptions();
   }
 
   const IHTIYAT_FIELDS = [
@@ -1237,14 +1326,38 @@
     document.getElementById('scrim').classList.remove('show');
   });
 
-  // kota -> isi lintang/bujur/elevasi
-  document.getElementById('in-city').addEventListener('change', function () {
-    const preset = CITY_LIST.find(function (c) { return c.lokasi === this.value; }, this);
-    if (preset) {
-      document.getElementById('in-latitude').value = preset.latitude;
-      document.getElementById('in-longitude').value = preset.longitude;
-      document.getElementById('in-elevationMeters').value = preset.elevation;
+  // Combobox kota: ketik untuk mencari, panah + Enter memilih, Esc menutup.
+  const cityInput = document.getElementById('in-city');
+  const cityList = document.getElementById('in-city-list');
+
+  cityInput.addEventListener('input', renderCityList);
+  cityInput.addEventListener('focus', function () { renderCityList(); });
+
+  cityInput.addEventListener('keydown', function (e) {
+    if (cityList.hidden) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); renderCityList(); setCityHighlight(0); }
+      return;
     }
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      const count = CITY_MATCHES.length;
+      if (count === 0) return;
+      const delta = e.key === 'ArrowDown' ? 1 : -1;
+      setCityHighlight((cityHighlight + delta + count) % count);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const chosen = (cityHighlight >= 0 && CITY_MATCHES[cityHighlight]) ||
+        CITY_LIST.find(function (c) { return c.lokasi === cityInput.value.trim(); });
+      if (chosen) selectCity(chosen); else closeCityList();
+    } else if (e.key === 'Escape') {
+      closeCityList();
+    }
+  });
+
+  // Klik di luar combobox -> tutup panel.
+  document.addEventListener('click', function (e) {
+    const combo = cityInput.closest('.city-combo');
+    if (combo && !combo.contains(e.target)) closeCityList();
   });
 
   // marquee pratinjau mengikuti input

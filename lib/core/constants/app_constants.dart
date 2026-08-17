@@ -32,6 +32,16 @@ class AppConstants {
   static const int shalatDuration = 10; // minutes
   static const int isyraqDuration = 10; // minutes
   static const int hijriCorrection = -1;
+
+  /// Hijri calendar used for the displayed date: `'umum'` (location-based,
+  /// local rukyat) or `'khgt'` (Kalender Hijriah Global Tunggal — one global
+  /// date for everyone). Editable at runtime through the local config server;
+  /// when `'khgt'`, [hijriCorrection] is not applied.
+  static const String hijriKalender = 'umum';
+
+  /// Serialized values accepted for [hijriKalender] in `AppConfig`.
+  static const List<String> hijriKalenderNames = ['umum', 'khgt'];
+
   static const int waitingIsyraqDuration = 15; // minutes
   static const int iqomahSubuhDuration = 15; // minutes
   static const int iqomahMaghribRamadhanDuration = 15; // minutes

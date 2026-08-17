@@ -41,6 +41,14 @@ class AppConfig {
   /// Hijri date correction in days, clamped to `[-2, 2]`.
   final int hijriCorrection;
 
+  /// Hijri calendar used to render the displayed date: `'umum'` (location-based,
+  /// local rukyat) or `'khgt'` (Kalender Hijriah Global Tunggal). When `'khgt'`,
+  /// [hijriCorrection] is ignored because KHGT yields one global date for all
+  /// locations. Editable at runtime through the local config server's "Kalender
+  /// Hijriah" dashboard; an unknown value falls back to
+  /// [AppConstants.hijriKalender].
+  final String hijriKalender;
+
   /// Minutes between Syuruq and the Isyraq screen.
   final int waitingIsyraqDuration;
 
@@ -103,6 +111,7 @@ class AppConfig {
     required this.shalatDuration,
     required this.isyraqDuration,
     required this.hijriCorrection,
+    required this.hijriKalender,
     required this.waitingIsyraqDuration,
     required this.iqomahSubuhDuration,
     required this.iqomahMaghribRamadhanDuration,
@@ -146,6 +155,13 @@ class AppConfig {
       return AppConstants.madhabNames.contains(raw)
           ? raw
           : AppConstants.madhab.name;
+    }
+
+    String parseKalender(dynamic value) {
+      final String raw = value?.toString().toLowerCase() ?? '';
+      return AppConstants.hijriKalenderNames.contains(raw)
+          ? raw
+          : AppConstants.hijriKalender;
     }
 
     String parseName(dynamic value, String fallback) {
@@ -206,6 +222,7 @@ class AppConfig {
         json['hijriCorrection'],
         AppConstants.hijriCorrection,
       ).clamp(-2, 2),
+      hijriKalender: parseKalender(json['hijriKalender']),
       waitingIsyraqDuration: parseInt(
         json['waitingIsyraqDuration'],
         AppConstants.waitingIsyraqDuration,
@@ -274,6 +291,7 @@ class AppConfig {
       'shalatDuration': shalatDuration,
       'isyraqDuration': isyraqDuration,
       'hijriCorrection': hijriCorrection,
+      'hijriKalender': hijriKalender,
       'waitingIsyraqDuration': waitingIsyraqDuration,
       'iqomahSubuhDuration': iqomahSubuhDuration,
       'iqomahMaghribRamadhanDuration': iqomahMaghribRamadhanDuration,

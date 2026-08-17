@@ -92,6 +92,7 @@ class ConfigProvider extends ChangeNotifier {
   int get shalatDuration => _config.shalatDuration;
   int get isyraqDuration => _config.isyraqDuration;
   int get hijriCorrection => _config.hijriCorrection;
+  String get hijriKalender => _config.hijriKalender;
   int get waitingIsyraqDuration => _config.waitingIsyraqDuration;
   int get iqomahSubuhDuration => _config.iqomahSubuhDuration;
   int get iqomahMaghribRamadhanDuration =>

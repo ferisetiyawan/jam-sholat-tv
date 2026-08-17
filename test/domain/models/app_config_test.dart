@@ -14,6 +14,7 @@ void main() {
       expect(config.adzanDuration, AppConstants.adzanDuration);
       expect(config.jumatDuration, AppConstants.jumatDuration);
       expect(config.hijriCorrection, AppConstants.hijriCorrection);
+      expect(config.hijriKalender, AppConstants.hijriKalender);
       expect(config.marqueeText, AppConstants.marqueeText);
       expect(config.backgroundImage, AppConstants.backgroundImage);
       expect(config.eventImages, isEmpty);
@@ -58,6 +59,15 @@ void main() {
       expect(AppConfig.fromJson({'hijriCorrection': 1}).hijriCorrection, 1);
     });
 
+    test('hijriKalender is normalized and falls back on unknown values', () {
+      expect(AppConfig.fromJson({'hijriKalender': 'KHGT'}).hijriKalender, 'khgt');
+      expect(AppConfig.fromJson({'hijriKalender': 'bogus'}).hijriKalender,
+          AppConstants.hijriKalender);
+      expect(AppConfig.fromJson({'hijriKalender': ''}).hijriKalender,
+          AppConstants.hijriKalender);
+      expect(AppConfig.fromJson({}).hijriKalender, AppConstants.hijriKalender);
+    });
+
     test('parses event images and defaults to empty list', () {
       final config = AppConfig.fromJson({
         'eventImages': [
@@ -95,6 +105,7 @@ void main() {
         'locationName': 'Jl. Merdeka No. 1',
         'homeDuration': 7,
         'hijriCorrection': 1,
+        'hijriKalender': 'khgt',
         'eventImages': [
           {'type': 'image', 'url': 'assets/a.png'},
         ],
@@ -106,6 +117,7 @@ void main() {
       expect(restored.locationName, 'Jl. Merdeka No. 1');
       expect(restored.homeDuration, 7);
       expect(restored.hijriCorrection, 1);
+      expect(restored.hijriKalender, 'khgt');
       expect(restored.eventImages, hasLength(1));
       expect(restored.eventImages.first.type, 'IMAGE');
       expect(restored.eventImages.first.url, 'assets/a.png');

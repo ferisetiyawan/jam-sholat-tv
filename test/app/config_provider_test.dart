@@ -28,6 +28,7 @@ void main() {
       expect(config.iqomahDefaultDuration, AppConstants.iqomahDefaultDuration);
       expect(config.iqomahTestingDuration, AppConstants.iqomahTestingDuration);
       expect(config.hijriCorrection, AppConstants.hijriCorrection);
+      expect(config.hijriKalender, AppConstants.hijriKalender);
       expect(config.minutesBeforeMaghrib, AppConstants.minutesBeforeMaghrib);
       expect(config.minutesBeforeJumat, AppConstants.minutesBeforeJumat);
       expect(config.marqueeText, AppConstants.marqueeText);
@@ -135,6 +136,19 @@ void main() {
 
       expect(config.masjidName, 'Masjid An-Nur');
       expect(config.locationName, 'Jl. Merdeka No. 1');
+    });
+
+    test('load() applies a persisted hijriKalender override', () async {
+      SharedPreferences.setMockInitialValues({
+        ConfigProvider.configPrefsKey: jsonEncode({'hijriKalender': 'khgt'}),
+      });
+
+      final config = ConfigProvider();
+      expect(config.hijriKalender, AppConstants.hijriKalender);
+
+      await config.load();
+
+      expect(config.hijriKalender, 'khgt');
     });
 
     test('load() falls back to defaults when nothing is saved', () async {

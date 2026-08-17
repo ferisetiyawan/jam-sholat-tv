@@ -228,7 +228,10 @@ class AppProvider extends ChangeNotifier {
     timeString = DateFormat('HH:mm').format(now);
 
     final correction = config.hijriCorrection;
-    final dates = DateFormatter.getFullDate(correction);
+    final dates = DateFormatter.getFullDate(
+      correction,
+      kalender: config.hijriKalender,
+    );
     dateMasehi = dates['masehi']!;
     dateHijriah = dates['hijriah']!;
 

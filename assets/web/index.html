@@ -628,23 +628,26 @@
                   <option value="hanafi">Hanafi</option>
                 </select>
               </div>
-              <div class="hint-card" style="margin-top:8px">
-                <span class="ic" data-i="info"></span>
-                <div><b>Jadwal dihitung di perangkat</b><p>Waktu sholat dihitung langsung di TV dengan koordinat di atas &mdash; tidak butuh internet.</p></div>
-              </div>
             </div>
           </div>
 
           <hr class="section-divider">
 
-          <h3 class="sub-head">Penyesuaian Kalender</h3>
-          <div class="grid3">
+          <h3 class="sub-head">Kalender Hijriah</h3>
+          <div class="grid2">
+            <div class="field">
+              <label for="in-hijriKalender">Pilih Kalender</label>
+              <select class="input" id="in-hijriKalender">
+                <option value="umum">Umum</option>
+                <option value="khgt">Kalender Hijriah Global Tunggal (KHGT)</option>
+              </select>
+            </div>
             <div class="field">
               <label for="in-hijriCorrection">Koreksi Hijriah <span class="unit">(hari, -2 s.d. 2)</span></label>
               <div class="input-wrap"><input class="input" id="in-hijriCorrection" type="number" min="-2" max="2"><span class="ic" data-i="calendar"></span></div>
-              <p class="hint">Gunakan nilai negatif atau positif (-1, 0, 1) untuk menyesuaikan tanggal Hijriah.</p>
             </div>
           </div>
+          <p class="hint" id="hint-hijriKalender">Koreksi Hijriah menyesuaikan tanggal menurut rukyat lokal (nilai -1, 0, atau 1).</p>
 
           <hr class="section-divider">
 
@@ -1265,6 +1268,21 @@
     });
   }
 
+  // pilihan kalender -> aktifkan/nonaktifkan Koreksi Hijriah
+  function setHijriKalenderState() {
+    const sel = document.getElementById('in-hijriKalender');
+    const corr = document.getElementById('in-hijriCorrection');
+    const hint = document.getElementById('hint-hijriKalender');
+    const isKhgt = sel && sel.value === 'khgt';
+    if (corr) corr.disabled = isKhgt;
+    if (hint) {
+      hint.textContent = isKhgt
+        ? 'KHGT memakai satu tanggal global untuk seluruh dunia — Koreksi Hijriah tidak berlaku.'
+        : 'Koreksi Hijriah menyesuaikan tanggal menurut rukyat lokal (nilai -1, 0, atau 1).';
+    }
+  }
+  document.getElementById('in-hijriKalender').addEventListener('change', setHijriKalenderState);
+
   // tambah baris transaksi
   document.getElementById('week-add').addEventListener('click', function () {
     addWeekRow();
@@ -1329,6 +1347,8 @@
     document.getElementById('side-masjid-name').textContent = cfg.masjidName || 'Masjid';
     document.getElementById('bg-preview-marquee').textContent =
       cfg.marqueeText || 'Selamat Datang';
+    document.getElementById('in-hijriKalender').value = cfg.hijriKalender || 'umum';
+    setHijriKalenderState();
 
     const ihtiyat = cfg.ihtiyat || {};
     IHTIYAT_FIELDS.forEach(function (f) {
@@ -1509,6 +1529,7 @@
 
     p.masjidName = document.getElementById('in-masjidName').value.trim();
     p.locationName = document.getElementById('in-locationName').value.trim();
+    p.hijriKalender = document.getElementById('in-hijriKalender').value;
     // Simpan marquee dengan spasi di akhir agar ada jeda visual saat teks
     // berulang di layar (marquee mengukur lebar teks termasuk spasi).
     p.marqueeText = document.getElementById('in-marqueeText').value.trim() + ' '.repeat(1);

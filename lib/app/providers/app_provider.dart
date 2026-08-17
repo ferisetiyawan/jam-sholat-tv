@@ -258,14 +258,18 @@ class AppProvider extends ChangeNotifier {
     int totalCycle =
         config.homeDuration + effectiveEventDuration + effectiveReportDuration;
 
-    int currentSec = _timer!.tick % totalCycle;
+    int currentSec =
+        (DateTime.now().millisecondsSinceEpoch ~/ 1000) % totalCycle;
 
     if (currentSec < config.homeDuration) {
       isEventMode = false;
       isReportMode = false;
     } else if (currentSec < (config.homeDuration + effectiveEventDuration)) {
-      if (!isEventMode && canShowEvent) {
-        currentEventIndex = (currentEventIndex + 1) % config.eventImages.length;
+      if (canShowEvent) {
+        // Derive event index from wall clock so all devices show the same image.
+        final epochSec = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+        currentEventIndex =
+            (epochSec ~/ config.eventDuration) % config.eventImages.length;
       }
       isEventMode = true;
       isReportMode = false;

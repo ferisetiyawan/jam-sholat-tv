@@ -53,6 +53,55 @@ void main() {
       expect(config.ihtiyat, AppConstants.ihtiyat);
     });
 
+    test('load() migrates legacy seconds durations to minutes', () async {
+      SharedPreferences.setMockInitialValues({
+        ConfigProvider.configPrefsKey: jsonEncode({
+          'adzanDuration': 180,
+          'jumatDuration': 2700,
+          'shalatDuration': 600,
+          'isyraqDuration': 600,
+          'waitingIsyraqDuration': 900,
+          'iqomahSubuhDuration': 900,
+          'iqomahMaghribRamadhanDuration': 900,
+          'iqomahDefaultDuration': 600,
+        }),
+      });
+
+      final config = ConfigProvider();
+      await config.load();
+
+      expect(config.adzanDuration, 3);
+      expect(config.jumatDuration, 45);
+      expect(config.shalatDuration, 10);
+      expect(config.isyraqDuration, 10);
+      expect(config.waitingIsyraqDuration, 15);
+      expect(config.iqomahSubuhDuration, 15);
+      expect(config.iqomahMaghribRamadhanDuration, 15);
+      expect(config.iqomahDefaultDuration, 10);
+    });
+
+    test('load() leaves minute-based configs untouched', () async {
+      SharedPreferences.setMockInitialValues({
+        ConfigProvider.configPrefsKey: jsonEncode({
+          'adzanDuration': 3,
+          'jumatDuration': 45,
+          'shalatDuration': 10,
+          'isyraqDuration': 10,
+          'waitingIsyraqDuration': 15,
+          'iqomahSubuhDuration': 15,
+          'iqomahMaghribRamadhanDuration': 15,
+          'iqomahDefaultDuration': 10,
+        }),
+      });
+
+      final config = ConfigProvider();
+      await config.load();
+
+      expect(config.adzanDuration, 3);
+      expect(config.jumatDuration, 45);
+      expect(config.shalatDuration, 10);
+    });
+
     test('load() merges persisted overrides over AppConstants', () async {
       SharedPreferences.setMockInitialValues({
         ConfigProvider.configPrefsKey:

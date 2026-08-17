@@ -10,20 +10,41 @@ import 'financial_summary.dart';
 /// default when absent from the remote payload, so `AppConfig.fromJson({})`
 /// yields a fully usable default config.
 class AppConfig {
+  // Durations below marked "minutes" are configured and stored in minutes
+  // (converted to seconds when the countdown runs); the rest stay in seconds.
   final int homeDuration;
   final int eventDuration;
   final int reportDuration;
+
+  /// Adzan screen length, in minutes.
   final int adzanDuration;
+
+  /// Jumat mode screen length, in minutes.
   final int jumatDuration;
+
+  /// Shalat screen length, in minutes.
   final int shalatDuration;
+
+  /// Isyraq screen length, in minutes.
   final int isyraqDuration;
 
   /// Hijri date correction in days, clamped to `[-2, 2]`.
   final int hijriCorrection;
+
+  /// Minutes between Syuruq and the Isyraq screen.
   final int waitingIsyraqDuration;
+
+  /// Iqomah wait before Subuh, in minutes.
   final int iqomahSubuhDuration;
+
+  /// Iqomah wait before Maghrib during Ramadhan, in minutes.
   final int iqomahMaghribRamadhanDuration;
+
+  /// Iqomah wait for every other prayer, in minutes.
   final int iqomahDefaultDuration;
+
+  /// Seconds the iqomah stage lasts in debug builds only (hidden from the
+  /// config dashboard; never used in release builds).
   final int iqomahTestingDuration;
 
   final int minutesBeforeMaghrib;

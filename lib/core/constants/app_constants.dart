@@ -10,18 +10,25 @@ class AppConstants {
   static const bool enableFinancialReport = true;
 
   // --- duration defaults (ConfigProvider) ---
+  // Units: durations below marked MINUTES are configured and stored in minutes
+  // (converted to seconds when the countdown runs); the rest stay in seconds.
+  // In debug builds the state machine shortens the minute-based durations to a
+  // few seconds so the prayer cycle can be tested quickly.
   static const int homeDuration = isDebug ? 2 : 10;
   static const int eventDuration = isDebug ? 3 : 20;
   static const int reportDuration = isDebug ? 3 : 20;
-  static const int adzanDuration = 180;
-  static const int jumatDuration = isDebug ? 10 : 2700;
-  static const int shalatDuration = isDebug ? 10 : 600;
-  static const int isyraqDuration = isDebug ? 10 : 600;
+  static const int adzanDuration = 3; // minutes
+  static const int jumatDuration = 45; // minutes
+  static const int shalatDuration = 10; // minutes
+  static const int isyraqDuration = 10; // minutes
   static const int hijriCorrection = -1;
-  static const int waitingIsyraqDuration = isDebug ? 15 : 900; // 15 minutes
-  static const int iqomahSubuhDuration = 900; // 15 minutes
-  static const int iqomahMaghribRamadhanDuration = 900; // 15 minutes
-  static const int iqomahDefaultDuration = 600; // 10 minutes
+  static const int waitingIsyraqDuration = 15; // minutes
+  static const int iqomahSubuhDuration = 15; // minutes
+  static const int iqomahMaghribRamadhanDuration = 15; // minutes
+  static const int iqomahDefaultDuration = 10; // minutes
+
+  /// Seconds the iqomah stage lasts in debug builds only. Debug-only: hidden
+  /// from the config dashboard and never used in release builds.
   static const int iqomahTestingDuration = 5;
   static const int monthOfRamadhan = 9; // 9 = Ramadhan in Hijri Calendar
 

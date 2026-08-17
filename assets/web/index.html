@@ -505,40 +505,36 @@
               <div class="input-wrap"><input class="input" id="in-reportDuration" type="number" min="0"><span class="ic" data-i="wallet"></span></div>
             </div>
             <div class="field">
-              <label for="in-adzanDuration">Durasi Adzan <span class="unit">(detik)</span></label>
+              <label for="in-adzanDuration">Durasi Adzan <span class="unit">(menit)</span></label>
               <div class="input-wrap"><input class="input" id="in-adzanDuration" type="number" min="0"><span class="ic" data-i="alarm"></span></div>
             </div>
             <div class="field">
-              <label for="in-jumatDuration">Durasi Jumat <span class="unit">(detik)</span></label>
+              <label for="in-jumatDuration">Durasi Jumat <span class="unit">(menit)</span></label>
               <div class="input-wrap"><input class="input" id="in-jumatDuration" type="number" min="0"><span class="ic" data-i="mosque"></span></div>
             </div>
             <div class="field">
-              <label for="in-shalatDuration">Durasi Shalat <span class="unit">(detik)</span></label>
+              <label for="in-shalatDuration">Durasi Shalat <span class="unit">(menit)</span></label>
               <div class="input-wrap"><input class="input" id="in-shalatDuration" type="number" min="0"><span class="ic" data-i="schedule"></span></div>
             </div>
             <div class="field">
-              <label for="in-isyraqDuration">Durasi Isyraq <span class="unit">(detik)</span></label>
+              <label for="in-isyraqDuration">Durasi Isyraq <span class="unit">(menit)</span></label>
               <div class="input-wrap"><input class="input" id="in-isyraqDuration" type="number" min="0"><span class="ic" data-i="light_mode"></span></div>
             </div>
             <div class="field">
-              <label for="in-waitingIsyraqDuration">Menunggu Isyraq <span class="unit">(detik)</span></label>
+              <label for="in-waitingIsyraqDuration">Menunggu Isyraq <span class="unit">(menit)</span></label>
               <div class="input-wrap"><input class="input" id="in-waitingIsyraqDuration" type="number" min="0"><span class="ic" data-i="pending"></span></div>
             </div>
             <div class="field">
-              <label for="in-iqomahSubuhDuration">Iqomah Subuh <span class="unit">(detik)</span></label>
+              <label for="in-iqomahSubuhDuration">Iqomah Subuh <span class="unit">(menit)</span></label>
               <div class="input-wrap"><input class="input" id="in-iqomahSubuhDuration" type="number" min="0"><span class="ic" data-i="notifications"></span></div>
             </div>
             <div class="field">
-              <label for="in-iqomahMaghribRamadhanDuration">Iqomah Maghrib Ramadhan <span class="unit">(detik)</span></label>
+              <label for="in-iqomahMaghribRamadhanDuration">Iqomah Maghrib Ramadhan <span class="unit">(menit)</span></label>
               <div class="input-wrap"><input class="input" id="in-iqomahMaghribRamadhanDuration" type="number" min="0"><span class="ic" data-i="dark_mode"></span></div>
             </div>
             <div class="field">
-              <label for="in-iqomahDefaultDuration">Iqomah Default <span class="unit">(detik)</span></label>
+              <label for="in-iqomahDefaultDuration">Iqomah Default <span class="unit">(menit)</span></label>
               <div class="input-wrap"><input class="input" id="in-iqomahDefaultDuration" type="number" min="0"><span class="ic" data-i="alarm"></span></div>
-            </div>
-            <div class="field">
-              <label for="in-iqomahTestingDuration">Iqomah Mode Testing <span class="unit">(detik)</span></label>
-              <div class="input-wrap"><input class="input" id="in-iqomahTestingDuration" type="number" min="0"><span class="ic" data-i="pending"></span></div>
             </div>
           </div>
 
@@ -1276,7 +1272,7 @@
     const intKeys = ['homeDuration', 'eventDuration', 'reportDuration', 'adzanDuration',
       'jumatDuration', 'shalatDuration', 'isyraqDuration', 'waitingIsyraqDuration',
       'iqomahSubuhDuration', 'iqomahMaghribRamadhanDuration', 'iqomahDefaultDuration',
-      'iqomahTestingDuration', 'hijriCorrection', 'minutesBeforeMaghrib', 'minutesBeforeJumat'];
+      'hijriCorrection', 'minutesBeforeMaghrib', 'minutesBeforeJumat'];
     intKeys.forEach(function (k) {
       const el = document.getElementById('in-' + k);
       if (el && cfg[k] !== undefined && cfg[k] !== null) el.value = cfg[k];
@@ -1436,7 +1432,7 @@
     const intKeys = ['homeDuration', 'eventDuration', 'reportDuration', 'adzanDuration',
       'jumatDuration', 'shalatDuration', 'isyraqDuration', 'waitingIsyraqDuration',
       'iqomahSubuhDuration', 'iqomahMaghribRamadhanDuration', 'iqomahDefaultDuration',
-      'iqomahTestingDuration', 'hijriCorrection'];
+      'hijriCorrection'];
     intKeys.forEach(function (k) {
       p[k] = toInt(document.getElementById('in-' + k).value);
     });

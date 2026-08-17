@@ -1,25 +1,28 @@
 import 'package:hijriyah_indonesia/hijriyah_indonesia.dart';
 
 import '../../core/constants/app_constants.dart';
+import '../models/app_config.dart';
 
-/// Selects how long the iqomah stage lasts for a given prayer.
+/// Selects how long the iqomah stage lasts for a given prayer, in MINUTES.
 ///
-/// Rules: Subuh = 15 minutes; Maghrib during Ramadhan (hijri month 9) = 15
-/// minutes; everything else = 10 minutes. In debug builds a few seconds are
-/// used to speed up testing.
+/// Rules: Subuh = `config.iqomahSubuhDuration`; Maghrib during Ramadhan (hijri
+/// month 9) = `config.iqomahMaghribRamadhanDuration`; everything else =
+/// `config.iqomahDefaultDuration`. All three come from the runtime config
+/// (defaults 15 / 15 / 10 minutes) so the dashboard edits take effect. In debug
+/// builds a few seconds are used to speed up testing.
 class GetIqomahDuration {
-  int call(String prayerName) {
+  int call(String prayerName, AppConfig config) {
     if (AppConstants.isDebug) return AppConstants.iqomahTestingDuration;
 
     final hijri = Hijriyah.now();
-    bool isRamadhan = hijri.hMonth == AppConstants.monthOfRamadhan;
+    final bool isRamadhan = hijri.hMonth == AppConstants.monthOfRamadhan;
 
     if (prayerName == "Subuh") {
-      return AppConstants.iqomahSubuhDuration;
+      return config.iqomahSubuhDuration;
     } else if (prayerName == "Maghrib" && isRamadhan) {
-      return AppConstants.iqomahMaghribRamadhanDuration;
+      return config.iqomahMaghribRamadhanDuration;
     } else {
-      return AppConstants.iqomahDefaultDuration;
+      return config.iqomahDefaultDuration;
     }
   }
 }

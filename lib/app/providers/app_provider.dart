@@ -80,6 +80,15 @@ class AppProvider extends ChangeNotifier {
 
   DateTime get currentDateTime => _fakeTime ?? DateTime.now();
 
+  /// Converts a duration configured in MINUTES to the countdown value in
+  /// seconds. Debug builds shorten it to a few seconds so the prayer cycle can
+  /// be exercised without waiting out real minutes; release builds use the real
+  /// `minutes * 60`.
+  int _minutesToCountdownSeconds(int minutes) {
+    if (kDebugMode) return 5;
+    return minutes * 60;
+  }
+
   void init() {
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _onTick());
     _initConnectivity();
@@ -272,7 +281,7 @@ class AppProvider extends ChangeNotifier {
         if (prayerKey == "Syuruq") {
           status = AppStatus.iqomah;
           currentPrayerName = "Syuruq";
-          iqomahCounter = config.waitingIsyraqDuration;
+          iqomahCounter = _minutesToCountdownSeconds(config.waitingIsyraqDuration);
           AudioService.playAdzanBeep();
         } else {
           _startAdzan(prayerDisplayName);
@@ -286,14 +295,14 @@ class AppProvider extends ChangeNotifier {
   void _startAdzan(String prayerName) {
     status = AppStatus.adzan;
     currentPrayerName = prayerName;
-    adzanCounter = (_fakeTime == null) ? config.adzanDuration : 5;
+    adzanCounter = _minutesToCountdownSeconds(config.adzanDuration);
     AudioService.playAdzanBeep();
     notifyListeners();
   }
 
   void _startIsyraq() {
     status = AppStatus.isyraq;
-    isyraqCounter = (_fakeTime == null) ? config.isyraqDuration : 5;
+    isyraqCounter = _minutesToCountdownSeconds(config.isyraqDuration);
     AudioService.playAdzanBeep();
     notifyListeners();
   }
@@ -342,11 +351,13 @@ class AppProvider extends ChangeNotifier {
   void _handleAdzanTransition() {
     if (currentPrayerName == "Jumat") {
       status = AppStatus.jumatMode;
-      jumatCounter = config.jumatDuration;
+      jumatCounter = _minutesToCountdownSeconds(config.jumatDuration);
     } else {
       status = AppStatus.iqomah;
       iqomahCounter = !kDebugMode
-          ? _getIqomahDuration(currentPrayerName)
+          ? _minutesToCountdownSeconds(
+              _getIqomahDuration(currentPrayerName, config.config),
+            )
           : config.iqomahTestingDuration;
     }
     notifyListeners();
@@ -354,7 +365,7 @@ class AppProvider extends ChangeNotifier {
 
   void _finishPrayerCycle() {
     status = AppStatus.shalat;
-    shalatCounter = config.shalatDuration;
+    shalatCounter = _minutesToCountdownSeconds(config.shalatDuration);
     AudioService.playAdzanBeep();
     notifyListeners();
   }
@@ -472,8 +483,14 @@ class AppProvider extends ChangeNotifier {
       );
 
       if (name == "Syuruq") {
-        final endWaiting = pTime.add(const Duration(seconds: 900));
-        final endIsyraq = endWaiting.add(const Duration(seconds: 600));
+        final endWaiting = pTime.add(
+          Duration(
+            seconds: _minutesToCountdownSeconds(config.waitingIsyraqDuration),
+          ),
+        );
+        final endIsyraq = endWaiting.add(
+          Duration(seconds: _minutesToCountdownSeconds(config.isyraqDuration)),
+        );
 
         if (now.isAfter(pTime) && now.isBefore(endWaiting)) {
           status = AppStatus.iqomah;
@@ -486,7 +503,9 @@ class AppProvider extends ChangeNotifier {
         return;
       }
 
-      final endAdzan = pTime.add(Duration(seconds: config.adzanDuration));
+      final endAdzan = pTime.add(
+        Duration(seconds: _minutesToCountdownSeconds(config.adzanDuration)),
+      );
 
       if (now.isAfter(pTime) && now.isBefore(endAdzan)) {
         status = AppStatus.adzan;
@@ -497,9 +516,9 @@ class AppProvider extends ChangeNotifier {
 
       int currentIqomahDuration = (displayName == "Jumat")
           ? 0
-          : _getIqomahDuration(name);
+          : _minutesToCountdownSeconds(_getIqomahDuration(name, config.config));
       final currentContentDuration = (displayName == "Jumat")
-          ? config.jumatDuration
+          ? _minutesToCountdownSeconds(config.jumatDuration)
           : currentIqomahDuration;
       final endCycle = endAdzan.add(Duration(seconds: currentContentDuration));
 

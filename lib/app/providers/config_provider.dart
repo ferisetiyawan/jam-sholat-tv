@@ -21,9 +21,42 @@ class ConfigProvider extends ChangeNotifier {
   /// the same shape as `AppConfig.toJson()`).
   static const String configPrefsKey = 'app_config_json';
 
+  /// Config keys whose unit changed from seconds to MINUTES (v2). A config
+  /// saved before that change carries seconds (e.g. `adzanDuration: 180`);
+  /// [load] migrates those so an upgraded TV doesn't run multi-minute screens
+  /// for what was meant to be a few seconds.
+  static const List<String> _minuteDurationKeys = [
+    'adzanDuration',
+    'jumatDuration',
+    'shalatDuration',
+    'isyraqDuration',
+    'waitingIsyraqDuration',
+    'iqomahSubuhDuration',
+    'iqomahMaghribRamadhanDuration',
+    'iqomahDefaultDuration',
+  ];
+
   AppConfig _config = AppConfig.defaults();
 
   AppConfig get config => _config;
+
+  /// Converts a persisted config that still stores durations in seconds to the
+  /// current minute-based unit. Detection is by content: a value above 59 can
+  /// not be minutes in any realistic masjid config, so it is a legacy seconds
+  /// value. No-op for configs already in minutes.
+  static void _migrateLegacyConfig(Map<String, dynamic> json) {
+    final bool looksLegacy = _minuteDurationKeys.any((key) {
+      final dynamic value = json[key];
+      return value is num && value > 59;
+    });
+    if (!looksLegacy) return;
+    for (final String key in _minuteDurationKeys) {
+      final dynamic value = json[key];
+      if (value is num && value > 0) {
+        json[key] = (value / 60).round();
+      }
+    }
+  }
 
   /// Merges persisted overrides (if any) on top of the [AppConstants]
   /// defaults. Call once at startup, before the widget tree builds.
@@ -32,7 +65,10 @@ class ConfigProvider extends ChangeNotifier {
     final String? raw = prefs.getString(configPrefsKey);
     if (raw == null || raw.isEmpty) return;
     try {
-      _config = AppConfig.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      final Map<String, dynamic> decoded =
+          jsonDecode(raw) as Map<String, dynamic>;
+      _migrateLegacyConfig(decoded);
+      _config = AppConfig.fromJson(decoded);
       notifyListeners();
     } catch (_) {
       // Corrupt saved config falls back to defaults; never crash the TV.

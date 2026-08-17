@@ -516,7 +516,7 @@
     <section class="view active" id="view-durasi">
       <div class="page-head">
         <h2>Konfigurasi Durasi</h2>
-        <p>Atur durasi tampilan setiap fase dan penyesuaian kalender Hijriah.</p>
+        <p>Atur durasi tampilan setiap fase pada layar masjid.</p>
       </div>
       <div class="glass-card card-pad">
         <div class="deco deco-a"></div>
@@ -568,17 +568,6 @@
             </div>
           </div>
 
-          <hr class="section-divider">
-
-          <h3 class="sub-head">Penyesuaian Kalender</h3>
-          <div class="grid3">
-            <div class="field">
-              <label for="in-hijriCorrection">Koreksi Hijriah <span class="unit">(hari, -2 s.d. 2)</span></label>
-              <div class="input-wrap"><input class="input" id="in-hijriCorrection" type="number" min="-2" max="2"><span class="ic" data-i="calendar"></span></div>
-              <p class="hint">Gunakan nilai negatif atau positif (-1, 0, 1) untuk menyesuaikan tanggal Hijriah.</p>
-            </div>
-          </div>
-
           <div class="actions">
             <button class="btn-primary js-save" type="button"><span class="ic ic--sm" data-i="save"></span>Simpan Perubahan</button>
           </div>
@@ -590,45 +579,11 @@
     <section class="view" id="view-sholat">
       <div class="page-head">
         <h2>Konfigurasi Waktu Sholat</h2>
-        <p>Atur ihtiyat, lokasi, dan metode perhitungan jadwal sholat di layar masjid.</p>
+        <p>Atur lokasi, metode perhitungan, penyesuaian kalender, dan ihtiyat jadwal sholat.</p>
       </div>
       <div class="glass-card card-pad">
         <div class="deco deco-a"></div>
         <div class="rel">
-          <h3 class="sub-head">Waktu Ihtiyat <span class="unit" style="font-weight:500;font-size:16px;color:var(--on-surface-variant)">(menit tambahan)</span></h3>
-          <div class="grid-ih">
-            <div class="field">
-              <label for="in-ihtiyat.imsak">Imsak</label>
-              <div class="input-wrap"><input class="input" id="in-ihtiyat.imsak" type="number" min="0"><span class="ic" data-i="alarm"></span></div>
-            </div>
-            <div class="field">
-              <label for="in-ihtiyat.subuh">Subuh</label>
-              <div class="input-wrap"><input class="input" id="in-ihtiyat.subuh" type="number" min="0"><span class="ic" data-i="alarm"></span></div>
-            </div>
-            <div class="field">
-              <label for="in-ihtiyat.terbit">Terbit (Syuruq)</label>
-              <div class="input-wrap"><input class="input" id="in-ihtiyat.terbit" type="number"><span class="ic" data-i="light_mode"></span></div>
-            </div>
-            <div class="field">
-              <label for="in-ihtiyat.dhuhur">Dhuhur</label>
-              <div class="input-wrap"><input class="input" id="in-ihtiyat.dhuhur" type="number" min="0"><span class="ic" data-i="schedule"></span></div>
-            </div>
-            <div class="field">
-              <label for="in-ihtiyat.ashar">Ashar</label>
-              <div class="input-wrap"><input class="input" id="in-ihtiyat.ashar" type="number" min="0"><span class="ic" data-i="schedule"></span></div>
-            </div>
-            <div class="field">
-              <label for="in-ihtiyat.maghrib">Maghrib</label>
-              <div class="input-wrap"><input class="input" id="in-ihtiyat.maghrib" type="number" min="0"><span class="ic" data-i="dark_mode"></span></div>
-            </div>
-            <div class="field">
-              <label for="in-ihtiyat.isya">Isya</label>
-              <div class="input-wrap"><input class="input" id="in-ihtiyat.isya" type="number" min="0"><span class="ic" data-i="dark_mode"></span></div>
-            </div>
-          </div>
-
-          <hr class="section-divider">
-
           <h3 class="sub-head">Lokasi &amp; Metode</h3>
           <div class="grid2">
             <div class="col-stack">
@@ -677,6 +632,51 @@
                 <span class="ic" data-i="info"></span>
                 <div><b>Jadwal dihitung di perangkat</b><p>Waktu sholat dihitung langsung di TV dengan koordinat di atas &mdash; tidak butuh internet.</p></div>
               </div>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+
+          <h3 class="sub-head">Penyesuaian Kalender</h3>
+          <div class="grid3">
+            <div class="field">
+              <label for="in-hijriCorrection">Koreksi Hijriah <span class="unit">(hari, -2 s.d. 2)</span></label>
+              <div class="input-wrap"><input class="input" id="in-hijriCorrection" type="number" min="-2" max="2"><span class="ic" data-i="calendar"></span></div>
+              <p class="hint">Gunakan nilai negatif atau positif (-1, 0, 1) untuk menyesuaikan tanggal Hijriah.</p>
+            </div>
+          </div>
+
+          <hr class="section-divider">
+
+          <h3 class="sub-head">Waktu Ihtiyat <span class="unit" style="font-weight:500;font-size:16px;color:var(--on-surface-variant)">(menit tambahan)</span></h3>
+          <div class="grid-ih">
+            <div class="field">
+              <label for="in-ihtiyat.imsak">Imsak</label>
+              <div class="input-wrap"><input class="input" id="in-ihtiyat.imsak" type="number" min="0"><span class="ic" data-i="alarm"></span></div>
+            </div>
+            <div class="field">
+              <label for="in-ihtiyat.subuh">Subuh</label>
+              <div class="input-wrap"><input class="input" id="in-ihtiyat.subuh" type="number" min="0"><span class="ic" data-i="alarm"></span></div>
+            </div>
+            <div class="field">
+              <label for="in-ihtiyat.terbit">Terbit (Syuruq)</label>
+              <div class="input-wrap"><input class="input" id="in-ihtiyat.terbit" type="number"><span class="ic" data-i="light_mode"></span></div>
+            </div>
+            <div class="field">
+              <label for="in-ihtiyat.dhuhur">Dhuhur</label>
+              <div class="input-wrap"><input class="input" id="in-ihtiyat.dhuhur" type="number" min="0"><span class="ic" data-i="schedule"></span></div>
+            </div>
+            <div class="field">
+              <label for="in-ihtiyat.ashar">Ashar</label>
+              <div class="input-wrap"><input class="input" id="in-ihtiyat.ashar" type="number" min="0"><span class="ic" data-i="schedule"></span></div>
+            </div>
+            <div class="field">
+              <label for="in-ihtiyat.maghrib">Maghrib</label>
+              <div class="input-wrap"><input class="input" id="in-ihtiyat.maghrib" type="number" min="0"><span class="ic" data-i="dark_mode"></span></div>
+            </div>
+            <div class="field">
+              <label for="in-ihtiyat.isya">Isya</label>
+              <div class="input-wrap"><input class="input" id="in-ihtiyat.isya" type="number" min="0"><span class="ic" data-i="dark_mode"></span></div>
             </div>
           </div>
 

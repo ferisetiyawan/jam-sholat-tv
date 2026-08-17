@@ -172,6 +172,8 @@ class LocalServerService {
       ..mount('/api/', apiHandler)
       ..mount('/images/', imagesRouter.call)
       ..get('/bundled/background', _getBundledBackground)
+      ..get('/bundled/icon', _getBundledIcon)
+      ..get('/favicon.ico', _getBundledIcon)
       // City list for the "Pilih Kota" dropdown — public (no token) like the
       // bundled background, loaded straight from the Flutter asset bundle so
       // it works on Android release builds too.
@@ -723,7 +725,31 @@ class LocalServerService {
     }
   }
 
-  /// Raw `kota_indonesia.json` for the dashboard's "Pilih Kota" dropdown.
+  /// Serves `assets/images/icon.png` as the dashboard favicon/brand image.
+  Future<Response> _getBundledIcon(Request request) async {
+    const asset = 'assets/images/icon.png';
+    try {
+      final File file = File(asset);
+      List<int> bytes;
+      if (file.existsSync()) {
+        bytes = await file.readAsBytes();
+      } else {
+        final ByteData data = await rootBundle.load(asset);
+        bytes = data.buffer.asUint8List();
+      }
+      return Response.ok(
+        bytes,
+        headers: {
+          'content-type': 'image/png',
+          'cache-control': 'max-age=86400',
+        },
+      );
+    } catch (_) {
+      return Response.notFound('Not found');
+    }
+  }
+
+  /// Raw `kota_indonesia.json` for the dashboard's \"Pilih Kota\" dropdown.
   /// Loaded once and cached; mirrors `_getBundledBackground` so it works from
   /// disk in tests and from `rootBundle` on Android release builds.
   String? _citiesJson;

@@ -13,7 +13,7 @@ lib/
 │   ├── remote_key_handler.dart       # TV remote: long-press OK / Menu toggles the config menu
 │   └── providers/
 │       ├── config_provider.dart      # AppConfig defaults + persisted overrides (load/applyConfig)
-│       └── app_provider.dart         # THE state machine (1-sec tick) + offline financial sample + event state
+│       └── app_provider.dart         # THE state machine (1-sec tick) + config-fed financial report + event state
 ├── core/
 │   ├── constants/app_constants.dart  # all duration/text/asset defaults + prayer-calc constants
 │   ├── constants/app_enum.dart       # AppStatus enum
@@ -30,7 +30,7 @@ lib/
 │   │   └── audio_service.dart            # adzan/iqomah beep playback (static AudioPlayer)
 │   └── repositories/
 │       ├── prayer_repository.dart    # single source of truth: today's (locally computed) jadwal; passes an optional AppConfig for runtime-editable calc params
-│       └── financial_repository.dart # single source of truth: FinancialSummary (retained, never called — offline sample)
+│       └── financial_repository.dart # single source of truth: FinancialSummary (retained, never called — report lives in config)
 ├── services/                         # standalone infrastructure (not data-layer)
 │   ├── local_server_service.dart     # embedded shelf server: token auth, /api/config, image uploads + public /images/ serving, static UI
 │   └── network_info_helper.dart      # resolves the LAN IPv4 for the config URL/QR
@@ -49,7 +49,7 @@ lib/
     │   ├── home_screen.dart          # big clock + schedule row (used inside HomeWrapper)
     │   ├── home_wrapper.dart         # BackgroundImage + HomeScreen
     │   ├── event_screen.dart         # rotating announcement images (active when eventImages is non-empty)
-    │   ├── financial_report_screen.dart  # monthly kas report (offline sample, rotates in on home)
+    │   ├── financial_report_screen.dart  # monthly kas report (from config, rotates in on home)
     │   └── live_makkah_screen.dart   # YouTube live stream (LIVE_MECCA video id)
     ├── settings/
     │   └── config_menu_screen.dart   # QR + URL of the config server (opened via remote)
@@ -82,7 +82,7 @@ lib/
 
 `MainController` (`lib/app/main_controller.dart`) watches both providers and maps `app.status` (+ mode flags) to exactly one screen through a `switch`. On the `home` status it further branches:
 - `isSpecialLiveMode` → `LiveMakkahScreen` (30 min before Maghrib or, on Friday, Jumat — and internet is up)
-- `isReportMode && financialSummary != null` → `FinancialReportScreen` (fed by the offline sample; shows during the `reportDuration` slice of the home idle cycle)
+- `isReportMode && financialSummary != null` → `FinancialReportScreen` (shows `AppProvider.financialSummary` — the config's report, editable via the web editor — during the `reportDuration` slice of the home idle cycle)
 - `isEventMode && eventImages.isNotEmpty` → `EventScreen` (active once at least one image is uploaded via the config server)
 - otherwise → `HomeWrapper`
 
@@ -121,7 +121,7 @@ Additionally `_isMinutesBeforePrayer("Jumat", ...)` maps the lookup key back to 
 
 - `ConfigProvider.load()` (called in `main.dart` before `runApp`) reads the persisted JSON from `SharedPreferences` (`configPrefsKey`) and merges it over the defaults via `AppConfig.fromJson`.
 - `POST /api/config` persists the new values **and** hot-applies them with `ConfigProvider.applyConfig(config)` (reassigns `_config` + `notifyListeners`). `AppProvider` reads through the same `ConfigProvider` instance, so the next 1-second tick picks up the change — no state-machine edits needed. For the prayer-calc params the tick's `_refreshJadwalIfNeeded()` (see above) also recomputes the schedule.
-- Durations, `hijriCorrection`, marquee text, the background asset, the `enableFinancialReport` toggle, and the prayer-calc params (`latitude`/`longitude`/`fajrAngle`/`ishaAngle`/`madhab`/`ihtiyat`) all default from `AppConstants` (`lib/core/constants/app_constants.dart`).
+- Durations, `hijriCorrection`, marquee text, the background asset, the `enableFinancialReport` toggle, and the prayer-calc params (`latitude`/`longitude`/`fajrAngle`/`ishaAngle`/`madhab`/`ihtiyat`) all default from `AppConstants` (`lib/core/constants/app_constants.dart`). The `financialSummary` (monthly kas report) defaults to `FinancialSummary.offlineSample()` and is editable — like every other field — through the web editor's "Laporan Keuangan" card; `AppProvider` mirrors it each tick (`_syncFinancialSummaryIfNeeded`).
 - **Image uploads** (`POST /api/upload/background` / `POST /api/upload/event`, `DELETE /api/event/<index>` / `DELETE /api/background`) write raster files to the app-support `config_images` dir, store baked `http://127.0.0.1:8080/images/<unique-name>` URLs in config, then persist + hot-apply. The TV loads them via the existing `NetworkImage`/`CachedNetworkImage` branches in `BackgroundImage` / `EventScreen` — **no widget changes**. Uploads are token-protected; the `GET /images/<name>` read route is public (path-traversal guarded). `eventImages` is empty until images are uploaded, so event mode is dormant by default.
 
 `hijriCorrection` is clamped to `[-2, 2]` when parsing (still via `AppConfig.fromJson`, used by `defaults()`) and applied in `DateFormatter.getFullDate` by shifting `DateTime.now()` by that many days before converting to Hijriah (`hijriyah_indonesia` package). Default is `-1`.

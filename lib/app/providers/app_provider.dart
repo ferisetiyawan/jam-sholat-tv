@@ -57,6 +57,9 @@ class AppProvider extends ChangeNotifier {
     "Isya": "--:--",
   };
 
+  /// The monthly kas report, fed from the config (editable via the web editor;
+  /// defaults to the offline sample). Re-synced on every tick so a browser save
+  /// hot-applies; kept nullable so the report slice drops out when unset.
   FinancialSummary? financialSummary = FinancialSummary.offlineSample();
 
   final FinancialRepository _financialRepository = FinancialRepository();
@@ -141,6 +144,7 @@ class AppProvider extends ChangeNotifier {
     if (_config == null) return;
 
     _refreshJadwalIfNeeded();
+    _syncFinancialSummaryIfNeeded();
 
     if (_fakeTime != null) {
       _fakeTime = _fakeTime!.add(const Duration(seconds: 1));
@@ -184,6 +188,17 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Keeps [financialSummary] in sync with the report data saved through the
+  /// local config server. Config is immutable and only replaced on apply, so a
+  /// reference comparison detects a browser edit; the report then hot-applies
+  /// on the same tick as the rest of the config.
+  void _syncFinancialSummaryIfNeeded() {
+    final FinancialSummary? next = _config?.config.financialSummary;
+    if (!identical(next, financialSummary)) {
+      financialSummary = next;
+    }
+  }
+
   /// Stable fingerprint of the prayer-calc inputs, used by
   /// [_refreshJadwalIfNeeded] to detect a change worth recomputing.
   String? _calcKey(AppConfig? cfg) {
@@ -217,8 +232,9 @@ class AppProvider extends ChangeNotifier {
     if (status != AppStatus.home) return;
 
     bool isFriday = now.weekday == DateTime.friday;
-    // The report is fed by the offline sample, so it does not need internet.
-    // The config toggle lets the masjid turn the report slice on/off entirely.
+    // The report comes from the config (defaults to the offline sample), so it
+    // does not need internet. The config toggle lets the masjid turn the report
+    // slice on/off entirely.
     bool canShowReport =
         config.enableFinancialReport && financialSummary != null;
     bool canShowEvent = config.eventImages.isNotEmpty;

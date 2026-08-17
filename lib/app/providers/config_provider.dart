@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/models/app_config.dart';
 import '../../domain/models/event_image.dart';
+import '../../domain/models/financial_summary.dart';
 
 /// Exposes the [AppConfig] to the widget tree.
 ///
@@ -71,4 +72,5 @@ class ConfigProvider extends ChangeNotifier {
   String get backgroundImage => _config.backgroundImage;
   List<EventImage> get eventImages => _config.eventImages;
   bool get enableFinancialReport => _config.enableFinancialReport;
+  FinancialSummary get financialSummary => _config.financialSummary;
 }

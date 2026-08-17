@@ -35,18 +35,18 @@ shalatDuration, isyraqDuration, hijriCorrection (clamped to [-2, 2]),
 waitingIsyraqDuration, iqomahSubuhDuration, iqomahMaghribRamadhanDuration,
 iqomahDefaultDuration, minutesBeforeMaghrib, minutesBeforeJumat,
 latitude, longitude, fajrAngle, ishaAngle, madhab, ihtiyat,
-marqueeText, backgroundImage, eventImages, enableFinancialReport
+marqueeText, backgroundImage, eventImages, enableFinancialReport, financialSummary
 ```
 
 `eventImages` starts empty; it is populated through the config server's image uploads (§6), which **activates the event screen** on the home idle cycle. `marqueeText` and `backgroundImage` default to the bundled values and can be overridden too — `backgroundImage` is replaced by an image upload, `marqueeText` is a free-text field.
 
-## 3. Financial report — offline sample data (no fetch)
+## 3. Financial report — editable via the web editor (no fetch)
 
-The financial summary endpoint is **never called**. `FinancialService` / `FinancialRepository` / `AppProvider.updateFinancialReport()` are retained in the codebase but have no call sites. Instead, `AppProvider.financialSummary` is initialized with `FinancialSummary.offlineSample()` (`lib/domain/models/financial_summary.dart`), which parses hard-coded JSON — edit those values to change what the TV displays.
+The financial summary endpoint is **never called**. `FinancialService` / `FinancialRepository` / `AppProvider.updateFinancialReport()` are retained in the codebase but have no call sites. Instead the report lives **inside the config** as `financialSummary` (`AppConfig.financialSummary`, default `FinancialSummary.offlineSample()` from `lib/domain/models/financial_summary.dart`) and is edited from the browser through the **"Laporan Keuangan"** card of the web editor (§6): `totalKasMasjid`, `saldoKasDate`, and the `weeklyIncome` rows (periodeStart, periodeEnd, pemasukan) with add/remove row buttons. Saving persists + hot-applies it like any other config field; `AppProvider.financialSummary` mirrors the config value on each tick (`_syncFinancialSummaryIfNeeded`), so the TV report updates within ~1s.
 
-On the home screen the report is shown during the `reportDuration` slice of the idle cycle (`isReportMode`), so it **alternates with the clock+schedule** (`homeDuration` → event (always 0) → report → repeat). Setting `AppConstants.enableFinancialReport` to `false` removes the report slice entirely (the clock+schedule runs alone).
+On the home screen the report is shown during the `reportDuration` slice of the idle cycle (`isReportMode`), so it **alternates with the clock+schedule** (`homeDuration` → event (always 0) → report → repeat). Setting `enableFinancialReport` to `false` removes the report slice entirely (the clock+schedule runs alone).
 
-Current offline sample shape (all amounts parsed as `double`; dates are ISO 8601 UTC and rendered `.toLocal()` — `17:00Z` is `00:00` the next day WIB):
+Default offline sample shape (all amounts parsed as `double`; dates are ISO 8601 UTC and rendered `.toLocal()` — `17:00Z` is `00:00` the next day WIB):
 
 | Key | Value | Meaning |
 | --- | --- | --- |

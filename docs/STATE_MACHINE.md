@@ -67,11 +67,11 @@ On launch (after the local schedule loads), `AppProvider.checkInitialStatus` wal
 
 ## Home-screen idle cycle
 
-While `status == home`, `_handleCycleLogic` slices a rolling cycle of `homeDuration + eventDuration + reportDuration`. The report is fed by the offline sample (`financialSummary` is non-null). The event segment is only active when at least one event image has been uploaded via the config server; with an empty `eventImages` it contributes 0, so the cycle is effectively `home → report → repeat`:
+While `status == home`, `_handleCycleLogic` slices a rolling cycle of `homeDuration + eventDuration + reportDuration`. The report comes from the config (`AppProvider.financialSummary` — defaults to `FinancialSummary.offlineSample()`, editable via the web editor's "Laporan Keuangan" card). The event segment is only active when at least one event image has been uploaded via the config server; with an empty `eventImages` it contributes 0, so the cycle is effectively `home → report → repeat`:
 
 - `tick % totalCycle < homeDuration` → Home (big clock + schedule row)
 - `< homeDuration + eventDuration` → `isEventMode = true` (advances `currentEventIndex` through `config.eventImages`) → `EventScreen`
-- else → `isReportMode = true` → `FinancialReportScreen` (shows `financialSummary.offlineSample()`)
+- else → `isReportMode = true` → `FinancialReportScreen` (shows the config's `financialSummary`)
 
 `isSpecialLiveMode` is checked *separately* and, when true, the live Makkah screen wins over home.
 

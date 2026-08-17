@@ -86,5 +86,55 @@ void main() {
         DateTime.parse('2026-06-03T17:00:00.000Z'),
       );
     });
+
+    test('toJson emits UTC ISO dates and numeric amounts', () {
+      final summary = FinancialSummary.fromJson({
+        'totalKasMasjid': 5000000,
+        'saldoKasDate': '2026-06-04T00:00:00.000Z',
+        'weeklyIncome': [
+          {
+            'periodeStart': '2026-05-01T00:00:00.000Z',
+            'periodeEnd': '2026-05-07T00:00:00.000Z',
+            'pemasukan': 750000,
+          },
+        ],
+      });
+
+      final json = summary.toJson();
+
+      expect(json['totalKasMasjid'], 5000000);
+      expect(json['saldoKasDate'], '2026-06-04T00:00:00.000Z');
+      expect(json['weeklyIncome'], hasLength(1));
+      final Map<String, dynamic> week =
+          (json['weeklyIncome'] as List).first as Map<String, dynamic>;
+      expect(week['periodeStart'], '2026-05-01T00:00:00.000Z');
+      expect(week['periodeEnd'], '2026-05-07T00:00:00.000Z');
+      expect(week['pemasukan'], 750000);
+    });
+
+    test('round-trips through toJson/fromJson', () {
+      final original = FinancialSummary.fromJson({
+        'totalKasMasjid': 5000000,
+        'saldoKasDate': '2026-06-03T17:00:00.000Z',
+        'weeklyIncome': [
+          {
+            'periodeStart': '2026-04-30T17:00:00.000Z',
+            'periodeEnd': '2026-05-06T17:00:00.000Z',
+            'pemasukan': 2050000,
+          },
+        ],
+      });
+
+      final restored = FinancialSummary.fromJson(original.toJson());
+
+      expect(restored.totalKasMasjid, 5000000);
+      expect(restored.saldoKasDate, DateTime.parse('2026-06-03T17:00:00.000Z'));
+      expect(restored.weeklyIncome, hasLength(1));
+      expect(restored.weeklyIncome.first.pemasukan, 2050000);
+      expect(
+        restored.weeklyIncome.first.periodeEnd,
+        DateTime.parse('2026-05-06T17:00:00.000Z'),
+      );
+    });
   });
 }

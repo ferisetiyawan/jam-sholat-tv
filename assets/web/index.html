@@ -45,7 +45,8 @@
     margin-bottom: 5px;
     color: var(--muted);
   }
-  .field input[type="number"], .field input[type="text"] {
+  .field input[type="number"], .field input[type="text"],
+  .field input[type="datetime-local"] {
     width: 100%;
     background: var(--bg);
     border: 1px solid var(--border);
@@ -55,6 +56,7 @@
     font-size: 15px;
   }
   .field input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+  .field input[type="datetime-local"] { color-scheme: dark; }
   .check { display: flex; align-items: center; gap: 10px; }
   .check input { width: 18px; height: 18px; accent-color: var(--accent); }
   .check label { margin: 0; color: var(--text); }
@@ -163,6 +165,30 @@
     margin-right: 10px;
     cursor: pointer;
   }
+  .week-row {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+  }
+  .week-row .field { margin-bottom: 8px; }
+  button.row-del {
+    width: 100%;
+    background: rgba(248, 113, 113, .15);
+    color: #fca5a5;
+    border: 1px solid rgba(248, 113, 113, .35);
+    padding: 7px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .weeks-label {
+    margin: 16px 0 4px;
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+  }
 </style>
 </head>
 <body>
@@ -263,6 +289,35 @@
     return wrap;
   }
 
+  function dateField(key, labelText) {
+    const wrap = el('div', 'field');
+    const label = el('label', null, labelText);
+    label.htmlFor = 'in-' + key;
+    const input = el('input', null, null, 'in-' + key);
+    input.type = 'datetime-local';
+    wrap.append(label, input);
+    return wrap;
+  }
+
+  // `YYYY-MM-DDTHH:mm` (datetime-local value) — parses as local time.
+  function isoToLocalInput(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
+      'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  }
+
+  // Converts a datetime-local value back to a UTC ISO string, matching the
+  // `...Z` shape the Dart model emits.
+  function localInputToIso(value) {
+    if (!value) return '';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '';
+    return d.toISOString();
+  }
+
   // Rewrites a baked `http://127.0.0.1:8080/images/<name>` URL to the origin
   // the browser is actually using, so previews render from the same host.
   function localImageUrl(url) {
@@ -293,21 +348,65 @@
       root.appendChild(card);
     }
 
-    // Checkbox for enableFinancialReport.
+    root.appendChild(buildFinancialCard());
+    root.appendChild(buildLocationCard());
+    root.appendChild(buildBackgroundCard());
+    root.appendChild(buildEventCard());
+  }
+
+  function buildFinancialCard() {
     const card = el('div', 'card');
+    card.id = 'financial-card';
     card.appendChild(el('h2', null, 'Laporan Keuangan'));
-    const wrap = el('div', 'field check');
+
+    const checkWrap = el('div', 'field check');
     const cb = el('input', null, null, 'in-enableFinancialReport');
     cb.type = 'checkbox';
     const cl = el('label', null, 'Tampilkan Laporan Keuangan di layar home');
     cl.htmlFor = 'in-enableFinancialReport';
-    wrap.append(cb, cl);
-    card.appendChild(wrap);
-    root.appendChild(card);
+    checkWrap.append(cb, cl);
+    card.appendChild(checkWrap);
 
-    root.appendChild(buildLocationCard());
-    root.appendChild(buildBackgroundCard());
-    root.appendChild(buildEventCard());
+    card.appendChild(
+      numberField('financialSummary.totalKasMasjid', 'Total Kas Masjid (Rp)', 'any'));
+    card.appendChild(
+      dateField('financialSummary.saldoKasDate', 'Tanggal Saldo Kas'));
+
+    const weeksLabel = el('label', 'weeks-label', 'Pemasukan Pekan Ini');
+    weeksLabel.htmlFor = 'week-rows';
+    card.appendChild(weeksLabel);
+    card.appendChild(el('div', null, null, 'week-rows'));
+
+    const addBtn = el('button', 'ghost', 'Tambah Minggu', 'week-add');
+    addBtn.type = 'button';
+    addBtn.addEventListener('click', () => addWeekRow());
+    card.appendChild(addBtn);
+    return card;
+  }
+
+  // Appends one weekly-income row to the list, filling its inputs from [week]
+  // (a `weeklyIncome` object) when given — i.e. when rendering saved data.
+  function addWeekRow(week) {
+    const rows = document.getElementById('week-rows');
+    const idx = rows.children.length;
+    const row = el('div', 'week-row');
+    row.append(dateField('weeklyIncome.' + idx + '.periodeStart', 'Mulai (periode)'));
+    row.append(dateField('weeklyIncome.' + idx + '.periodeEnd', 'Selesai (periode)'));
+    row.append(numberField('weeklyIncome.' + idx + '.pemasukan', 'Pemasukan (Rp)', 'any'));
+    const del = el('button', 'row-del', 'Hapus baris');
+    del.type = 'button';
+    del.addEventListener('click', () => row.remove());
+    row.appendChild(del);
+    rows.appendChild(row);
+
+    if (week) {
+      document.getElementById('in-weeklyIncome.' + idx + '.periodeStart').value =
+        isoToLocalInput(week.periodeStart);
+      document.getElementById('in-weeklyIncome.' + idx + '.periodeEnd').value =
+        isoToLocalInput(week.periodeEnd);
+      document.getElementById('in-weeklyIncome.' + idx + '.pemasukan').value =
+        week.pemasukan;
+    }
   }
 
   function buildLocationCard() {
@@ -436,6 +535,7 @@
     }
     document.getElementById('in-enableFinancialReport').checked =
       !!cfg.enableFinancialReport;
+    fillFinancialForm();
 
     document.getElementById('in-latitude').value = cfg.latitude;
     document.getElementById('in-longitude').value = cfg.longitude;
@@ -459,6 +559,17 @@
     city.value = preset ? preset.name : CITY_PRESETS[0].name;
   }
 
+  function fillFinancialForm() {
+    const fs = cfg.financialSummary || {};
+    document.getElementById('in-financialSummary.totalKasMasjid').value =
+      fs.totalKasMasjid;
+    document.getElementById('in-financialSummary.saldoKasDate').value =
+      isoToLocalInput(fs.saldoKasDate);
+    const rows = document.getElementById('week-rows');
+    rows.innerHTML = '';
+    (fs.weeklyIncome || []).forEach((week) => addWeekRow(week));
+  }
+
   function collectPayload() {
     const payload = {};
     for (const section of FIELDS) {
@@ -474,6 +585,7 @@
     }
     payload.enableFinancialReport =
       document.getElementById('in-enableFinancialReport').checked;
+    collectFinancialPayload(payload);
 
     payload.latitude = parseFloat(document.getElementById('in-latitude').value);
     payload.longitude = parseFloat(
@@ -495,6 +607,29 @@
       payload.ihtiyat[f.key] = Number.isFinite(v) ? v : 0;
     }
     return payload;
+  }
+
+  function collectFinancialPayload(payload) {
+    const rows = Array.from(document.getElementById('week-rows').children);
+    payload.financialSummary = {
+      totalKasMasjid: parseFloat(
+        document.getElementById('in-financialSummary.totalKasMasjid').value,
+      ) || 0,
+      saldoKasDate: localInputToIso(
+        document.getElementById('in-financialSummary.saldoKasDate').value,
+      ),
+      weeklyIncome: rows.map((row) => ({
+        periodeStart: localInputToIso(
+          row.querySelector('input[id$=".periodeStart"]').value,
+        ),
+        periodeEnd: localInputToIso(
+          row.querySelector('input[id$=".periodeEnd"]').value,
+        ),
+        pemasukan: parseFloat(
+          row.querySelector('input[id$=".pemasukan"]').value,
+        ) || 0,
+      })),
+    };
   }
 
   function renderBackground() {

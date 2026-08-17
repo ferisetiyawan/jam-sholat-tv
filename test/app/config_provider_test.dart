@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jam_sholat_tv/app/providers/config_provider.dart';
 import 'package:jam_sholat_tv/core/constants/app_constants.dart';
 import 'package:jam_sholat_tv/domain/models/app_config.dart';
+import 'package:jam_sholat_tv/domain/models/financial_summary.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -112,6 +113,40 @@ void main() {
       expect(config.homeDuration, 9);
       expect(config.marqueeText, 'baru');
       expect(notifications, 1);
+    });
+
+    test('serves the offline financial sample by default', () {
+      final sample = FinancialSummary.offlineSample();
+      final config = ConfigProvider();
+
+      expect(config.financialSummary.totalKasMasjid, sample.totalKasMasjid);
+      expect(config.financialSummary.saldoKasDate, sample.saldoKasDate);
+      expect(config.financialSummary.weeklyIncome, hasLength(5));
+    });
+
+    test('load() applies a persisted financialSummary override', () async {
+      SharedPreferences.setMockInitialValues({
+        ConfigProvider.configPrefsKey: jsonEncode({
+          'financialSummary': {
+            'totalKasMasjid': 5000000,
+            'saldoKasDate': '2026-06-04T00:00:00.000Z',
+            'weeklyIncome': [
+              {
+                'periodeStart': '2026-05-01T00:00:00.000Z',
+                'periodeEnd': '2026-05-07T00:00:00.000Z',
+                'pemasukan': 750000,
+              },
+            ],
+          },
+        }),
+      });
+
+      final config = ConfigProvider();
+      await config.load();
+
+      expect(config.financialSummary.totalKasMasjid, 5000000);
+      expect(config.financialSummary.weeklyIncome, hasLength(1));
+      expect(config.financialSummary.weeklyIncome.first.pemasukan, 750000);
     });
   });
 }

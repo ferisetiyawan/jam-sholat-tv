@@ -1,5 +1,6 @@
 import '../../core/constants/app_constants.dart';
 import 'event_image.dart';
+import 'financial_summary.dart';
 
 /// Merged runtime configuration: remote (Google Apps Script) values over the
 /// [AppConstants] defaults.
@@ -51,6 +52,10 @@ class AppConfig {
   /// Whether the financial report is shown during the home idle cycle.
   final bool enableFinancialReport;
 
+  /// The monthly kas report rendered on the financial screen. Defaults to the
+  /// offline sample; editable at runtime through the local config server.
+  final FinancialSummary financialSummary;
+
   const AppConfig({
     required this.homeDuration,
     required this.eventDuration,
@@ -77,6 +82,7 @@ class AppConfig {
     required this.backgroundImage,
     required this.eventImages,
     required this.enableFinancialReport,
+    required this.financialSummary,
   });
 
   factory AppConfig.fromJson(Map<String, dynamic> json) {
@@ -120,6 +126,19 @@ class AppConfig {
         }
       }
       return result;
+    }
+
+    FinancialSummary parseFinancialSummary(dynamic value) {
+      if (value is Map<String, dynamic>) {
+        return FinancialSummary.fromJson(value);
+      }
+      // Handles non-generic maps (e.g. a Map<dynamic, dynamic>); the editor
+      // always sends the full object, so a missing key falls back to the
+      // offline sample like every other unset field.
+      if (value is Map) {
+        return FinancialSummary.fromJson(Map<String, dynamic>.from(value));
+      }
+      return FinancialSummary.offlineSample();
     }
 
     final rawImages = json['eventImages'];
@@ -188,6 +207,7 @@ class AppConfig {
         json['enableFinancialReport'],
         AppConstants.enableFinancialReport,
       ),
+      financialSummary: parseFinancialSummary(json['financialSummary']),
     );
   }
 
@@ -221,6 +241,7 @@ class AppConfig {
       'backgroundImage': backgroundImage,
       'eventImages': eventImages.map((e) => e.toJson()).toList(),
       'enableFinancialReport': enableFinancialReport,
+      'financialSummary': financialSummary.toJson(),
     };
   }
 }

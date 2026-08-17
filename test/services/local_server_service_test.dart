@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jam_sholat_tv/app/providers/config_provider.dart';
 import 'package:jam_sholat_tv/core/constants/app_constants.dart';
+import 'package:jam_sholat_tv/domain/models/financial_summary.dart';
 import 'package:jam_sholat_tv/services/local_server_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -222,6 +223,58 @@ void main() {
       expect(json['madhab'], AppConstants.madhab.name);
       expect(json['ihtiyat'], isA<Map>());
       expect(json.containsKey('eventImage'), isFalse);
+    });
+
+    test('financialSummary is served, persisted and hot-applied', () async {
+      await server.start();
+
+      // GET exposes the default offline sample.
+      final (getStatus, getBody) =
+          await get('/api/config', token: server.authToken);
+      expect(getStatus, 200);
+      final Map<String, dynamic> initial =
+          jsonDecode(getBody) as Map<String, dynamic>;
+      final Map<String, dynamic> initialFs =
+          initial['financialSummary'] as Map<String, dynamic>;
+      expect(
+        initialFs['totalKasMasjid'],
+        FinancialSummary.offlineSample().totalKasMasjid,
+      );
+
+      // POST a custom report.
+      final (status, body) = await post(
+        '/api/config',
+        jsonEncode({
+          'financialSummary': {
+            'totalKasMasjid': 5000000,
+            'saldoKasDate': '2026-06-04T00:00:00.000Z',
+            'weeklyIncome': [
+              {
+                'periodeStart': '2026-05-01T00:00:00.000Z',
+                'periodeEnd': '2026-05-07T00:00:00.000Z',
+                'pemasukan': 750000,
+              },
+            ],
+          },
+        }),
+        token: server.authToken,
+      );
+      expect(status, 200);
+      final Map<String, dynamic> saved =
+          (jsonDecode(body) as Map<String, dynamic>)['financialSummary']
+              as Map<String, dynamic>;
+      expect(saved['totalKasMasjid'], 5000000);
+      expect(saved['weeklyIncome'], hasLength(1));
+
+      // Hot-applied to the running provider.
+      expect(provider.financialSummary.totalKasMasjid, 5000000);
+      expect(provider.financialSummary.weeklyIncome.first.pemasukan, 750000);
+
+      // A fresh provider (new launch) loads the persisted report.
+      final reloaded = ConfigProvider();
+      await reloaded.load();
+      expect(reloaded.financialSummary.totalKasMasjid, 5000000);
+      expect(reloaded.financialSummary.weeklyIncome, hasLength(1));
     });
 
     test('POST /api/config persists+applies calc params; range validated',

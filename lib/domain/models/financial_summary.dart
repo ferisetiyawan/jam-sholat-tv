@@ -30,6 +30,14 @@ class WeeklyIncome {
       pemasukan: toAmount(json['pemasukan']),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'periodeStart': periodeStart.toUtc().toIso8601String(),
+      'periodeEnd': periodeEnd.toUtc().toIso8601String(),
+      'pemasukan': pemasukan,
+    };
+  }
 }
 
 /// Masjid treasury (kas) report rendered on the financial screen.
@@ -75,9 +83,18 @@ class FinancialSummary {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'totalKasMasjid': totalKasMasjid,
+      'saldoKasDate': saldoKasDate.toUtc().toIso8601String(),
+      'weeklyIncome': weeklyIncome.map((w) => w.toJson()).toList(),
+    };
+  }
+
   /// Offline sample data shown on the masjid TV (no network).
   ///
-  /// Edit these values to update what the report displays.
+  /// The initial/default report; the masjid can replace it at runtime through
+  /// the local config server's web editor (saved under `financialSummary`).
   static FinancialSummary offlineSample() =>
       FinancialSummary.fromJson(const {
         'saldoKasDate': '2026-06-03T17:00:00.000Z',

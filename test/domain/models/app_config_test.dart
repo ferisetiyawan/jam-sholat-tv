@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jam_sholat_tv/core/constants/app_constants.dart';
 import 'package:jam_sholat_tv/domain/models/app_config.dart';
+import 'package:jam_sholat_tv/domain/models/financial_summary.dart';
 
 void main() {
   group('AppConfig', () {
@@ -153,6 +154,63 @@ void main() {
       expect(restored.madhab, 'hanafi');
       expect(restored.ihtiyat['subuh'], 5);
       expect(restored.ihtiyat['maghrib'], AppConstants.ihtiyat['maghrib']);
+    });
+
+    test('financialSummary defaults to the offline sample', () {
+      final sample = FinancialSummary.offlineSample();
+      final config = AppConfig.defaults();
+
+      expect(config.financialSummary.totalKasMasjid, sample.totalKasMasjid);
+      expect(config.financialSummary.saldoKasDate, sample.saldoKasDate);
+      expect(config.financialSummary.weeklyIncome, hasLength(5));
+      expect(AppConfig.fromJson({}).financialSummary.totalKasMasjid,
+          sample.totalKasMasjid);
+    });
+
+    test('fromJson parses a provided financialSummary', () {
+      final config = AppConfig.fromJson({
+        'financialSummary': {
+          'totalKasMasjid': 5000000,
+          'saldoKasDate': '2026-06-04T00:00:00.000Z',
+          'weeklyIncome': [
+            {
+              'periodeStart': '2026-05-01T00:00:00.000Z',
+              'periodeEnd': '2026-05-07T00:00:00.000Z',
+              'pemasukan': 750000,
+            },
+          ],
+        },
+      });
+
+      expect(config.financialSummary.totalKasMasjid, 5000000);
+      expect(config.financialSummary.weeklyIncome, hasLength(1));
+      expect(config.financialSummary.weeklyIncome.first.pemasukan, 750000);
+    });
+
+    test('round-trips financialSummary through toJson/fromJson', () {
+      final original = AppConfig.fromJson({
+        'financialSummary': {
+          'totalKasMasjid': 5000000,
+          'saldoKasDate': '2026-06-04T00:00:00.000Z',
+          'weeklyIncome': [
+            {
+              'periodeStart': '2026-05-01T00:00:00.000Z',
+              'periodeEnd': '2026-05-07T00:00:00.000Z',
+              'pemasukan': 750000,
+            },
+          ],
+        },
+      });
+
+      final restored = AppConfig.fromJson(original.toJson());
+
+      expect(restored.financialSummary.totalKasMasjid, 5000000);
+      expect(restored.financialSummary.weeklyIncome, hasLength(1));
+      expect(restored.financialSummary.weeklyIncome.first.pemasukan, 750000);
+      expect(
+        restored.financialSummary.weeklyIncome.first.periodeStart,
+        DateTime.parse('2026-05-01T00:00:00.000Z'),
+      );
     });
   });
 }

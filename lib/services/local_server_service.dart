@@ -167,7 +167,8 @@ class LocalServerService {
 
     final router = Router(notFoundHandler: _staticHandler)
       ..mount('/api/', apiHandler)
-      ..mount('/images/', imagesRouter.call);
+      ..mount('/images/', imagesRouter.call)
+      ..get('/bundled/background', _getBundledBackground);
 
     return const Pipeline()
         .addMiddleware(logRequests())
@@ -632,6 +633,36 @@ class LocalServerService {
       file.readAsBytesSync(),
       headers: {'content-type': mime, 'cache-control': 'no-cache'},
     );
+  }
+
+  /// Serves the bundled default background (`AppConstants.backgroundImage`)
+  /// over HTTP. Public (no token) like `/images/*` — the asset is app-owned —
+  /// so the dashboard preview can display it even though bundled assets aren't
+  /// reachable as real files on Android. Mirrors `_buildStaticHandler`: when the
+  /// asset is on disk (e.g. `flutter test` runs from the project root) read it
+  /// as a file; otherwise load it from `rootBundle` (dev/release on Android).
+  Future<Response> _getBundledBackground(Request request) async {
+    final String asset = AppConstants.backgroundImage;
+    final String ext = asset.contains('.')
+        ? asset.substring(asset.lastIndexOf('.')).toLowerCase()
+        : '';
+    final String mime = _imageMimeTypes[ext] ?? 'application/octet-stream';
+    try {
+      final File file = File(asset);
+      List<int> bytes;
+      if (file.existsSync()) {
+        bytes = await file.readAsBytes();
+      } else {
+        final ByteData data = await rootBundle.load(asset);
+        bytes = data.buffer.asUint8List();
+      }
+      return Response.ok(
+        bytes,
+        headers: {'content-type': mime, 'cache-control': 'no-cache'},
+      );
+    } catch (_) {
+      return Response.notFound('Not found');
+    }
   }
 
   Future<String> _readBody(Request request) async {

@@ -1323,11 +1323,21 @@
   function renderBackground() {
     const url = cfg.backgroundImage || '';
     const box = document.getElementById('bg-preview-img');
-    const isUploaded = url.indexOf('/images/') !== -1;
+    // Hasil upload selalu URL absolut `http://127.0.0.1:8080/images/<name>`;
+    // bawaan adalah path relatif `assets/images/...`. Cek `/images/` SAJA tidak
+    // cukup karena path bawaan juga mengandung `/images/` -> harus absolut juga.
+    const isUploaded = url.indexOf('/images/') !== -1 && url.indexOf('://') !== -1;
     if (isUploaded) {
       box.innerHTML = '<img src="' + localImageUrl(url) + '" alt="Pratinjau background">';
     } else {
-      box.textContent = 'Gambar bawaan (bundled)';
+      // Gambar bawaan berada di dalam bundle app, tidak bisa di-load langsung
+      // lewat HTTP -> sajikan lewat endpoint `/bundled/background` dari server.
+      box.textContent = '';
+      const img = document.createElement('img');
+      img.alt = 'Background bawaan';
+      img.src = localImageUrl('/bundled/background');
+      img.onerror = function () { box.textContent = 'Gambar bawaan (bundled)'; };
+      box.appendChild(img);
     }
   }
 

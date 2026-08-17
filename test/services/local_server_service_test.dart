@@ -9,6 +9,10 @@ import 'package:jam_sholat_tv/services/local_server_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  // rootBundle.load() needs the binding; null out flutter_test's mock
+  TestWidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = null;
+
   late ConfigProvider provider;
   late LocalServerService server;
   late Directory tempDir;
@@ -196,11 +200,11 @@ void main() {
 
       final (root, rootBody) = await get('/');
       expect(root, 200);
-      expect(rootBody, contains('Pengaturan Jam Sholat TV'));
+      expect(rootBody, contains('Washol TV'));
 
       final (index, indexBody) = await get('/index.html');
       expect(index, 200);
-      expect(indexBody, contains('Pengaturan'));
+      expect(indexBody, contains('Panel Kontrol'));
 
       final (missing, _) = await get('/does-not-exist.js');
       expect(missing, 404);
@@ -446,6 +450,16 @@ void main() {
 
       final (traversal, _) = await getBytes('/images/..%2fpubspec.yaml');
       expect(traversal, 404);
+    });
+
+    test('serves the bundled background at /bundled/background', () async {
+      await server.start();
+
+      final (status, bytes) = await getBytes('/bundled/background');
+      expect(status, 200);
+      expect(bytes, isNotEmpty);
+      // JPEG magic bytes FF D8 FF — confirms it's the bundled jpeg, not text.
+      expect(bytes.sublist(0, 3), [0xFF, 0xD8, 0xFF]);
     });
 
     test('uploads require auth and reject bad bodies', () async {

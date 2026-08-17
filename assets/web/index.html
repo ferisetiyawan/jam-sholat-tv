@@ -1313,6 +1313,16 @@
         };
       }),
     };
+
+    // Media dikelola lewat endpoint upload/delete (bukan form), jadi harus
+    // dibawa kembali apa adanya. Tanpa ini `AppConfig.fromJson` me-rebuild
+    // config baru yang tidak menyertakan eventImages/backgroundImage, sehingga
+    // upload yang sudah terpasang hilang saat tombol Simpan ditekan.
+    if (cfg.backgroundImage) p.backgroundImage = cfg.backgroundImage;
+    p.eventImages = (cfg.eventImages || []).map(function (e) {
+      return { type: e.type, url: e.url };
+    });
+
     return p;
   }
 

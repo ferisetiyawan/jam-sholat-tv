@@ -1722,16 +1722,28 @@
         document.getElementById('in-financialSummary.totalKasMasjid').value),
       saldoKasDate: localInputToIso(
         document.getElementById('in-financialSummary.saldoKasDate').value),
-      weeklyIncome: Array.from(document.getElementById('week-rows').children).map(function (row) {
-        return {
-          periodeStart: localInputToIso(
-            row.querySelector('input[id$=".periodeStart"]').value),
-          periodeEnd: localInputToIso(
-            row.querySelector('input[id$=".periodeEnd"]').value),
-          pemasukan: parseRupiah(
-            row.querySelector('input[id$=".pemasukan"]').value),
-        };
-      }),
+      weeklyIncome: (function () {
+        var rows = Array.from(document.getElementById('week-rows').children);
+        for (var i = 0; i < rows.length; i++) {
+          var row = rows[i];
+          var start = row.querySelector('input[id$=".periodeStart"]').value;
+          var end = row.querySelector('input[id$=".periodeEnd"]').value;
+          if (start && end && end <= start) {
+            alert('Baris ' + (i + 1) + ': Tanggal selesai harus setelah tanggal mulai.');
+            throw new Error('invalid_periode');
+          }
+        }
+        return rows.map(function (row) {
+          return {
+            periodeStart: localInputToIso(
+              row.querySelector('input[id$=".periodeStart"]').value),
+            periodeEnd: localInputToIso(
+              row.querySelector('input[id$=".periodeEnd"]').value),
+            pemasukan: parseRupiah(
+              row.querySelector('input[id$=".pemasukan"]').value),
+          };
+        });
+      })(),
     };
 
     // Media dikelola lewat endpoint upload/delete (bukan form), jadi harus
@@ -1767,13 +1779,14 @@
     document.querySelectorAll('.js-save').forEach(function (b) { b.disabled = true; });
     toast('Menyimpan…');
     try {
+      const payload = collectPayload();
       const res = await fetch('/api/config', {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + token,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(collectPayload()),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
@@ -1781,7 +1794,9 @@
       renderAll();
       toast('Tersimpan ✓ — diterapkan di TV.', 'ok');
     } catch (e) {
-      toast('Gagal menyimpan (' + e.message + ').', 'err');
+      if (e.message !== 'invalid_periode') {
+        toast('Gagal menyimpan (' + e.message + ').', 'err');
+      }
     } finally {
       document.querySelectorAll('.js-save').forEach(function (b) { b.disabled = false; });
     }

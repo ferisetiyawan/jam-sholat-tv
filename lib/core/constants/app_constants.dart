@@ -17,7 +17,7 @@ class AppConstants {
   // --- feature toggles ---
   /// Set to `false` to remove the financial report from the home-screen idle
   /// cycle (the clock+schedule then runs alone).
-  static const bool enableFinancialReport = true;
+  static const bool enableFinancialReport = false;
 
   // --- duration defaults (ConfigProvider) ---
   // Units: durations below marked MINUTES are configured and stored in minutes
@@ -121,9 +121,9 @@ class AppConstants {
 
   // --- app_provider.dart ---
   static const int minutesBeforeMaghrib =
-      30; // live makkah before maghrib, in minutes
+      0; // live makkah before maghrib, in minutes (0 = disabled by default)
   static const int minutesBeforeJumat =
-      30; // live makkah before jumat, in minutes
+      0; // live makkah before jumat, in minutes (0 = disabled by default)
 
   /// YouTube URL of the live Makkah (Masjid al-Haram) stream shown during the
   /// pre-Maghrib / pre-Jumat live mode. Editable at runtime through the local

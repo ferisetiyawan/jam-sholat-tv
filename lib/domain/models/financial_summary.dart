@@ -96,35 +96,9 @@ class FinancialSummary {
   /// The initial/default report; the masjid can replace it at runtime through
   /// the local config server's web editor (saved under `financialSummary`).
   static FinancialSummary offlineSample() =>
-      FinancialSummary.fromJson(const {
-        'saldoKasDate': '2026-06-03T17:00:00.000Z',
-        'totalKasMasjid': 121381630,
-        'weeklyIncome': [
-          {
-            'periodeStart': '2026-04-30T17:00:00.000Z',
-            'periodeEnd': '2026-05-06T17:00:00.000Z',
-            'pemasukan': 2050000,
-          },
-          {
-            'periodeStart': '2026-05-07T17:00:00.000Z',
-            'periodeEnd': '2026-05-13T17:00:00.000Z',
-            'pemasukan': 2050000,
-          },
-          {
-            'periodeStart': '2026-05-14T17:00:00.000Z',
-            'periodeEnd': '2026-05-20T17:00:00.000Z',
-            'pemasukan': 2050000,
-          },
-          {
-            'periodeStart': '2026-05-21T17:00:00.000Z',
-            'periodeEnd': '2026-05-27T17:00:00.000Z',
-            'pemasukan': 2050000,
-          },
-          {
-            'periodeStart': '2026-05-28T17:00:00.000Z',
-            'periodeEnd': '2026-06-03T17:00:00.000Z',
-            'pemasukan': 2050000,
-          },
-        ],
+      FinancialSummary.fromJson({
+        'saldoKasDate': DateTime.now().toUtc().toIso8601String(),
+        'totalKasMasjid': 0,
+        'weeklyIncome': <Map<String, dynamic>>[],
       });
 }

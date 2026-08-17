@@ -8,6 +8,8 @@ class HomeWrapper extends StatelessWidget {
   final Map<String, String> jadwal;
   final String dateMasehi;
   final String dateHijriah;
+  final String masjidName;
+  final String locationName;
   final Widget Function(String, String) prayerItemBuilder;
 
   const HomeWrapper({
@@ -16,6 +18,8 @@ class HomeWrapper extends StatelessWidget {
     required this.dateMasehi,
     required this.dateHijriah,
     required this.jadwal,
+    required this.masjidName,
+    required this.locationName,
     required this.prayerItemBuilder,
   });
 
@@ -30,6 +34,8 @@ class HomeWrapper extends StatelessWidget {
           jadwal: jadwal,
           dateMasehi: dateMasehi,
           dateHijriah: dateHijriah,
+          masjidName: masjidName,
+          locationName: locationName,
           prayerItemBuilder: prayerItemBuilder,
         ),
       ],

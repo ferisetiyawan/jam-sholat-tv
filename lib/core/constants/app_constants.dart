@@ -4,6 +4,16 @@ import 'package:flutter/foundation.dart';
 class AppConstants {
   static const bool isDebug = kDebugMode;
 
+  // --- masjid identity ---
+  /// Name of the masjid shown on the display screens (home corner + side
+  /// panel). Editable at runtime through the local config server's
+  /// "Identitas Masjid" dashboard.
+  static const String masjidName = 'Nama Masjid';
+
+  /// Address/location shown under the masjid name on the home screen. Editable
+  /// at runtime through the local config server's "Identitas Masjid" dashboard.
+  static const String locationName = 'Lokasi Masjid';
+
   // --- feature toggles ---
   /// Set to `false` to remove the financial report from the home-screen idle
   /// cycle (the clock+schedule then runs alone).
@@ -36,8 +46,8 @@ class AppConstants {
   // All prayer times are computed fully on-device; no network or bundled
   // schedule is needed. Fine-tune the coordinates to the masjid's exact
   // position.
-  static const double latitude = -6.40; // Depok
-  static const double longitude = 106.82; // Depok
+  static const double latitude = -6.40;
+  static const double longitude = 106.82;
   static const double fajrAngle = 20.0; // Kemenag
   static const double ishaAngle = 18.0; // Kemenag
   static const Madhab madhab = Madhab.shafi;
@@ -80,5 +90,5 @@ class AppConstants {
 
   // marquee text
   static const String marqueeText =
-      'Selamat Datang di Masjid Al Hijrah CGE - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ';
+      'Selamat Datang - Jagalah Kebersihan dan Matikan Handphone saat Sholat - ';
 }

@@ -8,6 +8,7 @@ class SidePrayerPanel extends StatelessWidget {
   final String dateHijriah;
   final Map<String, String> jadwal;
   final String nextPrayerName;
+  final String masjidName;
 
   const SidePrayerPanel({
     super.key,
@@ -16,6 +17,7 @@ class SidePrayerPanel extends StatelessWidget {
     required this.dateHijriah,
     required this.jadwal,
     required this.nextPrayerName,
+    required this.masjidName,
   });
 
   @override
@@ -41,9 +43,9 @@ class SidePrayerPanel extends StatelessWidget {
             ),
             child: Column(
               children: [
-                const Text(
-                  "Masjid Al Hijrah CGE",
-                  style: TextStyle(
+                Text(
+                  masjidName,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

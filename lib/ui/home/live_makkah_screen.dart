@@ -12,6 +12,7 @@ class LiveMakkahScreen extends StatefulWidget {
   final String dateMasehi;
   final String dateHijriah;
   final String nextPrayerName;
+  final String masjidName;
 
   /// YouTube URL of the live Makkah stream, editable via the dashboard. Falls
   /// back to [AppConstants.liveMakkahUrl] when unparseable.
@@ -24,6 +25,7 @@ class LiveMakkahScreen extends StatefulWidget {
     required this.dateHijriah,
     required this.jadwal,
     required this.nextPrayerName,
+    required this.masjidName,
     required this.liveMakkahUrl,
   });
 
@@ -78,6 +80,7 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
                       dateHijriah: widget.dateHijriah,
                       jadwal: widget.jadwal,
                       nextPrayerName: widget.nextPrayerName,
+                      masjidName: widget.masjidName,
                     ),
 
                     Expanded(

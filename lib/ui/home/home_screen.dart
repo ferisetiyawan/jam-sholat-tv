@@ -9,6 +9,8 @@ class HomeScreen extends StatelessWidget {
   final Map<String, String> jadwal;
   final String dateMasehi;
   final String dateHijriah;
+  final String masjidName;
+  final String locationName;
   final Widget Function(String, String) prayerItemBuilder;
 
   const HomeScreen({
@@ -17,6 +19,8 @@ class HomeScreen extends StatelessWidget {
     required this.dateMasehi,
     required this.dateHijriah,
     required this.jadwal,
+    required this.masjidName,
+    required this.locationName,
     required this.prayerItemBuilder,
   });
 
@@ -68,17 +72,20 @@ class HomeScreen extends StatelessWidget {
 
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [
+                    children: [
                       Text(
-                        "MASJID AL HIJRAH CGE",
-                        style: TextStyle(
+                        masjidName.toUpperCase(),
+                        style: const TextStyle(
                           fontSize: 38,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        "Cimanggis Golf Estate",
-                        style: TextStyle(fontSize: 24, color: Colors.white70),
+                        locationName,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          color: Colors.white70,
+                        ),
                       ),
                     ],
                   ),

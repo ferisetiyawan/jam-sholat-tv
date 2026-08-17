@@ -17,6 +17,7 @@ class FinancialReportScreen extends StatelessWidget {
   final String dateMasehi;
   final String dateHijriah;
   final String nextPrayerName;
+  final String masjidName;
   final FinancialSummary summary;
 
   const FinancialReportScreen({
@@ -26,6 +27,7 @@ class FinancialReportScreen extends StatelessWidget {
     required this.dateHijriah,
     required this.jadwal,
     required this.nextPrayerName,
+    required this.masjidName,
     required this.summary,
   });
 
@@ -47,6 +49,7 @@ class FinancialReportScreen extends StatelessWidget {
                       dateHijriah: dateHijriah,
                       jadwal: jadwal,
                       nextPrayerName: nextPrayerName,
+                      masjidName: masjidName,
                     ),
                     Expanded(
                       child: Container(

@@ -454,6 +454,7 @@
     </div>
   </div>
   <nav class="nav">
+    <button class="nav-item" data-view="identitas"><span class="ic" data-i="mosque"></span>Identitas Masjid</button>
     <button class="nav-item active" data-view="durasi"><span class="ic" data-i="timer"></span>Konfigurasi Durasi</button>
     <button class="nav-item" data-view="sholat"><span class="ic" data-i="schedule"></span>Konfigurasi Waktu Sholat</button>
     <button class="nav-item" data-view="background"><span class="ic" data-i="image"></span>Konfigurasi Background Aplikasi</button>
@@ -462,7 +463,7 @@
     <button class="nav-item" data-view="keuangan"><span class="ic" data-i="wallet"></span>Konfigurasi Laporan Keuangan</button>
   </nav>
   <div class="side-foot">
-    <span class="pill off"><span class="dot"></span>Masjid Al Hijrah CGE &middot; Depok</span>
+    <span class="pill off"><span class="dot"></span><span id="side-masjid-name">Masjid</span></span>
   </div>
 </aside>
 
@@ -482,6 +483,34 @@
   </header>
 
   <div id="content">
+
+    <!-- ============ IDENTITAS MASJID ============ -->
+    <section class="view" id="view-identitas">
+      <div class="page-head">
+        <h2>Identitas Masjid</h2>
+        <p>Atur nama masjid yang tampil di pojok layar utama dan panel samping display.</p>
+      </div>
+      <div class="glass-card card-pad">
+        <div class="deco deco-a"></div>
+        <div class="rel">
+          <div class="field">
+            <label for="in-masjidName">Nama Masjid</label>
+            <div class="input-wrap"><input class="input" id="in-masjidName" type="text" maxlength="60" autocomplete="off" placeholder="Masukkan nama masjid..."><span class="ic" data-i="mosque"></span></div>
+            <p class="hint">Nama ini tampil di pojok kanan atas layar utama dan di panel samping. Kosongkan untuk memakai nama bawaan.</p>
+          </div>
+
+          <div class="field">
+            <label for="in-locationName">Lokasi / Alamat</label>
+            <div class="input-wrap"><input class="input" id="in-locationName" type="text" maxlength="80" autocomplete="off" placeholder="Masukkan alamat masjid..."><span class="ic" data-i="location"></span></div>
+            <p class="hint">Alamat ini tampil di bawah nama masjid pada layar utama. Kosongkan untuk memakai alamat bawaan.</p>
+          </div>
+
+          <div class="actions">
+            <button class="btn-primary js-save" type="button"><span class="ic ic--sm" data-i="save"></span>Simpan Perubahan</button>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- ============ KONFIGURASI DURASI ============ -->
     <section class="view active" id="view-durasi">
@@ -717,7 +746,7 @@
                   <div class="p" id="mock-prayer">Dzuhur</div>
                 </div>
               </div>
-              <div class="mock-marquee"><span class="track" id="bg-preview-marquee">Selamat Datang di Masjid Al Hijrah CGE &middot; Jagalah Kebersihan</span></div>
+              <div class="mock-marquee"><span class="track" id="bg-preview-marquee">Selamat Datang &middot; Jagalah Kebersihan</span></div>
             </div>
             <div class="hint-card">
               <span class="ic" data-i="info"></span>
@@ -994,7 +1023,6 @@
   let eventPreviewTimer = null;
 
   const CITY_PRESETS = [
-    { name: 'Depok', lat: -6.40, lng: 106.82 },
     { name: 'Jakarta', lat: -6.2088, lng: 106.8456 },
     { name: 'Bogor', lat: -6.5944, lng: 106.7892 },
     { name: 'Bekasi', lat: -6.2349, lng: 106.9896 },
@@ -1027,6 +1055,7 @@
   ];
 
   const VIEW_TITLES = {
+    identitas: 'Identitas Masjid',
     durasi: 'Konfigurasi Durasi',
     sholat: 'Konfigurasi Waktu Sholat',
     background: 'Konfigurasi Background',
@@ -1196,7 +1225,13 @@
   // marquee pratinjau mengikuti input
   document.getElementById('in-marqueeText').addEventListener('input', function () {
     document.getElementById('bg-preview-marquee').textContent =
-      this.value || 'Selamat Datang di Masjid Al Hijrah CGE';
+      this.value || 'Selamat Datang';
+  });
+
+  // nama masjid -> pratinjau panel samping (sidebar) ikut berubah
+  document.getElementById('in-masjidName').addEventListener('input', function () {
+    document.getElementById('side-masjid-name').textContent =
+      this.value.trim() || 'Masjid';
   });
 
   // jam mockup selalu mengikuti waktu sekarang
@@ -1289,6 +1324,11 @@
     document.getElementById('in-ishaAngle').value = cfg.ishaAngle;
     document.getElementById('in-madhab').value = cfg.madhab;
     document.getElementById('in-marqueeText').value = cfg.marqueeText;
+    document.getElementById('in-masjidName').value = cfg.masjidName || '';
+    document.getElementById('in-locationName').value = cfg.locationName || '';
+    document.getElementById('side-masjid-name').textContent = cfg.masjidName || 'Masjid';
+    document.getElementById('bg-preview-marquee').textContent =
+      cfg.marqueeText || 'Selamat Datang';
 
     const ihtiyat = cfg.ihtiyat || {};
     IHTIYAT_FIELDS.forEach(function (f) {
@@ -1467,6 +1507,8 @@
     p.minutesBeforeJumat = makkahOn ? toInt(document.getElementById('in-minutesBeforeJumat').value) : 0;
     p.liveMakkahUrl = document.getElementById('in-liveMakkahUrl').value.trim();
 
+    p.masjidName = document.getElementById('in-masjidName').value.trim();
+    p.locationName = document.getElementById('in-locationName').value.trim();
     p.marqueeText = document.getElementById('in-marqueeText').value.trim();
     p.enableFinancialReport = document.getElementById('in-enableFinancialReport').checked;
 

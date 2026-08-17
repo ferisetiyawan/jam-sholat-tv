@@ -3,8 +3,8 @@ import 'package:adhan_dart/adhan_dart.dart';
 import '../../core/constants/app_constants.dart';
 import '../models/app_config.dart';
 
-/// Computes today's prayer schedule fully on-device (Kemenag method, Depok)
-/// using [adhan_dart].
+/// Computes today's prayer schedule fully on-device (Kemenag method) using
+/// [adhan_dart].
 ///
 /// Returns the canonical jadwal map in insertion order:
 /// `Subuh`, `Syuruq`, `Dzuhur`, `Ashar`, `Maghrib`, `Isya` with `HH:mm`

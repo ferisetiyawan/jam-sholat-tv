@@ -32,6 +32,8 @@ void main() {
       expect(config.minutesBeforeJumat, AppConstants.minutesBeforeJumat);
       expect(config.marqueeText, AppConstants.marqueeText);
       expect(config.backgroundImage, AppConstants.backgroundImage);
+      expect(config.masjidName, AppConstants.masjidName);
+      expect(config.locationName, AppConstants.locationName);
       expect(
         config.enableFinancialReport,
         AppConstants.enableFinancialReport,
@@ -117,6 +119,22 @@ void main() {
       expect(config.marqueeText, 'hai');
       // Fields not persisted fall back to defaults.
       expect(config.adzanDuration, AppConstants.adzanDuration);
+    });
+
+    test('load() applies a persisted identity override', () async {
+      SharedPreferences.setMockInitialValues({
+        ConfigProvider.configPrefsKey:
+            jsonEncode({'masjidName': 'Masjid An-Nur', 'locationName': 'Jl. Merdeka No. 1'}),
+      });
+
+      final config = ConfigProvider();
+      expect(config.masjidName, AppConstants.masjidName);
+      expect(config.locationName, AppConstants.locationName);
+
+      await config.load();
+
+      expect(config.masjidName, 'Masjid An-Nur');
+      expect(config.locationName, 'Jl. Merdeka No. 1');
     });
 
     test('load() falls back to defaults when nothing is saved', () async {

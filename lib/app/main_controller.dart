@@ -44,6 +44,7 @@ class MainController extends StatelessWidget {
         dateHijriah: app.dateHijriah,
         jadwal: app.jadwal,
         nextPrayerName: app.nextPrayerName,
+        masjidName: config.masjidName,
         liveMakkahUrl: config.liveMakkahUrl,
       ),
       AppStatus.home when app.isReportMode && app.financialSummary != null =>
@@ -53,6 +54,7 @@ class MainController extends StatelessWidget {
           dateHijriah: app.dateHijriah,
           jadwal: app.jadwal,
           nextPrayerName: app.nextPrayerName,
+          masjidName: config.masjidName,
           summary: app.financialSummary!,
         ),
       AppStatus.home when app.isEventMode && config.eventImages.isNotEmpty =>
@@ -67,6 +69,8 @@ class MainController extends StatelessWidget {
         dateMasehi: app.dateMasehi,
         dateHijriah: app.dateHijriah,
         jadwal: app.jadwal,
+        masjidName: config.masjidName,
+        locationName: config.locationName,
         prayerItemBuilder: (label, time) => PrayerCard(
           label: label,
           time: time,

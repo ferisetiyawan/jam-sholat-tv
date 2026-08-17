@@ -8,6 +8,8 @@ void main() {
     test('defaults() is populated from AppConstants', () {
       final config = AppConfig.defaults();
 
+      expect(config.masjidName, AppConstants.masjidName);
+      expect(config.locationName, AppConstants.locationName);
       expect(config.homeDuration, AppConstants.homeDuration);
       expect(config.adzanDuration, AppConstants.adzanDuration);
       expect(config.jumatDuration, AppConstants.jumatDuration);
@@ -29,6 +31,25 @@ void main() {
       expect(config.marqueeText, 'Selamat datang');
       // Unset keys fall back to defaults.
       expect(config.adzanDuration, AppConstants.adzanDuration);
+      expect(config.masjidName, AppConstants.masjidName);
+      expect(config.locationName, AppConstants.locationName);
+    });
+
+    test('identity fields override from JSON and fall back when empty', () {
+      expect(
+        AppConfig.fromJson({'masjidName': 'Masjid An-Nur'}).masjidName,
+        'Masjid An-Nur',
+      );
+      expect(
+        AppConfig.fromJson({'locationName': 'Jl. Merdeka No. 1'}).locationName,
+        'Jl. Merdeka No. 1',
+      );
+      expect(AppConfig.fromJson({'masjidName': '   '}).masjidName,
+          AppConstants.masjidName);
+      expect(AppConfig.fromJson({'locationName': '   '}).locationName,
+          AppConstants.locationName);
+      expect(AppConfig.fromJson({}).masjidName, AppConstants.masjidName);
+      expect(AppConfig.fromJson({}).locationName, AppConstants.locationName);
     });
 
     test('clamps hijriCorrection to [-2, 2]', () {
@@ -70,6 +91,8 @@ void main() {
 
     test('round-trips through toJson/fromJson', () {
       final original = AppConfig.fromJson({
+        'masjidName': 'Masjid An-Nur',
+        'locationName': 'Jl. Merdeka No. 1',
         'homeDuration': 7,
         'hijriCorrection': 1,
         'eventImages': [
@@ -79,6 +102,8 @@ void main() {
 
       final restored = AppConfig.fromJson(original.toJson());
 
+      expect(restored.masjidName, 'Masjid An-Nur');
+      expect(restored.locationName, 'Jl. Merdeka No. 1');
       expect(restored.homeDuration, 7);
       expect(restored.hijriCorrection, 1);
       expect(restored.eventImages, hasLength(1));

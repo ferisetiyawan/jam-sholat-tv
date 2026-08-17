@@ -10,6 +10,16 @@ import 'financial_summary.dart';
 /// default when absent from the remote payload, so `AppConfig.fromJson({})`
 /// yields a fully usable default config.
 class AppConfig {
+  /// Name of the masjid shown on the display screens. Editable at runtime
+  /// through the local config server's "Identitas Masjid" dashboard; an empty
+  /// saved value falls back to [AppConstants.masjidName].
+  final String masjidName;
+
+  /// Address/location shown under the masjid name on the home screen. Editable
+  /// at runtime through the local config server's "Identitas Masjid"
+  /// dashboard; an empty saved value falls back to [AppConstants.locationName].
+  final String locationName;
+
   // Durations below marked "minutes" are configured and stored in minutes
   // (converted to seconds when the countdown runs); the rest stay in seconds.
   final int homeDuration;
@@ -83,6 +93,8 @@ class AppConfig {
   final FinancialSummary financialSummary;
 
   const AppConfig({
+    required this.masjidName,
+    required this.locationName,
     required this.homeDuration,
     required this.eventDuration,
     required this.reportDuration,
@@ -136,6 +148,11 @@ class AppConfig {
           : AppConstants.madhab.name;
     }
 
+    String parseName(dynamic value, String fallback) {
+      final String raw = value?.toString().trim() ?? '';
+      return raw.isEmpty ? fallback : raw;
+    }
+
     Map<String, int> parseIhtiyat(dynamic value) {
       // Start from the full Kemenag default map so every lookup in the
       // calculator is always non-null, then overlay saved per-key values.
@@ -176,6 +193,8 @@ class AppConfig {
         : const [];
 
     return AppConfig(
+      masjidName: parseName(json['masjidName'], AppConstants.masjidName),
+      locationName: parseName(json['locationName'], AppConstants.locationName),
       homeDuration: parseInt(json['homeDuration'], AppConstants.homeDuration),
       eventDuration: parseInt(json['eventDuration'], AppConstants.eventDuration),
       reportDuration: parseInt(json['reportDuration'], AppConstants.reportDuration),
@@ -245,6 +264,8 @@ class AppConfig {
 
   Map<String, dynamic> toJson() {
     return {
+      'masjidName': masjidName,
+      'locationName': locationName,
       'homeDuration': homeDuration,
       'eventDuration': eventDuration,
       'reportDuration': reportDuration,

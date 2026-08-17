@@ -82,6 +82,8 @@ class ConfigProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  String get masjidName => _config.masjidName;
+  String get locationName => _config.locationName;
   int get homeDuration => _config.homeDuration;
   int get eventDuration => _config.eventDuration;
   int get reportDuration => _config.reportDuration;

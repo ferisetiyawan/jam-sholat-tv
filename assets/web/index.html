@@ -253,6 +253,10 @@
     text-align: center; cursor: pointer; background: rgba(243, 244, 245, 0.5);
     transition: border-color 0.3s, background 0.3s;
   }
+  .dropzone .dz-body {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; width: 100%; pointer-events: none;
+  }
   .dropzone:hover, .dropzone.dragover { border-color: var(--primary); background: rgba(52, 168, 83, 0.06); }
   .dropzone .dz-icon {
     width: 64px; height: 64px; border-radius: 50%; background: rgba(52, 168, 83, 0.12);
@@ -651,10 +655,12 @@
             </div>
             <p style="color:var(--on-surface-variant);margin:0 0 16px">Unggah gambar resolusi tinggi untuk latar belakang aplikasi.</p>
             <div class="dropzone" id="bg-dropzone">
-              <div class="dz-icon"><span class="ic" data-i="cloud_upload"></span></div>
-              <h4>Tarik &amp; Lepas Gambar Kesini</h4>
-              <p>atau klik untuk memilih file dari komputer</p>
-              <span class="badge">JPG, PNG, WEBP (Max. 5MB)</span>
+              <div class="dz-body">
+                <div class="dz-icon"><span class="ic" data-i="cloud_upload"></span></div>
+                <h4>Tarik &amp; Lepas Gambar Kesini</h4>
+                <p>atau klik untuk memilih file dari komputer</p>
+                <span class="badge">JPG, PNG, WEBP (Max. 5MB)</span>
+              </div>
               <input type="file" id="bg-file" accept="image/jpeg,image/png,image/webp" hidden>
             </div>
             <div class="actions" style="justify-content:flex-start;padding-top:16px">
@@ -706,10 +712,12 @@
               <h3>Unggah Gambar Baru</h3>
             </div>
             <div class="dropzone" id="event-dropzone">
-              <div class="dz-icon"><span class="ic" data-i="cloud_upload"></span></div>
-              <h4>Tarik &amp; lepas gambar ke sini</h4>
-              <p>atau klik untuk menelusuri file dari perangkat Anda</p>
-              <span class="badge">JPG, PNG, GIF &mdash; Max 5MB</span>
+              <div class="dz-body">
+                <div class="dz-icon"><span class="ic" data-i="cloud_upload"></span></div>
+                <h4>Tarik &amp; lepas gambar ke sini</h4>
+                <p>atau klik untuk menelusuri file dari perangkat Anda</p>
+                <span class="badge">JPG, PNG, GIF &mdash; Max 5MB</span>
+              </div>
               <input type="file" id="event-file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
             </div>
           </div>
@@ -1100,7 +1108,10 @@
   function bindDropzone(dzId, fileId, endpoint) {
     const dz = document.getElementById(dzId);
     const file = document.getElementById(fileId);
-    dz.addEventListener('click', function () { file.click(); });
+    dz.addEventListener('click', function () {
+      if (dz.dataset.uploading === '1') return; // jangan buka picker saat unggah berjalan
+      file.click();
+    });
     dz.addEventListener('dragover', function (e) {
       e.preventDefault();
       dz.classList.add('dragover');
@@ -1364,11 +1375,22 @@
     btn.addEventListener('click', doSave);
   });
 
+  // HTML bawaan dropzone; dipakai untuk mereset status setelah unggah.
+  function dzBodyHTML(isEvent) {
+    return (
+      '<div class="dz-icon"><span class="ic">' + ICONS.cloud_upload + '</span></div>' +
+      '<h4>' + (isEvent ? 'Tarik &amp; lepas gambar ke sini' : 'Tarik &amp; Lepas Gambar Kesini') + '</h4>' +
+      '<p>' + (isEvent ? 'atau klik untuk menelusuri file dari perangkat Anda' : 'atau klik untuk memilih file dari komputer') + '</p>' +
+      '<span class="badge">' + (isEvent ? 'JPG, PNG, GIF &mdash; Max 5MB' : 'JPG, PNG, WEBP (Max. 5MB)') + '</span>'
+    );
+  }
+
   async function uploadImage(endpoint, file, dz) {
     if (!file) return;
     const isEvent = endpoint.indexOf('/event') !== -1;
-    const oldHTML = dz.innerHTML;
-    dz.innerHTML =
+    const body = dz.querySelector('.dz-body');
+    dz.dataset.uploading = '1';
+    body.innerHTML =
       '<div class="dz-icon"><span class="ic">' + ICONS.check_circle + '</span></div>' +
       '<h4>' + file.name + '</h4><p>Siap diunggah…</p>';
     try {
@@ -1381,10 +1403,13 @@
       if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
       cfg = data;
       renderAll();
+      body.innerHTML = dzBodyHTML(isEvent);
       toast(isEvent ? 'Gambar event diunggah ✓ — diterapkan di TV.' : 'Background diunggah ✓ — diterapkan di TV.', 'ok');
     } catch (e) {
-      dz.innerHTML = oldHTML;
+      body.innerHTML = dzBodyHTML(isEvent);
       toast('Gagal mengunggah (' + e.message + ').', 'err');
+    } finally {
+      delete dz.dataset.uploading;
     }
   }
 

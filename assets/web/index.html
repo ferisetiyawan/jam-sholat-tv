@@ -1509,7 +1509,9 @@
 
     p.masjidName = document.getElementById('in-masjidName').value.trim();
     p.locationName = document.getElementById('in-locationName').value.trim();
-    p.marqueeText = document.getElementById('in-marqueeText').value.trim();
+    // Simpan marquee dengan spasi di akhir agar ada jeda visual saat teks
+    // berulang di layar (marquee mengukur lebar teks termasuk spasi).
+    p.marqueeText = document.getElementById('in-marqueeText').value.trim() + ' '.repeat(1);
     p.enableFinancialReport = document.getElementById('in-enableFinancialReport').checked;
 
     p.latitude = parseFloat(document.getElementById('in-latitude').value);

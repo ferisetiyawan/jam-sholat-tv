@@ -302,6 +302,7 @@
   .mock-clock .t { font-size: 26px; font-weight: 700; line-height: 1; letter-spacing: -0.01em; }
   .mock-clock .p { font-size: 12px; font-weight: 600; margin-top: 2px; opacity: 0.95; }
   .mock-badge { font-size: 11px; font-weight: 700; letter-spacing: 0.03em; padding: 5px 12px; border-radius: 999px; background: #e8f5e9; color: #34a853; display: inline-flex; align-items: center; gap: 5px; }
+  .mock-count { position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.6); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.03em; padding: 3px 9px; border-radius: 999px; }
   .mock-marquee {
     position: absolute; bottom: 0; left: 0; width: 100%; padding: 10px 14px;
     background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(6px);
@@ -747,7 +748,7 @@
                 <p>atau klik untuk menelusuri file dari perangkat Anda</p>
                 <span class="badge">JPG, PNG, GIF &mdash; Max 5MB</span>
               </div>
-              <input type="file" id="event-file" accept="image/jpeg,image/png,image/webp,image/gif" hidden>
+              <input type="file" id="event-file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
             </div>
           </div>
 
@@ -774,6 +775,7 @@
             <div class="mockup">
               <div class="mock-bg" id="event-preview-bg">Belum ada gambar event</div>
               <img alt="Pratinjau gambar event" id="event-preview-img" hidden>
+              <span class="mock-count" id="event-preview-count" hidden></span>
             </div>
             <div class="hint-card">
               <span class="ic" data-i="info"></span>
@@ -987,6 +989,9 @@
   // ============================================================
   const token = new URLSearchParams(location.search).get('token');
   const MAX_EVENT_IMAGES = 10;
+
+  // Slideshow timer for the event-image preview (cycling like the TV does).
+  let eventPreviewTimer = null;
 
   const CITY_PRESETS = [
     { name: 'Depok', lat: -6.40, lng: 106.82 },
@@ -1252,11 +1257,11 @@
       e.preventDefault();
       dz.classList.remove('dragover');
       if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-        uploadImage(endpoint, e.dataTransfer.files[0], dz);
+        uploadFiles(endpoint, e.dataTransfer.files, dz);
       }
     });
     file.addEventListener('change', function () {
-      if (file.files && file.files[0]) uploadImage(endpoint, file.files[0], dz);
+      if (file.files && file.files.length) uploadFiles(endpoint, file.files, dz);
       file.value = '';
     });
   }
@@ -1408,17 +1413,37 @@
       thumbs.appendChild(t);
     });
 
-    // pratinjau = gambar pertama
+    // pratinjau: kalau lebih dari satu gambar, tampilkan bergantian (slideshow)
+    // seperti siklus event di layar TV, dengan penanda "1 / N".
+    if (eventPreviewTimer) { clearInterval(eventPreviewTimer); eventPreviewTimer = null; }
     const previewImg = document.getElementById('event-preview-img');
     const previewBg = document.getElementById('event-preview-bg');
+    const countEl = document.getElementById('event-preview-count');
     if (images.length) {
-      previewImg.src = localImageUrl(images[0].url);
-      previewImg.hidden = false;
-      previewBg.style.display = 'none';
+      let idx = 0;
+      const show = function (i) {
+        previewImg.src = localImageUrl(images[i].url);
+        previewImg.hidden = false;
+        previewBg.style.display = 'none';
+        if (images.length > 1) {
+          countEl.textContent = (i + 1) + ' / ' + images.length;
+          countEl.hidden = false;
+        } else {
+          countEl.hidden = true;
+        }
+      };
+      show(0);
+      if (images.length > 1) {
+        eventPreviewTimer = setInterval(function () {
+          idx = (idx + 1) % images.length;
+          show(idx);
+        }, 3000);
+      }
     } else {
       previewImg.removeAttribute('src');
       previewImg.hidden = true;
       previewBg.style.display = 'flex';
+      countEl.hidden = true;
     }
   }
 
@@ -1539,26 +1564,40 @@
     );
   }
 
-  async function uploadImage(endpoint, file, dz) {
-    if (!file) return;
+  // Unggah satu atau beberapa file sekaligus. Event image diunggah satu per satu
+  // (endpoint menerima satu gambar per POST) sampai slot penuh (MAX_EVENT_IMAGES).
+  async function uploadFiles(endpoint, files, dz) {
     const isEvent = endpoint.indexOf('/event') !== -1;
+    let list = Array.from(files || []).filter(function (f) { return f && f.size > 0; });
+    if (!list.length) return;
+    if (isEvent) {
+      const remaining = MAX_EVENT_IMAGES - (cfg.eventImages || []).length;
+      list = list.slice(0, Math.max(remaining, 0));
+    }
     const body = dz.querySelector('.dz-body');
     dz.dataset.uploading = '1';
-    body.innerHTML =
-      '<div class="dz-icon"><span class="ic">' + ICONS.check_circle + '</span></div>' +
-      '<h4>' + file.name + '</h4><p>Siap diunggah…</p>';
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer ' + token },
-        body: file,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
-      cfg = data;
-      renderAll();
+      for (let i = 0; i < list.length; i++) {
+        const file = list[i];
+        body.innerHTML =
+          '<div class="dz-icon"><span class="ic">' + ICONS.check_circle + '</span></div>' +
+          '<h4>' + (list.length > 1 ? (i + 1) + ' / ' + list.length + ' ' + file.name : file.name) + '</h4>' +
+          '<p>Siap diunggah…</p>';
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token },
+          body: file,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || ('HTTP ' + res.status));
+        cfg = data;
+        renderAll();
+      }
       body.innerHTML = dzBodyHTML(isEvent);
-      toast(isEvent ? 'Gambar event diunggah ✓ — diterapkan di TV.' : 'Background diunggah ✓ — diterapkan di TV.', 'ok');
+      const n = list.length;
+      toast(isEvent
+        ? (n > 1 ? n + ' gambar event diunggah ✓ — diterapkan di TV.' : 'Gambar event diunggah ✓ — diterapkan di TV.')
+        : 'Background diunggah ✓ — diterapkan di TV.', 'ok');
     } catch (e) {
       body.innerHTML = dzBodyHTML(isEvent);
       toast('Gagal mengunggah (' + e.message + ').', 'err');

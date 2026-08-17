@@ -166,6 +166,9 @@ class LocalServerService {
     final Router imagesRouter = Router()..get('/<name>', _getImage);
 
     final router = Router(notFoundHandler: _staticHandler)
+      // Public config endpoint for followers — no token required.
+      // Must be before /api/ mount so auth middleware doesn't intercept it.
+      ..get('/api/public/config', _getPublicConfig)
       ..mount('/api/', apiHandler)
       ..mount('/images/', imagesRouter.call)
       ..get('/bundled/background', _getBundledBackground)
@@ -280,6 +283,53 @@ class LocalServerService {
 
   Future<Response> _getConfig(Request request) async {
     return _jsonResponse(_configProvider.config.toJson());
+  }
+
+  /// Public (no-auth) config endpoint used by follower devices to sync.
+  /// Only served when this device is configured as master.
+  Future<Response> _getPublicConfig(Request request) async {
+    final role = _configProvider.config.deviceRole;
+    if (role != 'master') {
+      return _jsonResponse(
+        {'error': 'This device is not a master'},
+        status: 403,
+      );
+    }
+    final json = Map<String, dynamic>.from(_configProvider.config.toJson());
+    // Strip role/master fields — followers should keep their own role config.
+    json.remove('deviceRole');
+    json.remove('masterUrl');
+
+    // Rewrite loopback image URLs to the master's real LAN IP so followers
+    // can actually load the images.
+    final String? lanIp = await _networkInfo.localIPv4();
+    if (lanIp != null && lanIp.isNotEmpty) {
+      String rewrite(String url) =>
+          url.replaceFirst('http://127.0.0.1:', 'http://$lanIp:');
+
+      if (json['backgroundImage'] is String) {
+        json['backgroundImage'] = rewrite(json['backgroundImage'] as String);
+      }
+      final rawImages = json['eventImages'];
+      if (rawImages is List) {
+        json['eventImages'] = rawImages.map((e) {
+          if (e is Map) {
+            final m = Map<String, dynamic>.from(e as Map);
+            if (m['url'] is String) m['url'] = rewrite(m['url'] as String);
+            return m;
+          }
+          return e;
+        }).toList();
+      }
+    }
+
+    return Response.ok(
+      jsonEncode(json),
+      headers: {
+        'content-type': 'application/json',
+        'access-control-allow-origin': '*',
+      },
+    );
   }
 
   Future<Response> _postConfig(Request request) async {

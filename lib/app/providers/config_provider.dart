@@ -116,4 +116,9 @@ class ConfigProvider extends ChangeNotifier {
   List<EventImage> get eventImages => _config.eventImages;
   bool get enableFinancialReport => _config.enableFinancialReport;
   FinancialSummary get financialSummary => _config.financialSummary;
+
+  String get deviceRole => _config.deviceRole;
+  String get masterUrl => _config.masterUrl;
+  bool get isFollower => _config.deviceRole == 'follower';
+  bool get isMaster => _config.deviceRole == 'master';
 }

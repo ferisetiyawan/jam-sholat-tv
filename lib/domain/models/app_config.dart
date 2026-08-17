@@ -164,6 +164,15 @@ class AppConfig {
   /// offline sample; editable at runtime through the local config server.
   final FinancialSummary financialSummary;
 
+  /// Device role: `'standalone'` (default), `'master'`, or `'follower'`.
+  /// - `master`: exposes `/api/config/public` so followers can sync.
+  /// - `follower`: polls `masterUrl` every 30 s and applies the config.
+  final String deviceRole;
+
+  /// The base URL of the master device (e.g. `http://192.168.10.5:8080`).
+  /// Only used when [deviceRole] is `'follower'`.
+  final String masterUrl;
+
   const AppConfig({
     required this.masjidName,
     required this.locationName,
@@ -198,6 +207,8 @@ class AppConfig {
     required this.eventImages,
     required this.enableFinancialReport,
     required this.financialSummary,
+    required this.deviceRole,
+    required this.masterUrl,
   });
 
   factory AppConfig.fromJson(Map<String, dynamic> json) {
@@ -355,6 +366,12 @@ class AppConfig {
         AppConstants.enableFinancialReport,
       ),
       financialSummary: parseFinancialSummary(json['financialSummary']),
+      deviceRole: () {
+        const valid = ['standalone', 'master', 'follower'];
+        final v = json['deviceRole']?.toString() ?? 'standalone';
+        return valid.contains(v) ? v : 'standalone';
+      }(),
+      masterUrl: json['masterUrl']?.toString() ?? '',
     );
   }
 
@@ -396,6 +413,8 @@ class AppConfig {
       'eventImages': eventImages.map((e) => e.toJson()).toList(),
       'enableFinancialReport': enableFinancialReport,
       'financialSummary': financialSummary.toJson(),
+      'deviceRole': deviceRole,
+      'masterUrl': masterUrl,
     };
   }
 }

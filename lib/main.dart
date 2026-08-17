@@ -5,6 +5,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import 'app/masjid_app.dart';
 import 'app/providers/config_provider.dart';
+import 'services/follower_sync_service.dart';
 import 'services/local_server_service.dart';
 
 Future<void> main() async {
@@ -35,6 +36,11 @@ Future<void> main() async {
     // Fall back to AppConstants defaults.
   }
   await LocalServerService(configProvider: configProvider).start();
+
+  // If this device is a follower, start polling the master for config.
+  if (configProvider.isFollower) {
+    FollowerSyncService(configProvider: configProvider).start();
+  }
 
   runApp(MasjidApp(configProvider: configProvider));
 }

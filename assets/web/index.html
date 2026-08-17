@@ -501,6 +501,7 @@
     <button class="nav-item" data-view="event"><span class="ic" data-i="event"></span>Konfigurasi Event Image</button>
     <button class="nav-item" data-view="makkah"><span class="ic" data-i="live_tv"></span>Konfigurasi Live Makkah</button>
     <button class="nav-item" data-view="keuangan"><span class="ic" data-i="wallet"></span>Konfigurasi Laporan Keuangan</button>
+    <button class="nav-item" data-view="peran"><span class="ic" data-i="device_hub"></span>Peran Perangkat</button>
   </nav>
   <div class="side-foot">
     <span class="pill off"><span class="dot"></span><span id="side-masjid-name">Masjid</span></span>
@@ -1016,6 +1017,46 @@
       </div>
     </section>
 
+    <section class="view" id="view-peran">
+      <h2>Peran Perangkat</h2>
+      <div class="glass-card card-pad">
+        <h3 class="sub-head">Mode Sinkronisasi</h3>
+        <p style="font-size:14px;color:var(--on-surface-variant);margin:0 0 16px">
+          Pilih peran perangkat ini. <strong>Master</strong> menjadi sumber data utama.
+          <strong>Follower</strong> mengambil konfigurasi dari master setiap 30 detik secara otomatis.
+          <strong>Standalone</strong> (default) — perangkat berdiri sendiri.
+        </p>
+        <div class="field">
+          <label>Peran Perangkat</label>
+          <div style="display:flex;gap:24px;flex-wrap:wrap;margin-top:4px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="deviceRole" value="standalone" id="role-standalone"> Standalone
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="deviceRole" value="master" id="role-master"> Master
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="radio" name="deviceRole" value="follower" id="role-follower"> Follower
+            </label>
+          </div>
+        </div>
+        <div class="field" id="field-masterUrl" style="display:none">
+          <label for="in-masterUrl">URL Master (contoh: http://192.168.10.5:8080)</label>
+          <input class="input" id="in-masterUrl" type="url" autocomplete="off"
+            placeholder="http://192.168.10.5:8080">
+        </div>
+        <div id="follower-notice" style="display:none;margin-top:12px;padding:12px 16px;
+          background:rgba(0,110,44,0.08);border-radius:12px;font-size:13px;
+          color:var(--on-surface-variant);line-height:20px">
+          ⚠️ Saat perangkat ini menjadi <strong>Follower</strong>, semua pengaturan akan digantikan
+          oleh data dari master. Pengaturan di halaman lain tidak bisa diedit.
+        </div>
+        <div class="actions">
+          <button class="btn-primary js-save" type="button"><span class="ic ic--sm" data-i="save"></span>Simpan Perubahan</button>
+        </div>
+      </div>
+    </section>
+
     <p class="foot-note">Nilai yang disimpan langsung diterapkan di TV tanpa perlu restart.</p>
   </div>
 </div>
@@ -1206,6 +1247,7 @@
     event: 'Konfigurasi Event Image',
     makkah: 'Konfigurasi Live Makkah',
     keuangan: 'Konfigurasi Laporan Keuangan',
+    peran: 'Peran Perangkat',
   };
 
   let cfg = {};
@@ -1346,6 +1388,15 @@
   // ============================================================
   document.querySelectorAll('.nav-item').forEach(function (btn) {
     btn.addEventListener('click', function () { switchView(btn.dataset.view); });
+  });
+
+  // Peran Perangkat: show/hide master URL field on radio change.
+  document.querySelectorAll('input[name="deviceRole"]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      const isFollower = r.value === 'follower';
+      document.getElementById('field-masterUrl').style.display = isFollower ? '' : 'none';
+      document.getElementById('follower-notice').style.display = isFollower ? '' : 'none';
+    });
   });
 
   document.getElementById('menu-btn').addEventListener('click', function () {
@@ -1702,6 +1753,26 @@
       previewBg.style.display = 'flex';
       countEl.hidden = true;
     }
+
+    // --- Peran Perangkat ---
+    const role = cfg.deviceRole || 'standalone';
+    document.querySelectorAll('input[name="deviceRole"]').forEach(function (r) {
+      r.checked = r.value === role;
+    });
+    document.getElementById('in-masterUrl').value = cfg.masterUrl || '';
+    document.getElementById('field-masterUrl').style.display =
+      role === 'follower' ? '' : 'none';
+    document.getElementById('follower-notice').style.display =
+      role === 'follower' ? '' : 'none';
+
+    // Follower: disable all non-peran inputs so the user can't edit locally.
+    const isFollower = role === 'follower';
+    document.querySelectorAll(
+      '.view:not(#view-peran) input, .view:not(#view-peran) select, ' +
+      '.view:not(#view-peran) textarea, .view:not(#view-peran) button'
+    ).forEach(function (el) {
+      el.disabled = isFollower;
+    });
   }
 
   function renderAll() { fillForm(); }
@@ -1785,6 +1856,10 @@
     p.eventImages = (cfg.eventImages || []).map(function (e) {
       return { type: e.type, url: e.url };
     });
+
+    // Peran Perangkat
+    p.deviceRole = document.querySelector('input[name="deviceRole"]:checked')?.value || 'standalone';
+    p.masterUrl = document.getElementById('in-masterUrl').value.trim();
 
     return p;
   }

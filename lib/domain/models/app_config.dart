@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../core/constants/app_constants.dart';
 import 'event_image.dart';
 import 'financial_summary.dart';
@@ -80,6 +82,17 @@ class AppConfig {
   final double fajrAngle;
   final double ishaAngle;
 
+  /// Whether the masjid's elevation above sea level is folded into the Syuruq
+  /// and Maghrib calculation. Defaults to off; toggled from the config
+  /// dashboard ("Gunakan elevasi"). When off, [elevationMeters] is stored but
+  /// ignored, so picking a city never silently changes the schedule.
+  final bool useElevation;
+
+  /// Masjid elevation above sea level in meters (clamped to `>= 0`). Filled
+  /// automatically when a city is picked from the dashboard's "Pilih Kota"
+  /// list. Only affects the calculation when [useElevation] is enabled.
+  final double elevationMeters;
+
   /// Prayer-calculation method, one of [AppConstants.calculationMethodNames]:
   /// `'kemenag'` (Subuh 20°, Isya 18°), `'muhammadiyah'` (MTT PP Muhammadiyah,
   /// 18°/18°) or `'kustom'` (uses the stored [fajrAngle]/[ishaAngle]). For the
@@ -118,6 +131,22 @@ class AppConfig {
       default:
         return ishaAngle;
     }
+  }
+
+  /// Dip of the astronomical horizon (degrees) seen from [elevationMeters]
+  /// above sea level, or `0.0` at/under sea level.
+  ///
+  /// Rising from sea level, the horizon drops by this angle — at 100 m it is
+  /// ~0.32°, worth roughly a minute of time. The elevation correction re-uses
+  /// it on the *rising/setting* edges only (Syuruq and Maghrib), because
+  /// Kemenag and Muhammadiyah both define Subuh/Isya as fixed depression angles
+  /// measured from the (sea-level) horizon — the dip is not applied to them.
+  static double horizonDip(double elevationMeters) {
+    if (elevationMeters <= 0) return 0.0;
+    const double earthRadiusMeters = 6371000.0;
+    final double dipRadians =
+        math.acos(earthRadiusMeters / (earthRadiusMeters + elevationMeters));
+    return dipRadians * 180.0 / math.pi;
   }
 
   /// Per-prayer ihtiyat (minutes) keyed by the Kemenag names. Always carries
@@ -159,6 +188,8 @@ class AppConfig {
     required this.longitude,
     required this.fajrAngle,
     required this.ishaAngle,
+    required this.useElevation,
+    required this.elevationMeters,
     required this.calculationMethod,
     required this.madhab,
     required this.ihtiyat,
@@ -305,6 +336,13 @@ class AppConfig {
       ).clamp(-180.0, 180.0).toDouble(),
       fajrAngle: parseDouble(json['fajrAngle'], AppConstants.fajrAngle),
       ishaAngle: parseDouble(json['ishaAngle'], AppConstants.ishaAngle),
+      useElevation: parseBool(json['useElevation'], AppConstants.useElevation),
+      elevationMeters: parseDouble(
+        json['elevationMeters'],
+        AppConstants.elevationMeters,
+      )
+          .clamp(0.0, double.infinity)
+          .toDouble(),
       calculationMethod: parseCalculationMethod(json['calculationMethod']),
       madhab: parseMadhab(json['madhab']),
       ihtiyat: parseIhtiyat(json['ihtiyat']),
@@ -348,6 +386,8 @@ class AppConfig {
       'longitude': longitude,
       'fajrAngle': fajrAngle,
       'ishaAngle': ishaAngle,
+      'useElevation': useElevation,
+      'elevationMeters': elevationMeters,
       'calculationMethod': calculationMethod,
       'madhab': madhab,
       'ihtiyat': ihtiyat,

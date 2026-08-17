@@ -137,4 +137,45 @@ void main() {
 
     expect(medan, isNot(equals(depok)));
   });
+
+  test('elevation makes Syuruq earlier and Maghrib later, not Subuh/Isya', () {
+    final seaLevel = calculator(now: now);
+    final elevated = calculator(
+      now: now,
+      config: AppConfig.fromJson({'useElevation': true, 'elevationMeters': 1000}),
+    );
+
+    // The horizon dip (here ~1.02°) moves the rising/setting edges outward;
+    // Subuh/Isya keep the published sea-level depression angles.
+    expect(
+      toMinutes(elevated['Syuruq']!),
+      lessThan(toMinutes(seaLevel['Syuruq']!)),
+    );
+    expect(
+      toMinutes(elevated['Maghrib']!),
+      greaterThan(toMinutes(seaLevel['Maghrib']!)),
+    );
+    expect(elevated['Subuh'], seaLevel['Subuh']);
+    expect(elevated['Isya'], seaLevel['Isya']);
+  });
+
+  test('useElevation without a positive elevation is a no-op', () {
+    final base = calculator(now: now);
+    final toggled = calculator(
+      now: now,
+      config: AppConfig.fromJson({'useElevation': true, 'elevationMeters': 0}),
+    );
+
+    expect(toggled, base);
+  });
+
+  test('stored elevation is a no-op while useElevation is off', () {
+    final base = calculator(now: now);
+    final stored = calculator(
+      now: now,
+      config: AppConfig.fromJson({'elevationMeters': 1000}),
+    );
+
+    expect(stored, base);
+  });
 }

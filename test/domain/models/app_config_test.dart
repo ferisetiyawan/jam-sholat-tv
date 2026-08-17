@@ -246,6 +246,60 @@ void main() {
       expect(restored.ihtiyat['maghrib'], AppConstants.ihtiyat['maghrib']);
     });
 
+    test('useElevation/elevationMeters default to off/zero', () {
+      final config = AppConfig.defaults();
+
+      expect(config.useElevation, false);
+      expect(config.elevationMeters, 0.0);
+      expect(AppConfig.fromJson({}).useElevation, false);
+      expect(AppConfig.fromJson({}).elevationMeters, 0.0);
+    });
+
+    test('parses useElevation and clamps elevationMeters to >= 0', () {
+      expect(AppConfig.fromJson({'useElevation': true}).useElevation, true);
+      expect(AppConfig.fromJson({'useElevation': 'true'}).useElevation, true);
+      expect(AppConfig.fromJson({'useElevation': 'false'}).useElevation, false);
+      expect(AppConfig.fromJson({'elevationMeters': 92}).elevationMeters, 92.0);
+      // A bogus/garbage value falls back to 0; a negative one clamps to 0.
+      expect(AppConfig.fromJson({'elevationMeters': 'x'}).elevationMeters, 0.0);
+      expect(AppConfig.fromJson({'elevationMeters': -5}).elevationMeters, 0.0);
+    });
+
+    test('round-trips useElevation/elevationMeters through toJson/fromJson', () {
+      final original = AppConfig.fromJson({
+        'useElevation': true,
+        'elevationMeters': 92,
+      });
+
+      final restored = AppConfig.fromJson(original.toJson());
+
+      expect(restored.useElevation, true);
+      expect(restored.elevationMeters, 92.0);
+    });
+
+    test('horizonDip is 0 at sea level and grows with elevation', () {
+      expect(AppConfig.horizonDip(0), 0.0);
+      expect(AppConfig.horizonDip(-10), 0.0);
+
+      // acos(R / (R + h)) in degrees, R = 6 371 000 m.
+      expect(AppConfig.horizonDip(100), closeTo(0.321, 0.001));
+      expect(AppConfig.horizonDip(1000), closeTo(1.015, 0.001));
+      expect(
+        AppConfig.horizonDip(2000),
+        greaterThan(AppConfig.horizonDip(1000)),
+      );
+    });
+
+    test('default ihtiyat is +2 for every salat, -2 for Syuruq', () {
+      expect(AppConstants.ihtiyat['imsak'], 2);
+      expect(AppConstants.ihtiyat['subuh'], 2);
+      expect(AppConstants.ihtiyat['terbit'], -2);
+      expect(AppConstants.ihtiyat['dhuhur'], 2);
+      expect(AppConstants.ihtiyat['ashar'], 2);
+      expect(AppConstants.ihtiyat['maghrib'], 2);
+      expect(AppConstants.ihtiyat['isya'], 2);
+    });
+
     test('financialSummary defaults to the offline sample', () {
       final sample = FinancialSummary.offlineSample();
       final config = AppConfig.defaults();

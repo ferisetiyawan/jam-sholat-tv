@@ -217,6 +217,7 @@ class AppProvider extends ChangeNotifier {
     final StringBuffer buffer = StringBuffer(
       '${cfg.latitude},${cfg.longitude},'
       '${cfg.effectiveFajrAngle},${cfg.effectiveIshaAngle},'
+      '${cfg.useElevation},${cfg.elevationMeters},'
       '${cfg.calculationMethod},${cfg.madhab}',
     );
     for (final MapEntry<String, int> entry in entries) {

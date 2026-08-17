@@ -588,7 +588,7 @@
           <div class="grid2">
             <div class="col-stack">
               <div class="field">
-                <label for="in-city">Pilih Kota <span class="unit">(mengisi lintang / bujur)</span></label>
+                <label for="in-city">Pilih Kota <span class="unit">(mengisi lintang / bujur / elevasi)</span></label>
                 <select class="input" id="in-city"></select>
               </div>
               <div class="grid2">
@@ -601,6 +601,21 @@
                   <div class="input-wrap"><input class="input" id="in-longitude" type="number" step="any" min="-180" max="180"><span class="ic" data-i="location"></span></div>
                 </div>
               </div>
+              <div class="field">
+                <label for="in-elevationMeters">Elevasi <span class="unit">(meter dpl)</span></label>
+                <div class="input-wrap"><input class="input" id="in-elevationMeters" type="number" step="any" min="0"><span class="ic" data-i="terrain"></span></div>
+              </div>
+              <div class="lbl-row">
+                <div class="lbl-txt">
+                  <h4>Gunakan elevasi</h4>
+                  <p>Syuruq lebih awal &amp; Maghrib lebih lambat</p>
+                </div>
+                <label class="switch">
+                  <input type="checkbox" id="in-useElevation">
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <p class="hint">Elevasi mengoreksi cakrawala (dip of horizon): Syuruq &amp; Maghrib ikut ketinggian tempat, Subuh &amp; Isya tetap memakai sudut baku metode. Mati secara bawaan — aktifkan bila masjid di dataran tinggi.</p>
               <div class="field">
                 <label for="in-fajrAngle">Sudut Subuh <span class="unit">(derajat)</span></label>
                 <div class="input-wrap"><input class="input" id="in-fajrAngle" type="number" step="any" min="0" max="40"><span class="ic" data-i="light_mode"></span></div>
@@ -1006,6 +1021,7 @@
     alarm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M5 4 3 6M19 4l2 2"/><circle cx="12" cy="14" r="7"/><path d="M12 10.5V14l2.5 2.5"/></svg>',
     home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="m3 11 9-8 9 8"/><path d="M5 9.5V21h14V9.5"/></svg>',
     location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    terrain: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M3 21h18L14.5 7 10 14l-2.5-3.5L3 21Z"/><path d="M17.5 5.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/></svg>',
     restart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     fullscreen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
     link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>',
@@ -1025,27 +1041,32 @@
   // Slideshow timer for the event-image preview (cycling like the TV does).
   let eventPreviewTimer = null;
 
-  const CITY_PRESETS = [
-    { name: 'Jakarta', lat: -6.2088, lng: 106.8456 },
-    { name: 'Bogor', lat: -6.5944, lng: 106.7892 },
-    { name: 'Bekasi', lat: -6.2349, lng: 106.9896 },
-    { name: 'Tangerang', lat: -6.1781, lng: 106.6319 },
-    { name: 'Bandung', lat: -6.9175, lng: 107.6191 },
-    { name: 'Cirebon', lat: -6.7320, lng: 108.5523 },
-    { name: 'Semarang', lat: -6.9667, lng: 110.4167 },
-    { name: 'Yogyakarta', lat: -7.7956, lng: 110.3695 },
-    { name: 'Surabaya', lat: -7.2504, lng: 112.7688 },
-    { name: 'Medan', lat: 3.5952, lng: 98.6722 },
-    { name: 'Padang', lat: -0.9471, lng: 100.4172 },
-    { name: 'Palembang', lat: -2.9761, lng: 104.7754 },
-    { name: 'Pekanbaru', lat: 0.5071, lng: 101.4478 },
-    { name: 'Banda Aceh', lat: 5.5483, lng: 95.3238 },
-    { name: 'Makassar', lat: -5.1477, lng: 119.4327 },
-    { name: 'Manado', lat: 1.4748, lng: 124.8421 },
-    { name: 'Balikpapan', lat: -1.2379, lng: 116.8529 },
-    { name: 'Pontianak', lat: -0.0281, lng: 109.3402 },
-    { name: 'Banjarmasin', lat: -3.3186, lng: 114.5944 },
-  ];
+  // Daftar kota dimuat dari /cities (assets/json/kota_indonesia.json) saat
+  // boot. Memilih kota mengisi lintang, bujur, dan elevasi (meter dpl).
+  let CITY_LIST = [];
+
+  function fillCityOptions() {
+    const city = document.getElementById('in-city');
+    city.innerHTML = '';
+    CITY_LIST.forEach(function (c) {
+      const opt = document.createElement('option');
+      opt.value = c.lokasi;
+      opt.textContent = c.lokasi;
+      city.appendChild(opt);
+    });
+  }
+
+  async function loadCities() {
+    try {
+      const res = await fetch('/cities');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const list = await res.json();
+      CITY_LIST = Array.isArray(list) ? list : [];
+    } catch (e) {
+      CITY_LIST = [];
+    }
+    fillCityOptions();
+  }
 
   const IHTIYAT_FIELDS = [
     { key: 'imsak', label: 'Imsak' },
@@ -1216,12 +1237,13 @@
     document.getElementById('scrim').classList.remove('show');
   });
 
-  // kota -> isi lintang/bujur
+  // kota -> isi lintang/bujur/elevasi
   document.getElementById('in-city').addEventListener('change', function () {
-    const preset = CITY_PRESETS.find(function (c) { return c.name === this.value; }, this);
+    const preset = CITY_LIST.find(function (c) { return c.lokasi === this.value; }, this);
     if (preset) {
-      document.getElementById('in-latitude').value = preset.lat;
-      document.getElementById('in-longitude').value = preset.lng;
+      document.getElementById('in-latitude').value = preset.latitude;
+      document.getElementById('in-longitude').value = preset.longitude;
+      document.getElementById('in-elevationMeters').value = preset.elevation;
     }
   });
 
@@ -1360,6 +1382,8 @@
 
     document.getElementById('in-latitude').value = cfg.latitude;
     document.getElementById('in-longitude').value = cfg.longitude;
+    document.getElementById('in-elevationMeters').value = cfg.elevationMeters || 0;
+    document.getElementById('in-useElevation').checked = !!cfg.useElevation;
     document.getElementById('in-fajrAngle').value = cfg.fajrAngle;
     document.getElementById('in-ishaAngle').value = cfg.ishaAngle;
     // Metode diisi setelah sudut: untuk preset, setCalculationMethodState
@@ -1383,12 +1407,14 @@
       if (el && ihtiyat[f.key] !== undefined && ihtiyat[f.key] !== null) el.value = ihtiyat[f.key];
     });
 
-    // preset kota terdekat
+    // preset kota terdekat (lintang/bujur sama dalam 0.01°); kota kustom
+    // dibiarkan tanpa pilihan.
     const city = document.getElementById('in-city');
-    const preset = CITY_PRESETS.find(function (c) {
-      return Math.abs(c.lat - cfg.latitude) < 0.01 && Math.abs(c.lng - cfg.longitude) < 0.01;
+    const preset = CITY_LIST.find(function (c) {
+      return Math.abs(c.latitude - cfg.latitude) < 0.01 &&
+        Math.abs(c.longitude - cfg.longitude) < 0.01;
     });
-    city.value = preset ? preset.name : CITY_PRESETS[0].name;
+    city.value = preset ? preset.lokasi : '';
 
     document.getElementById('in-enableFinancialReport').checked = !!cfg.enableFinancialReport;
 
@@ -1564,6 +1590,9 @@
 
     p.latitude = parseFloat(document.getElementById('in-latitude').value);
     p.longitude = parseFloat(document.getElementById('in-longitude').value);
+    p.useElevation = document.getElementById('in-useElevation').checked;
+    p.elevationMeters =
+      parseFloat(document.getElementById('in-elevationMeters').value) || 0;
     p.calculationMethod = document.getElementById('in-calculationMethod').value;
     p.madhab = document.getElementById('in-madhab').value;
     // Input sudut tetap terbaca walau dinonaktifkan pada metode preset.
@@ -1745,14 +1774,8 @@
       return;
     }
 
-    // isi preset kota
-    const city = document.getElementById('in-city');
-    CITY_PRESETS.forEach(function (c) {
-      const opt = document.createElement('option');
-      opt.value = c.name;
-      opt.textContent = c.name;
-      city.appendChild(opt);
-    });
+    // isi preset kota (harus selesai sebelum fillForm mencocokkan lintang/bujur)
+    await loadCities();
 
     try {
       cfg = await fetchConfig();

@@ -462,6 +462,61 @@ void main() {
       expect(bytes.sublist(0, 3), [0xFF, 0xD8, 0xFF]);
     });
 
+    test('GET /cities serves the bundled city list publicly', () async {
+      await server.start();
+
+      // No token needed — the dashboard fetches it before the config.
+      final (status, body) = await get('/cities');
+      expect(status, 200);
+      final List<dynamic> cities = jsonDecode(body) as List<dynamic>;
+      expect(cities, isNotEmpty);
+
+      final depok = cities.cast<Map<String, dynamic>>().firstWhere(
+            (c) => c['lokasi'] == 'KOTA DEPOK',
+          );
+      expect(depok['latitude'], -6.4);
+      expect(depok['longitude'], 106.81861);
+      expect(depok['elevation'], 92);
+    });
+
+    test('POST /api/config rejects negative elevationMeters', () async {
+      await server.start();
+
+      final (status, body) = await post(
+        '/api/config',
+        jsonEncode({'elevationMeters': -5}),
+        token: server.authToken,
+      );
+      expect(status, 400);
+      expect(body, contains('elevationMeters'));
+
+      // No change was applied.
+      expect(provider.elevationMeters, AppConstants.elevationMeters);
+    });
+
+    test('POST persists+applies useElevation/elevationMeters', () async {
+      await server.start();
+
+      final (ok, okBody) = await post(
+        '/api/config',
+        jsonEncode({'useElevation': true, 'elevationMeters': 92}),
+        token: server.authToken,
+      );
+      expect(ok, 200);
+      final Map<String, dynamic> saved =
+          jsonDecode(okBody) as Map<String, dynamic>;
+      expect(saved['useElevation'], true);
+      expect(saved['elevationMeters'], 92);
+
+      expect(provider.useElevation, true);
+      expect(provider.elevationMeters, 92);
+
+      final reloaded = ConfigProvider();
+      await reloaded.load();
+      expect(reloaded.useElevation, true);
+      expect(reloaded.elevationMeters, 92);
+    });
+
     test('uploads require auth and reject bad bodies', () async {
       await server.start();
 

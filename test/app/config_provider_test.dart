@@ -52,9 +52,30 @@ void main() {
       expect(config.longitude, AppConstants.longitude);
       expect(config.fajrAngle, AppConstants.fajrAngle);
       expect(config.ishaAngle, AppConstants.ishaAngle);
+      expect(config.useElevation, AppConstants.useElevation);
+      expect(config.elevationMeters, AppConstants.elevationMeters);
       expect(config.calculationMethod, AppConstants.calculationMethod);
       expect(config.madhab, AppConstants.madhab.name);
       expect(config.ihtiyat, AppConstants.ihtiyat);
+    });
+
+    test('load() applies persisted useElevation/elevationMeters overrides',
+        () async {
+      SharedPreferences.setMockInitialValues({
+        ConfigProvider.configPrefsKey: jsonEncode({
+          'useElevation': true,
+          'elevationMeters': 92,
+        }),
+      });
+
+      final config = ConfigProvider();
+      expect(config.useElevation, AppConstants.useElevation);
+      expect(config.elevationMeters, AppConstants.elevationMeters);
+
+      await config.load();
+
+      expect(config.useElevation, true);
+      expect(config.elevationMeters, 92.0);
     });
 
     test('load() migrates legacy seconds durations to minutes', () async {

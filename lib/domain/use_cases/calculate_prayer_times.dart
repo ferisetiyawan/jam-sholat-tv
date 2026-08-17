@@ -37,6 +37,13 @@ class CalculatePrayerTimes {
     final Madhab madhab = _madhabFrom(config?.madhab);
     final Map<String, int> ihtiyat = config?.ihtiyat ?? AppConstants.ihtiyat;
 
+    // Elevation (when explicitly enabled) dips the observer's horizon, so the
+    // rising/setting edges move: Syuruq lands earlier and Maghrib later. The
+    // Subuh/Isya depression angles are published from the sea-level horizon
+    // (Kemenag & Muhammadiyah) and are deliberately left untouched.
+    final bool useElevation =
+        (config?.useElevation ?? false) && (config?.elevationMeters ?? 0) > 0;
+
     final params = CalculationMethodParameters.other()
       ..fajrAngle = fajrAngle
       ..ishaAngle = ishaAngle
@@ -48,6 +55,30 @@ class CalculatePrayerTimes {
       calculationParameters: params,
       precision: true,
     );
+
+    // The dip shifts Maghrib later by the same amount Syuruq shifts earlier:
+    // both are the same solar-altitude crossing (-0.833°), symmetric about
+    // solar transit, so a deeper horizon angle moves them by an equal duration.
+    // adhan_dart's `maghribAngle` pushes the setting edge out directly; the
+    // rising edge is derived from that shift. (This is exact to the second —
+    // adhan keeps sub-minute precision with `precision: true`.)
+    DateTime syuruq = times.sunrise;
+    DateTime maghrib = times.maghrib;
+    if (useElevation) {
+      final double dip = AppConfig.horizonDip(config!.elevationMeters);
+      final elevated = PrayerTimes(
+        coordinates: Coordinates(latitude, longitude),
+        date: DateTime.utc(date.year, date.month, date.day),
+        calculationParameters: params
+          ..maghribAngle = AppConstants.sunsetAngle + dip,
+        precision: true,
+      );
+      // The elevated setting edge is Maghrib itself; the rising edge moves by
+      // the same duration (equal solar-altitude crossing, symmetric about
+      // solar transit).
+      maghrib = elevated.maghrib;
+      syuruq = times.sunrise.subtract(maghrib.difference(times.maghrib));
+    }
 
     // Formats a raw (UTC) prayer time into "HH:mm" after applying [ihtiyat]
     // minutes. `ceil` rounds leftover seconds up (salat); false drops them
@@ -69,13 +100,13 @@ class CalculatePrayerTimes {
     return {
       "Subuh": fmt(times.fajr, ihtiyat['subuh']!),
       "Syuruq": fmt(
-        times.sunrise,
+        syuruq,
         ihtiyat['terbit']!,
         ceil: false,
       ),
       "Dzuhur": fmt(times.dhuhr, ihtiyat['dhuhur']!),
       "Ashar": fmt(times.asr, ihtiyat['ashar']!),
-      "Maghrib": fmt(times.maghrib, ihtiyat['maghrib']!),
+      "Maghrib": fmt(maghrib, ihtiyat['maghrib']!),
       "Isya": fmt(times.isha, ihtiyat['isya']!),
     };
   }

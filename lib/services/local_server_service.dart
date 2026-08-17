@@ -168,7 +168,11 @@ class LocalServerService {
     final router = Router(notFoundHandler: _staticHandler)
       ..mount('/api/', apiHandler)
       ..mount('/images/', imagesRouter.call)
-      ..get('/bundled/background', _getBundledBackground);
+      ..get('/bundled/background', _getBundledBackground)
+      // City list for the "Pilih Kota" dropdown — public (no token) like the
+      // bundled background, loaded straight from the Flutter asset bundle so
+      // it works on Android release builds too.
+      ..get('/cities', _getCities);
 
     return const Pipeline()
         .addMiddleware(logRequests())
@@ -319,6 +323,10 @@ class LocalServerService {
     final double? ishaAngle = _parseDouble(json['ishaAngle']);
     if (ishaAngle != null && (ishaAngle <= 0.0 || ishaAngle > 40.0)) {
       return 'ishaAngle must be in (0, 40]';
+    }
+    final double? elevationMeters = _parseDouble(json['elevationMeters']);
+    if (elevationMeters != null && elevationMeters < 0.0) {
+      return 'elevationMeters cannot be negative';
     }
     return null;
   }
@@ -662,6 +670,33 @@ class LocalServerService {
       );
     } catch (_) {
       return Response.notFound('Not found');
+    }
+  }
+
+  /// Raw `kota_indonesia.json` for the dashboard's "Pilih Kota" dropdown.
+  /// Loaded once and cached; mirrors `_getBundledBackground` so it works from
+  /// disk in tests and from `rootBundle` on Android release builds.
+  String? _citiesJson;
+
+  Future<Response> _getCities(Request request) async {
+    final String json = _citiesJson ??= await _loadCitiesJson();
+    if (json.isEmpty) {
+      return _jsonResponse({'error': 'cities data unavailable'}, status: 500);
+    }
+    return Response.ok(
+      json,
+      headers: {'content-type': 'application/json; charset=utf-8'},
+    );
+  }
+
+  Future<String> _loadCitiesJson() async {
+    const String asset = 'assets/json/kota_indonesia.json';
+    try {
+      final File file = File(asset);
+      if (file.existsSync()) return await file.readAsString();
+      return await rootBundle.loadString(asset);
+    } catch (_) {
+      return '';
     }
   }
 

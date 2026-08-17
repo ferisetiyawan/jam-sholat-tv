@@ -87,15 +87,33 @@ class AppConstants {
     for (final Madhab m in Madhab.values) m.name,
   ];
   // Per-prayer ihtiyat (minutes) applied to the raw calculation, Kemenag keys.
+  // Default is +2 minutes for every salat; Syuruq (terbit) is *earlier* so its
+  // ihtiyat is negative (-2). Editable at runtime through the config server.
   static const Map<String, int> ihtiyat = {
     'imsak': 2,
     'subuh': 2,
-    'terbit': -3,
-    'dhuhur': 3,
+    'terbit': -2,
+    'dhuhur': 2,
     'ashar': 2,
-    'maghrib': 3,
+    'maghrib': 2,
     'isya': 2,
   };
+
+  /// Solar altitude (degrees below the horizon) at which the sun is considered
+  /// to rise/set at sea level: the standard 0.8333° = refraction (34′) plus the
+  /// sun's semi-diameter (16′). adhan_dart hardcodes this value internally; we
+  /// re-use it for the elevation dip (see `AppConfig.horizonDip`).
+  static const double sunsetAngle = 50.0 / 60.0;
+
+  /// Whether the masjid's elevation above sea level should be folded into the
+  /// Syuruq / Maghrib calculation. Defaults to off; must be explicitly enabled
+  /// from the config dashboard (the "Gunakan elevasi" checkbox).
+  static const bool useElevation = false;
+
+  /// Masjid elevation above sea level (meters). Populated automatically when a
+  /// city is picked from the dashboard's "Pilih Kota" list; only used when
+  /// [useElevation] is enabled.
+  static const double elevationMeters = 0.0;
 
   // --- audio_service.dart ---
   static const String adzanBeepAssetPath = 'sounds/beep_adzan.wav';

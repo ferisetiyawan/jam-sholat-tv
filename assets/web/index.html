@@ -407,7 +407,29 @@
   .dialog p { font-size: 15px; line-height: 22px; color: var(--on-surface-variant); margin: 0 0 22px; }
   .dialog-actions { display: flex; justify-content: flex-end; }
 
-  /* --- banner (missing token) --- */
+  /* --- no-token overlay --- */
+  #no-token-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.72);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #no-token-overlay[hidden] { display: none; }
+  .no-token-card {
+    background: var(--surface); border-radius: 24px;
+    padding: 40px 36px; max-width: 420px; width: 90%;
+    text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .no-token-card .ic-lock {
+    font-size: 48px; margin-bottom: 16px; display: block;
+  }
+  .no-token-card h2 {
+    font-size: 22px; font-weight: 700; margin: 0 0 12px;
+    color: var(--on-surface);
+  }
+  .no-token-card p {
+    font-size: 14px; line-height: 22px;
+    color: var(--on-surface-variant); margin: 0;
+  }
   #banner {
     max-width: 560px; margin: 90px auto 0; padding: 20px 24px;
     background: rgba(255, 218, 214, 0.9); border: 1px solid rgba(186, 26, 26, 0.3);
@@ -1011,6 +1033,15 @@
     <div class="dialog-actions">
       <button class="btn-primary" id="dialog-ok" type="button">Mengerti</button>
     </div>
+  </div>
+</div>
+
+<div id="no-token-overlay" hidden>
+  <div class="no-token-card" role="alertdialog" aria-modal="true">
+    <span class="ic-lock">🔒</span>
+    <h2>Akses Ditolak</h2>
+    <p>Halaman ini hanya bisa dibuka melalui QR code di TV.<br><br>
+    Tekan tombol <strong>OK / Menu</strong> pada remote TV untuk menampilkan QR code, lalu scan dengan ponsel Anda.</p>
   </div>
 </div>
 
@@ -1896,9 +1927,14 @@
   // ============================================================
   async function main() {
     if (!token) {
+      document.getElementById('no-token-overlay').hidden = false;
       document.getElementById('banner').hidden = false;
       setConn(false, 'URL tidak lengkap');
-      document.querySelectorAll('.js-save').forEach(function (b) { b.disabled = true; });
+      // disable all interactive elements
+      document.querySelectorAll('button, input, select, textarea, a').forEach(function (el) {
+        el.disabled = true;
+        el.setAttribute('tabindex', '-1');
+      });
       return;
     }
 

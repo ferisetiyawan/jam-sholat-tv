@@ -875,13 +875,13 @@
               <label for="in-financialSummary.totalKasMasjid">Total Kas Masjid</label>
               <div class="amt-input-wrap">
                 <span class="amt-prefix">Rp</span>
-                <input class="input" id="in-financialSummary.totalKasMasjid" type="number" step="any">
+                <input class="input" id="in-financialSummary.totalKasMasjid" type="text" inputmode="numeric" autocomplete="off" placeholder="0">
               </div>
             </div>
             <div class="field">
               <label for="in-financialSummary.saldoKasDate">Per Tanggal</label>
               <div class="input-wrap">
-                <input class="input" id="in-financialSummary.saldoKasDate" type="datetime-local">
+                <input class="input" id="in-financialSummary.saldoKasDate" type="date">
                 <span class="ic" data-i="calendar"></span>
               </div>
             </div>
@@ -1032,13 +1032,14 @@
     return Number.isFinite(n) ? n : 0;
   }
 
+  // Laporan keuangan memakai TANGGAL saja (tanpa waktu): tanggal lokal dari ISO,
+  // disimpan kembali sebagai ISO UTC tengah malam.
   function isoToLocalInput(iso) {
     if (!iso) return '';
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '';
     const pad = function (n) { return String(n).padStart(2, '0'); };
-    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
-      'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
 
   function localInputToIso(value) {
@@ -1046,6 +1047,27 @@
     const d = new Date(value);
     if (isNaN(d.getTime())) return '';
     return d.toISOString();
+  }
+
+  // Format angka Rupiah dengan pemisah ribuan titik — TAMPILAN saja
+  // (mis. 121381630 -> "121.381.630"). Nilai yang disimpan tetap angka polos
+  // tanpa titik — lihat parseRupiah().
+  function formatRupiah(value) {
+    const digits = String(value == null ? '' : value).replace(/\D/g, '');
+    return digits ? digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '';
+  }
+
+  function parseRupiah(str) {
+    if (!str) return 0;
+    const digits = String(str).replace(/\D/g, '');
+    return digits ? parseFloat(digits) : 0;
+  }
+
+  // Format ulang saat diketik agar pemisah titik selalu tampil.
+  function bindRupiah(input) {
+    input.addEventListener('input', function () {
+      input.value = formatRupiah(input.value);
+    });
   }
 
   // Ubah URL gambar baku (`http://127.0.0.1:8080/images/<name>`) ke origin
@@ -1195,6 +1217,9 @@
     addWeekRow();
   });
 
+  // Total Kas: tampilan pakai pemisah titik, simpan tanpa titik (parseRupiah).
+  bindRupiah(document.getElementById('in-financialSummary.totalKasMasjid'));
+
   // ============================================================
   //  Dropzone background & event
   // ============================================================
@@ -1274,7 +1299,8 @@
 
   function fillFinancialForm() {
     const fs = cfg.financialSummary || {};
-    document.getElementById('in-financialSummary.totalKasMasjid').value = fs.totalKasMasjid;
+    document.getElementById('in-financialSummary.totalKasMasjid').value =
+      formatRupiah(fs.totalKasMasjid);
     document.getElementById('in-financialSummary.saldoKasDate').value = isoToLocalInput(fs.saldoKasDate);
     const tb = document.getElementById('week-rows');
     tb.innerHTML = '';
@@ -1290,16 +1316,19 @@
     td1.innerHTML =
       '<div class="date-pair">' +
         '<div class="d"><span class="d-lbl">Mulai</span>' +
-          '<input class="tbl-input" id="in-weeklyIncome.' + idx + '.periodeStart" type="datetime-local"></div>' +
+          '<input class="tbl-input" id="in-weeklyIncome.' + idx + '.periodeStart" type="date"></div>' +
         '<div class="d-sep"></div>' +
         '<div class="d"><span class="d-lbl">Selesai</span>' +
-          '<input class="tbl-input" id="in-weeklyIncome.' + idx + '.periodeEnd" type="datetime-local"></div>' +
+          '<input class="tbl-input" id="in-weeklyIncome.' + idx + '.periodeEnd" type="date"></div>' +
       '</div>';
 
     const td2 = document.createElement('td');
     td2.innerHTML =
       '<div class="amt"><span class="amt-curr">Rp</span>' +
-        '<input class="tbl-input" id="in-weeklyIncome.' + idx + '.pemasukan" type="number" step="any"></div>';
+        '<input class="tbl-input" id="in-weeklyIncome.' + idx + '.pemasukan" type="text" inputmode="numeric" autocomplete="off" placeholder="0"></div>';
+    // id berisi titik (mis. in-weeklyIncome.0.pemasukan) -> getElementById OK,
+    // querySelector('#...') TIDAK (titik dibaca sebagai class). Pakai atribut.
+    bindRupiah(td2.querySelector('input[id$=".pemasukan"]'));
 
     const td3 = document.createElement('td');
     td3.className = 'right';
@@ -1315,7 +1344,8 @@
         isoToLocalInput(week.periodeStart);
       document.getElementById('in-weeklyIncome.' + idx + '.periodeEnd').value =
         isoToLocalInput(week.periodeEnd);
-      document.getElementById('in-weeklyIncome.' + idx + '.pemasukan').value = week.pemasukan;
+      document.getElementById('in-weeklyIncome.' + idx + '.pemasukan').value =
+        formatRupiah(week.pemasukan);
     }
     return tr;
   }
@@ -1412,8 +1442,8 @@
     });
 
     p.financialSummary = {
-      totalKasMasjid: parseFloat(
-        document.getElementById('in-financialSummary.totalKasMasjid').value) || 0,
+      totalKasMasjid: parseRupiah(
+        document.getElementById('in-financialSummary.totalKasMasjid').value),
       saldoKasDate: localInputToIso(
         document.getElementById('in-financialSummary.saldoKasDate').value),
       weeklyIncome: Array.from(document.getElementById('week-rows').children).map(function (row) {
@@ -1422,8 +1452,8 @@
             row.querySelector('input[id$=".periodeStart"]').value),
           periodeEnd: localInputToIso(
             row.querySelector('input[id$=".periodeEnd"]').value),
-          pemasukan: parseFloat(
-            row.querySelector('input[id$=".pemasukan"]').value) || 0,
+          pemasukan: parseRupiah(
+            row.querySelector('input[id$=".pemasukan"]').value),
         };
       }),
     };

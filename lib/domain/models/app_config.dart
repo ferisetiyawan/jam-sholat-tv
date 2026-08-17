@@ -29,6 +29,11 @@ class AppConfig {
   final int minutesBeforeMaghrib;
   final int minutesBeforeJumat;
 
+  /// YouTube URL of the live Makkah stream shown before Maghrib/Jumat. Editable
+  /// at runtime; a bad or empty value falls back to [AppConstants.liveMakkahUrl]
+  /// in the player.
+  final String liveMakkahUrl;
+
   /// Prayer-calculation parameters (Kemenag method), all editable at runtime
   /// through the local config server and used by [CalculatePrayerTimes].
   final double latitude;
@@ -72,6 +77,7 @@ class AppConfig {
     required this.iqomahTestingDuration,
     required this.minutesBeforeMaghrib,
     required this.minutesBeforeJumat,
+    required this.liveMakkahUrl,
     required this.latitude,
     required this.longitude,
     required this.fajrAngle,
@@ -188,6 +194,8 @@ class AppConfig {
         json['minutesBeforeJumat'],
         AppConstants.minutesBeforeJumat,
       ),
+      liveMakkahUrl:
+          json['liveMakkahUrl']?.toString() ?? AppConstants.liveMakkahUrl,
       latitude: parseDouble(json['latitude'], AppConstants.latitude)
           .clamp(-90.0, 90.0)
           .toDouble(),
@@ -231,6 +239,7 @@ class AppConfig {
       'iqomahTestingDuration': iqomahTestingDuration,
       'minutesBeforeMaghrib': minutesBeforeMaghrib,
       'minutesBeforeJumat': minutesBeforeJumat,
+      'liveMakkahUrl': liveMakkahUrl,
       'latitude': latitude,
       'longitude': longitude,
       'fajrAngle': fajrAngle,

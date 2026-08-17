@@ -841,6 +841,17 @@
               <span class="ic" data-i="mosque"></span>
             </div>
           </div>
+          <hr class="section-divider" style="margin:24px 0">
+          <div class="makkah-row">
+            <div class="m-lbl">
+              <label for="in-liveMakkahUrl">URL Live Makkah (YouTube)</label>
+              <p>Tautan siaran langsung YouTube Makkah. Pakai URL video live, bukan channel. Jika kosong/tidak valid, TV memakai URL bawaan.</p>
+            </div>
+            <div class="m-inp input-wrap" style="flex:1">
+              <input class="input" id="in-liveMakkahUrl" type="text" autocomplete="off" placeholder="https://www.youtube.com/watch?v=_y45JcS3MlQ">
+              <span class="ic" data-i="link"></span>
+            </div>
+          </div>
           <div class="hint-card" style="margin-top:24px">
             <span class="ic" data-i="info"></span>
             <div><p>Tayangan akan otomatis berhenti dan kembali ke tampilan jadwal sholat saat adzan berkumandang.</p></div>
@@ -967,6 +978,7 @@
     location: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
     restart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>',
     fullscreen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"' + S + '><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg>',
   };
 
   // isi semua placeholder ikon statis
@@ -1198,10 +1210,15 @@
   tickClock();
   setInterval(tickClock, 1000);
 
-  // toggle Live Makkah -> nonaktifkan input durasi + peringatan bila durasi 0
+  // toggle Live Makkah -> nonaktifkan input durasi + default 30 menit + peringatan bila durasi 0
   document.getElementById('in-liveMakkah').addEventListener('change', function () {
     setMakkahDisabled(!this.checked);
     if (this.checked) {
+      // Saat dinyalakan, isi default 30 menit bila kolom masih 0/kosong.
+      ['in-minutesBeforeMaghrib', 'in-minutesBeforeJumat'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (toInt(el.value) <= 0) el.value = 30;
+      });
       const err = validateMakkah();
       if (err) showDialog('Live Makkah Aktif', err);
     }
@@ -1291,6 +1308,7 @@
     const makkahOn = (cfg.minutesBeforeMaghrib > 0) || (cfg.minutesBeforeJumat > 0);
     document.getElementById('in-liveMakkah').checked = makkahOn;
     setMakkahDisabled(!makkahOn);
+    document.getElementById('in-liveMakkahUrl').value = cfg.liveMakkahUrl || '';
 
     fillFinancialForm();
     renderBackground();
@@ -1426,6 +1444,7 @@
     const makkahOn = document.getElementById('in-liveMakkah').checked;
     p.minutesBeforeMaghrib = makkahOn ? toInt(document.getElementById('in-minutesBeforeMaghrib').value) : 0;
     p.minutesBeforeJumat = makkahOn ? toInt(document.getElementById('in-minutesBeforeJumat').value) : 0;
+    p.liveMakkahUrl = document.getElementById('in-liveMakkahUrl').value.trim();
 
     p.marqueeText = document.getElementById('in-marqueeText').value.trim();
     p.enableFinancialReport = document.getElementById('in-enableFinancialReport').checked;

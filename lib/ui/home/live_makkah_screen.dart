@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
+import '../../core/constants/app_constants.dart';
 import '../../core/widgets/background_image.dart';
 import '../../core/widgets/bottom_marquee_bar.dart';
 import '../../core/widgets/side_prayer_panel.dart';
@@ -12,6 +13,10 @@ class LiveMakkahScreen extends StatefulWidget {
   final String dateHijriah;
   final String nextPrayerName;
 
+  /// YouTube URL of the live Makkah stream, editable via the dashboard. Falls
+  /// back to [AppConstants.liveMakkahUrl] when unparseable.
+  final String liveMakkahUrl;
+
   const LiveMakkahScreen({
     super.key,
     required this.time,
@@ -19,6 +24,7 @@ class LiveMakkahScreen extends StatefulWidget {
     required this.dateHijriah,
     required this.jadwal,
     required this.nextPrayerName,
+    required this.liveMakkahUrl,
   });
 
   @override
@@ -32,7 +38,7 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
   void initState() {
     super.initState();
     _controller = YoutubePlayerController(
-      initialVideoId: 'Cm1v4bteXbI',
+      initialVideoId: _resolveVideoId(widget.liveMakkahUrl),
       flags: const YoutubePlayerFlags(
         autoPlay: true,
         mute: true,
@@ -40,6 +46,17 @@ class _LiveMakkahScreenState extends State<LiveMakkahScreen> {
         hideControls: true,
       ),
     );
+  }
+
+  /// Extracts the video ID from the configured YouTube URL. Accepts a full
+  /// watch/share URL or a bare 11-char video ID; falls back to the bundled
+  /// default when the value is unparseable.
+  String _resolveVideoId(String url) {
+    final String trimmed = url.trim();
+    if (RegExp(r'^[A-Za-z0-9_-]{11}$').hasMatch(trimmed)) return trimmed;
+    final String? fromUrl = YoutubePlayer.convertUrlToId(trimmed);
+    if (fromUrl != null && fromUrl.isNotEmpty) return fromUrl;
+    return YoutubePlayer.convertUrlToId(AppConstants.liveMakkahUrl) ?? '';
   }
 
   @override

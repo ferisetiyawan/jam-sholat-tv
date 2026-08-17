@@ -62,6 +62,7 @@ class ConfigProvider extends ChangeNotifier {
   int get iqomahTestingDuration => _config.iqomahTestingDuration;
   int get minutesBeforeMaghrib => _config.minutesBeforeMaghrib;
   int get minutesBeforeJumat => _config.minutesBeforeJumat;
+  String get liveMakkahUrl => _config.liveMakkahUrl;
   double get latitude => _config.latitude;
   double get longitude => _config.longitude;
   double get fajrAngle => _config.fajrAngle;

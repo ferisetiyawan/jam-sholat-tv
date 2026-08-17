@@ -61,6 +61,13 @@ class AppConstants {
   static const int minutesBeforeJumat =
       30; // live makkah before jumat, in minutes
 
+  /// YouTube URL of the live Makkah (Masjid al-Haram) stream shown during the
+  /// pre-Maghrib / pre-Jumat live mode. Editable at runtime through the local
+  /// config server's "Konfigurasi Live Makkah" (dashboard). Verified 24/7 feed
+  /// (AlQuran4K); if it ever stops, the masjid can swap it from the dashboard.
+  static const String liveMakkahUrl =
+      'https://www.youtube.com/watch?v=_y45JcS3MlQ'; // Makkah Live HD (AlQuran4K)
+
   // --- ASSETS ---
   static const String backgroundImage = 'assets/images/background_masjid.jpeg';
 

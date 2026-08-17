@@ -34,6 +34,10 @@
     --font: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
   * { box-sizing: border-box; }
+  /* `hidden` harus selalu menang: tanpa ini, rule display (mis. .dialog-backdrop
+     display:flex, .mockup img display:block) menimpa atribut hidden dan elemen
+     yang seharusnya tersembunyi tetap tampil/menutupi halaman. */
+  [hidden] { display: none !important; }
   html { scroll-behavior: smooth; }
   body {
     margin: 0;
@@ -354,6 +358,35 @@
   #toast.show { transform: translateX(-50%) translateY(0); }
   #toast.ok { color: var(--primary); }
   #toast.err { color: var(--error); }
+
+  /* --- dialog / modal --- */
+  .dialog-backdrop {
+    position: fixed; inset: 0; z-index: 120;
+    background: rgba(25, 28, 29, 0.45);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    opacity: 0; transition: opacity 0.2s ease;
+    pointer-events: none; /* saat tidak .show, jangan halangi klik apa pun */
+  }
+  .dialog-backdrop.show { opacity: 1; pointer-events: auto; }
+  .dialog {
+    width: 100%; max-width: 440px;
+    background: var(--glass-strong); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border); box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+    border-radius: 20px; padding: 28px;
+    transform: translateY(12px) scale(0.97); transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+    pointer-events: auto;
+  }
+  .dialog-backdrop.show .dialog { transform: none; }
+  .dialog-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .dialog-ic {
+    width: 44px; height: 44px; border-radius: 50%; flex: none;
+    background: rgba(186, 26, 26, 0.1); color: var(--error);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .dialog-head h3 { font-size: 20px; line-height: 28px; font-weight: 700; margin: 0; }
+  .dialog p { font-size: 15px; line-height: 22px; color: var(--on-surface-variant); margin: 0 0 22px; }
+  .dialog-actions { display: flex; justify-content: flex-end; }
 
   /* --- banner (missing token) --- */
   #banner {
@@ -885,6 +918,20 @@
 
 <div id="toast"></div>
 
+<!-- Dialog peringatan -->
+<div class="dialog-backdrop" id="dialog-backdrop" hidden>
+  <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dialog-title" aria-describedby="dialog-msg">
+    <div class="dialog-head">
+      <span class="dialog-ic"><span class="ic" data-i="error"></span></span>
+      <h3 id="dialog-title">Perhatian</h3>
+    </div>
+    <p id="dialog-msg">…</p>
+    <div class="dialog-actions">
+      <button class="btn-primary" id="dialog-ok" type="button">Mengerti</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // ============================================================
   //  Ikon (inline SVG, tanpa dependensi eksternal)
@@ -1038,6 +1085,48 @@
     toastTimer = setTimeout(function () { t.classList.remove('show'); }, 3600);
   }
 
+  // --- dialog peringatan ---
+  function showDialog(title, msg) {
+    document.getElementById('dialog-title').textContent = title;
+    document.getElementById('dialog-msg').textContent = msg;
+    const bd = document.getElementById('dialog-backdrop');
+    bd.hidden = false;
+    // force reflow agar transisi fade-in berjalan
+    void bd.offsetWidth;
+    bd.classList.add('show');
+    document.getElementById('dialog-ok').focus();
+  }
+  function hideDialog() {
+    const bd = document.getElementById('dialog-backdrop');
+    bd.classList.remove('show');
+    setTimeout(function () { bd.hidden = true; }, 200);
+  }
+  document.getElementById('dialog-ok').addEventListener('click', hideDialog);
+  document.getElementById('dialog-backdrop').addEventListener('click', function (e) {
+    if (e.target === this) hideDialog();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !document.getElementById('dialog-backdrop').hidden) {
+      hideDialog();
+    }
+  });
+
+  // Validaasi Live Makkah: saat toggle aktif, kedua durasi wajib lebih dari 0.
+  function validateMakkah() {
+    const makkahOn = document.getElementById('in-liveMakkah').checked;
+    if (!makkahOn) return null;
+    const maghrib = toInt(document.getElementById('in-minutesBeforeMaghrib').value);
+    const jumat = toInt(document.getElementById('in-minutesBeforeJumat').value);
+    const bad = [];
+    if (maghrib <= 0) bad.push('Sebelum Maghrib');
+    if (jumat <= 0) bad.push('Sebelum Jumat');
+    if (bad.length) {
+      return 'Live Makkah aktif, tapi durasi tayang harus lebih dari 0 menit. ' +
+        'Isi kolom ' + bad.join(' dan ') + ' dengan nilai lebih dari 0.';
+    }
+    return null;
+  }
+
   function setConn(on, text) {
     const pill = document.getElementById('conn-pill');
     pill.className = 'pill ' + (on ? 'on' : 'off');
@@ -1087,9 +1176,13 @@
   tickClock();
   setInterval(tickClock, 1000);
 
-  // toggle Live Makkah -> nonaktifkan input durasi
+  // toggle Live Makkah -> nonaktifkan input durasi + peringatan bila durasi 0
   document.getElementById('in-liveMakkah').addEventListener('change', function () {
     setMakkahDisabled(!this.checked);
+    if (this.checked) {
+      const err = validateMakkah();
+      if (err) showDialog('Live Makkah Aktif', err);
+    }
   });
   function setMakkahDisabled(disabled) {
     ['in-minutesBeforeMaghrib', 'in-minutesBeforeJumat'].forEach(function (id) {
@@ -1349,6 +1442,12 @@
   }
 
   async function doSave() {
+    // Live Makkah aktif tapi durasi masih 0 -> tolak simpan dengan dialog.
+    const makkahErr = validateMakkah();
+    if (makkahErr) {
+      showDialog('Live Makkah Aktif', makkahErr);
+      return;
+    }
     document.querySelectorAll('.js-save').forEach(function (b) { b.disabled = true; });
     toast('Menyimpan…');
     try {

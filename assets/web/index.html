@@ -88,7 +88,7 @@
   .sidebar .brand { display: flex; align-items: center; gap: 14px; padding: 0 24px; margin-bottom: 40px; }
   .sidebar .brand-icon {
     width: 48px; height: 48px; border-radius: 14px;
-    background: rgba(52, 168, 83, 0.16); border: 1px solid rgba(52, 168, 83, 0.25);
+    background: none; border: none;
     display: flex; align-items: center; justify-content: center; color: var(--primary);
   }
   .sidebar .brand h1 { font-size: 24px; line-height: 30px; font-weight: 700; margin: 0; color: var(--primary); letter-spacing: -0.01em; }
@@ -489,7 +489,8 @@
 <!-- ======= Sidebar ======= -->
 <aside class="sidebar" id="sidebar">
   <div class="brand">
-    <div class="brand-icon"><img src="/bundled/icon" alt="Washol TV" style="width:100%;height:100%;object-fit:contain;border-radius:12px;"></div>
+    <div class="brand-icon" id="brand-icon-wrap"><img src="/bundled/icon?v=2" alt="Washol TV" style="width:100%;height:100%;object-fit:contain;border-radius:12px;" onerror="var w=document.getElementById('brand-icon-wrap');w.innerHTML='';w.appendChild(document.getElementById('brand-icon-svg').content.cloneNode(true))"></div>
+    <template id="brand-icon-svg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><path d="M12 2.5c2.2 2.3 3.2 3.5 3.2 5.3a3.2 3.2 0 0 1-6.4 0c0-1.8 1-3 3.2-5.3Z"/><path d="M4 21v-9a8 8 0 0 1 16 0v9"/><path d="M2 21h20"/><path d="M9 21v-3a3 3 0 0 1 6 0v3"/></svg></template>
     <div>
       <h1>Masjid Dashboard</h1>
       <p>Panel Kontrol</p>
@@ -699,24 +700,6 @@
 
           <hr class="section-divider">
 
-          <h3 class="sub-head">Kalender Hijriah</h3>
-          <div class="grid2">
-            <div class="field">
-              <label for="in-hijriKalender">Pilih Kalender</label>
-              <select class="input" id="in-hijriKalender">
-                <option value="umum">Umum</option>
-                <option value="khgt">Kalender Hijriah Global Tunggal (KHGT)</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="in-hijriCorrection">Koreksi Hijriah <span class="unit">(hari, -2 s.d. 2)</span></label>
-              <div class="input-wrap"><input class="input" id="in-hijriCorrection" type="number" min="-2" max="2"><span class="ic" data-i="calendar"></span></div>
-            </div>
-          </div>
-          <p class="hint" id="hint-hijriKalender">Koreksi Hijriah menyesuaikan tanggal menurut rukyat lokal (nilai -1, 0, atau 1).</p>
-
-          <hr class="section-divider">
-
           <h3 class="sub-head">Waktu Ihtiyat <span class="unit" style="font-weight:500;font-size:16px;color:var(--on-surface-variant)">(menit tambahan)</span></h3>
           <div class="grid-ih">
             <div class="field">
@@ -748,6 +731,24 @@
               <div class="input-wrap"><input class="input" id="in-ihtiyat.isya" type="number" min="0"><span class="ic" data-i="dark_mode"></span></div>
             </div>
           </div>
+
+          <hr class="section-divider">
+
+          <h3 class="sub-head">Kalender Hijriah</h3>
+          <div class="grid2">
+            <div class="field">
+              <label for="in-hijriKalender">Pilih Kalender</label>
+              <select class="input" id="in-hijriKalender">
+                <option value="umum">Umum</option>
+                <option value="khgt">Kalender Hijriah Global Tunggal (KHGT)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="in-hijriCorrection">Koreksi Hijriah <span class="unit">(hari, -2 s.d. 2)</span></label>
+              <div class="input-wrap"><input class="input" id="in-hijriCorrection" type="number" min="-2" max="2"><span class="ic" data-i="calendar"></span></div>
+            </div>
+          </div>
+          <p class="hint" id="hint-hijriKalender">Koreksi Hijriah menyesuaikan tanggal menurut rukyat lokal (nilai -1, 0, atau 1).</p>
 
           <div class="actions">
             <button class="btn-primary js-save" type="button"><span class="ic ic--sm" data-i="save"></span>Simpan Perubahan</button>

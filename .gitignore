@@ -120,3 +120,13 @@ app.*.symbols
 
 # FVM Version Cache
 .fvm/
+
+# Graphify - Keep graph outputs, skip heavy/local-only files
+graphify-out/manifest.json
+graphify-out/cost.json
+graphify-out/cache/
+graphify-out/.*
+
+# Claude local hooks and CRG (if used)
+.claude/settings.local.json
+.code-review-graph/
